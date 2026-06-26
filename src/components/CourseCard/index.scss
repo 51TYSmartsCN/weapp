@@ -120,7 +120,7 @@
   .course-meta {
     display: flex;
     align-items: center;
-    gap: $sm;
+    justify-content: space-between;
   }
 
   .course-rating,

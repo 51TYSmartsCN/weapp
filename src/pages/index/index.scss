@@ -109,6 +109,7 @@
   width: 100%;
   margin-top: $base;
   display: flex;
+  height: 48rpx;
   /* 微信小程序 ScrollView+enableFlex 下 gap 不生效，改用子元素 margin-right */
 }
 

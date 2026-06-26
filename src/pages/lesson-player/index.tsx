@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { View, Text, Video, Slider, ScrollView } from '@tarojs/components'
+import { useEffect, useState, useCallback } from 'react'
+import { View, Text, Video, ScrollView } from '@tarojs/components'
 import { useRouter } from '@tarojs/taro'
-import Taro, { createVideoContext } from '@tarojs/taro'
+import { createVideoContext } from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import Icon from '../../components/Icon'
 import { getCourseById, getLessons, getLessonById, showApiError } from '../../services'
@@ -17,17 +17,8 @@ export default function LessonPlayer() {
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null)
   const [loading, setLoading] = useState(true)
-
-  // 视频播放状态
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [playbackRate, setPlaybackRate] = useState(1)
   const [showList, setShowList] = useState(true)
-
-  const videoId = useRef('lessonVideo')
-
-  const playbackRates = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
   useEffect(() => {
     setLoading(true)
@@ -41,90 +32,17 @@ export default function LessonPlayer() {
       .finally(() => setLoading(false))
   }, [courseId, lessonId])
 
-  const formatTime = useCallback((seconds: number) => {
-    if (!seconds || isNaN(seconds)) return '00:00'
-    const m = Math.floor(seconds / 60)
-    const s = Math.floor(seconds % 60)
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }, [])
-
-  const getVideoContext = useCallback(() => {
-    return createVideoContext(videoId.current)
-  }, [])
-
-  // Video 事件回调
-  const handlePlay = () => {
-    setIsPlaying(true)
-  }
-
-  const handlePause = () => {
+  const handlePlay = useCallback(() => setIsPlaying(true), [])
+  const handlePause = useCallback(() => setIsPlaying(false), [])
+  const handleEnded = useCallback(() => {
     setIsPlaying(false)
-  }
-
-  const handleTimeUpdate = (e) => {
-    setCurrentTime(Number(e.detail.currentTime))
-  }
-
-  const handleLoadedMetaData = (e) => {
-    setDuration(Number(e.detail.duration))
-  }
-
-  const handleEnded = () => {
-    setIsPlaying(false)
-    const ctx = getVideoContext()
+    const ctx = createVideoContext('lessonVideo')
     ctx.pause()
-  }
-
-  // 用户控制操作
-  const handlePlayPause = () => {
-    const ctx = getVideoContext()
-    if (isPlaying) {
-      ctx.pause()
-      setIsPlaying(false)
-    } else {
-      ctx.play()
-      setIsPlaying(true)
-    }
-  }
-
-  // Slider onChanging — 拖动过程中，仅更新 UI 但不 seek
-  const handleSeekChanging = (e) => {
-    setCurrentTime(Number(e.detail.value) / 100)
-  }
-
-  // Slider onChange — 松手后执行 seek
-  const handleSeek = (e) => {
-    const seekTime = Number(e.detail.value) / 100
-    const ctx = getVideoContext()
-    ctx.seek(seekTime)
-    setCurrentTime(seekTime)
-  }
-
-  const handleRewind = () => {
-    const ctx = getVideoContext()
-    ctx.seek(0)
-    setCurrentTime(0)
-  }
-
-  const handleRateChange = () => {
-    const currentIdx = playbackRates.indexOf(playbackRate)
-    const nextIdx = (currentIdx + 1) % playbackRates.length
-    const newRate = playbackRates[nextIdx]
-    setPlaybackRate(newRate)
-    const ctx = getVideoContext()
-    ctx.playbackRate(newRate)
-    Taro.showToast({
-      title: `${newRate}x`,
-      icon: 'none',
-    })
-  }
+  }, [])
 
   const handleLessonChange = (lesson: Lesson) => {
     setCurrentLesson(lesson)
     setIsPlaying(false)
-    setCurrentTime(0)
-    setDuration(0)
-    setPlaybackRate(1)
   }
 
   const currentLessonIndex = lessons.findIndex((l) => l.id === currentLesson?.id)
@@ -156,35 +74,29 @@ export default function LessonPlayer() {
     <View className='lesson-player-page'>
       <NavBar title='课程播放' />
 
-      {/* 视频播放区域 */}
+      {/* 视频播放区域 — 原生控件负责播放/进度/全屏/倍速 */}
       <View className='player-video-area'>
         <Video
-          id={videoId.current}
+          id='lessonVideo'
           className='player-video'
           src={videoSrc}
-          controls={false}
+          controls={true}
           autoplay={false}
           loop={false}
           muted={false}
-          showFullscreenBtn={false}
-          showPlayBtn={false}
-          showCenterPlayBtn={false}
-          enableProgressGesture={false}
+          showFullscreenBtn={true}
+          showPlayBtn={true}
+          showCenterPlayBtn={true}
+          showBottomProgress={true}
+          showProgress={true}
+          showRateBtn={'1'}
+          enableProgressGesture={true}
           objectFit='contain'
           poster=''
           onPlay={handlePlay}
           onPause={handlePause}
-          onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
-          onLoadedMetaData={handleLoadedMetaData}
         />
-
-        {/* 视频区域中央播放/暂停按钮 */}
-        {!isPlaying && (
-          <View className='player-center-play' onClick={handlePlayPause}>
-            <Icon name='play' size={100} color='#FFFFFF' />
-          </View>
-        )}
       </View>
 
       {/* 课时信息 */}
@@ -195,46 +107,21 @@ export default function LessonPlayer() {
         </Text>
       </View>
 
-      {/* 进度条 */}
-      <View className='player-progress-section'>
-        <Slider
-          className='player-slider'
-          min={0}
-          max={duration > 0 ? duration * 100 : 100}
-          value={currentTime * 100}
-          step={1}
-          activeColor='#0D9488'
-          backgroundColor='#E2E8F0'
-          blockSize={24}
-          onChange={handleSeek}
-          onChanging={handleSeekChanging}
-        />
-        <View className='player-time-row'>
-          <Text className='player-time-current'>{formatTime(currentTime)}</Text>
-          <Text className='player-time-total'>{formatTime(duration)}</Text>
+      {/* 上一课 / 下一课 */}
+      <View className='player-switch-row'>
+        <View
+          className={`player-switch-btn ${!hasPrev ? 'disabled' : ''}`}
+          onClick={() => hasPrev && handlePrevNext('prev')}
+        >
+          <Icon name='skip-back' size={32} color={hasPrev ? '#0D9488' : '#CBD5E1'} />
+          <Text className={`switch-label ${!hasPrev ? 'disabled' : ''}`}>上一课</Text>
         </View>
-      </View>
-
-      {/* 播放控制栏 */}
-      <View className='player-controls'>
-        <View className='player-ctrl-btn' onClick={handleRewind}>
-          <Icon name='rotate-ccw' size={44} color='#475569' />
-          <Text className='ctrl-label'>重播</Text>
-        </View>
-        <View className='player-ctrl-btn' onClick={() => handlePrevNext('prev')}>
-          <Icon name='skip-back' size={48} color={hasPrev ? '#0F172A' : '#CBD5E1'} />
-          <Text className='ctrl-label'>上一课</Text>
-        </View>
-        <View className='player-ctrl-main' onClick={handlePlayPause}>
-          <Icon name={isPlaying ? 'pause' : 'play'} size={72} color='#FFFFFF' />
-        </View>
-        <View className='player-ctrl-btn' onClick={() => handlePrevNext('next')}>
-          <Icon name='skip-forward' size={48} color={hasNext ? '#0F172A' : '#CBD5E1'} />
-          <Text className='ctrl-label'>下一课</Text>
-        </View>
-        <View className='player-ctrl-btn' onClick={handleRateChange}>
-          <Text className='ctrl-rate'>{playbackRate}x</Text>
-          <Text className='ctrl-label'>倍速</Text>
+        <View
+          className={`player-switch-btn ${!hasNext ? 'disabled' : ''}`}
+          onClick={() => hasNext && handlePrevNext('next')}
+        >
+          <Text className={`switch-label ${!hasNext ? 'disabled' : ''}`}>下一课</Text>
+          <Icon name='skip-forward' size={32} color={hasNext ? '#0D9488' : '#CBD5E1'} />
         </View>
       </View>
 
