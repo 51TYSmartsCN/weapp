@@ -1,0 +1,200 @@
+@use '../../styles/variables.scss' as *;
+
+.learning-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  padding-bottom: calc(#{$tab-bar-height} + #{$base});
+  box-sizing: border-box;
+}
+
+.learning-header {
+  padding: $sm $base $base;
+  background: $bg;
+}
+
+.learning-title {
+  font-size: $font-xl;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.skeleton-learning-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: $sm 0;
+}
+
+.skeleton-learning-stat {
+  width: 96rpx;
+  height: 72rpx;
+  border-radius: $radius-sm;
+  background: $bg-tertiary;
+}
+
+.learning-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: $sm 0;
+}
+
+.learning-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $xs;
+}
+
+.stat-value {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #0F766E;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.learning-section {
+  margin-top: $base;
+  padding: 0 $base;
+}
+
+.section-title {
+  display: block; /* 微信小程序 Text 默认 inline，margin-bottom 不生效 */
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $md;
+}
+
+.continue-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $base;
+}
+
+.continue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $md;
+}
+
+.continue-course {
+  flex: 1;
+  min-width: 0;
+}
+
+.continue-name {
+  display: block;
+  font-size: $font-base;
+  font-weight: 500;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.continue-progress {
+  width: 100%;
+  height: 12rpx;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  margin-top: $sm;
+  overflow: hidden;
+}
+
+.continue-progress-bar {
+  height: 100%;
+  border-radius: $radius-full;
+  background: $primary;
+}
+
+.continue-meta {
+  display: block;
+  margin-top: $xs;
+  font-size: $font-sm;
+  color: $text-tertiary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.continue-btn {
+  flex-shrink: 0;
+  padding: $xs $md;
+  border: 1.5rpx solid $primary;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $primary;
+  font-size: $font-sm;
+  font-weight: 500;
+  line-height: 1;
+
+  /* 覆盖 Taro Button 在 H5 端的默认宽高 */
+  &::after {
+    border: none;
+  }
+}
+
+.course-item {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $md;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  margin-bottom: $sm;
+}
+
+.course-cover-small {
+  width: 120rpx;
+  height: 90rpx;
+  border-radius: $radius-md;
+  flex-shrink: 0;
+}
+
+.course-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-item-title {
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-item-progress {
+  display: block; /* 微信小程序 Text 默认 inline，margin-top 不生效 */
+  margin-top: $sm;
+  font-size: $font-sm;
+  color: $text-tertiary;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 1rpx;
+    height: 16rpx;
+    background: $border;
+    margin-right: 10rpx;
+    vertical-align: middle;
+  }
+}
+
+.empty-tip {
+  text-align: center;
+  padding: $xl 0;
+  font-size: $font-sm;
+  color: $text-tertiary;
+}

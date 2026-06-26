@@ -1,0 +1,20 @@
+@use '../../styles/variables.scss' as *;
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $md;
+}
+
+.section-title {
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.section-link {
+  font-size: $font-sm;
+  color: $primary;
+  font-weight: 500;
+}

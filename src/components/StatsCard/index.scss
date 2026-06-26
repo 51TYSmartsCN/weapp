@@ -1,0 +1,40 @@
+@use '../../styles/variables.scss' as *;
+
+.stats-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: $base;
+  border-radius: $radius-lg;
+}
+
+.stats-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.stats-value {
+  font-size: $font-xl;
+  font-weight: 700;
+  color: $primary-dark;
+  line-height: 1.25;
+}
+
+.stats-label {
+  margin-top: 4rpx;
+  font-size: $font-xs;
+  color: $text-secondary;
+}
+
+.stats-divider {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rpx;
+  height: 32rpx;
+  background-color: $primary-lighter;
+}

@@ -1,0 +1,32 @@
+@use '../../styles/variables.scss' as *;
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: $sm;
+  padding: 20rpx $base;
+  background: $bg;
+  border: 1.5rpx solid $border;
+  border-radius: $radius-full;
+}
+
+.search-input {
+  flex: 1;
+  width: 100%;
+  font-size: $font-base;
+  color: $text-primary;
+  background: transparent;
+  outline: none;
+}
+
+.search-clear {
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  color: $text-tertiary;
+  font-size: $font-sm;
+}

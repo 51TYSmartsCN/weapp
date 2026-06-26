@@ -1,0 +1,40 @@
+@use '../../styles/variables.scss' as *;
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+  padding: $md;
+  background: $bg;
+}
+
+.skeleton--horizontal {
+  flex-direction: row;
+  align-items: flex-start;
+
+  .skeleton-body {
+    flex: 1;
+  }
+}
+
+.skeleton-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: $bg-tertiary;
+}
+
+.skeleton-title {
+  height: 32rpx;
+  width: 40%;
+  border-radius: $radius-sm;
+  background: $bg-tertiary;
+  margin-bottom: 8rpx;
+}
+
+.skeleton-row {
+  height: 24rpx;
+  border-radius: $radius-sm;
+  background: $bg-tertiary;
+  margin-top: 12rpx;
+}

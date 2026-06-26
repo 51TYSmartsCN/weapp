@@ -1,0 +1,9 @@
+dist/
+node_modules/
+.temp/
+.rn_temp/
+.swc/
+*.log
+.DS_Store
+cli_extract
+comp_extract

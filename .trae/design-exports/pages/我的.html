@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的</title>
+    <style id="theme-vars">
+:root {
+  /* ========== Color System ========== */
+  --color-primary: #0D9488;
+  --color-primary-light: #14B8A6;
+  --color-primary-lighter: #99F6E4;
+  --color-primary-lightest: #F0FDFA;
+  --color-primary-dark: #0F766E;
+  --color-primary-darker: #115E59;
+
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F8FAFB;
+
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+  --color-text-link: #0D9488;
+
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-divider: #F1F5F9;
+
+  --state-success: #10B981;
+  --state-warning: #F59E0B;
+  --state-error: #EF4444;
+  --state-info: #0D9488;
+
+  /* ========== Typography ========== */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+  --font-size-3xl: 30px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ========== Spacing ========== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 40px;
+
+  /* ========== Radius ========== */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ========== Shadow ========== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+
+  /* ========== Mini Program Specific ========== */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --tab-bar-height: 50px;
+  --status-bar-height: 44px;
+  --nav-bar-height: 44px;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+    --color-border: var(--color-border);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <!-- Mini Program System Capsule -->
+    <div class="w-[87px] h-8 flex items-center justify-center rounded-full mr-2 mt-1" style="position: fixed; top: 0; right: 0; padding-top: var(--safe-area-top); background: rgba(0,0,0,0.05); z-index: 50;">
+      <span class="w-px h-4 mr-1" style="background: rgba(0,0,0,0.15);"></span>
+      <span style="font-size: 12px;">···</span>
+      <span style="font-size: 12px;">×</span>
+    </div>
+    <main class="min-h-screen pb-[calc(var(--safe-area-bottom)+var(--tab-bar-height)+16px)]" style="background: var(--color-bg-secondary);">
+
+      <!-- ========== 1. User Header Card ========== -->
+      <div class="px-4 pt-4">
+        <div class="rounded-lg shadow-sm p-5 relative overflow-hidden" style="background: linear-gradient(180deg, var(--color-primary-lightest) 0%, #FFFFFF 100%);">
+          <!-- Settings gear icon -->
+          <button class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors" style="background: rgba(0,0,0,0.04);">
+            <i data-lucide="settings" class="w-[18px] h-[18px]" style="color: var(--color-text-secondary);"></i>
+          </button>
+
+          <div class="flex items-center gap-3">
+            <!-- Avatar -->
+            <div class="w-[60px] h-[60px] rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-primary);">
+              <span class="text-[22px] font-bold" style="color: var(--color-text-inverse);">李</span>
+            </div>
+            <!-- Name & VIP tag -->
+            <div class="flex flex-col gap-1.5">
+              <span class="text-[18px] font-bold" style="color: var(--color-text-primary); line-height: var(--line-height-tight);">李晓明</span>
+              <span class="inline-flex self-start items-center px-2.5 py-[2px] rounded-full text-[11px] font-medium" style="background: linear-gradient(135deg, #FBBF24, #F59E0B); color: #78350F;">
+                VIP 会员
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 2. Stats Row ========== -->
+      <div class="px-4 mt-3">
+        <div class="rounded-lg shadow-sm p-4 flex items-center" style="background: var(--color-surface);">
+          <!-- Stat 1: 已购课程 -->
+          <div class="flex-1 flex flex-col items-center">
+            <span class="text-[26px] font-bold" style="color: var(--color-text-primary); line-height: var(--line-height-tight);">3</span>
+            <span class="text-[12px] mt-0.5" style="color: var(--color-text-tertiary);">已购课程</span>
+          </div>
+          <!-- Divider -->
+          <div class="w-px h-8 flex-shrink-0" style="background: var(--color-border-light);"></div>
+          <!-- Stat 2: 已完成课时 -->
+          <div class="flex-1 flex flex-col items-center">
+            <span class="text-[26px] font-bold" style="color: var(--color-text-primary); line-height: var(--line-height-tight);">12</span>
+            <span class="text-[12px] mt-0.5" style="color: var(--color-text-tertiary);">已完成课时</span>
+          </div>
+          <!-- Divider -->
+          <div class="w-px h-8 flex-shrink-0" style="background: var(--color-border-light);"></div>
+          <!-- Stat 3: 学习时长 -->
+          <div class="flex-1 flex flex-col items-center">
+            <span class="text-[26px] font-bold" style="color: var(--color-text-primary); line-height: var(--line-height-tight);">86h</span>
+            <span class="text-[12px] mt-0.5" style="color: var(--color-text-tertiary);">学习时长</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 3. Learning Progress Card ========== -->
+      <div class="px-4 mt-3">
+        <div class="rounded-lg shadow-sm p-4" style="background: var(--color-surface);">
+          <!-- Section title -->
+          <h3 class="text-[15px] font-semibold mb-3" style="color: var(--color-text-primary);">继续学习</h3>
+
+          <!-- Course progress item -->
+          <div class="flex items-center gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="text-[14px] font-medium" style="color: var(--color-text-primary);">GEO 实战入门</div>
+              <!-- Progress bar -->
+              <div class="w-full h-[6px] rounded-full mt-2 overflow-hidden" style="background: var(--color-bg-tertiary);">
+                <div class="h-full rounded-full" style="width: 65%; background: var(--color-primary);"></div>
+              </div>
+              <div class="text-[12px] mt-1.5" style="color: var(--color-text-tertiary);">已完成 8/12 节 · 上次学习：昨天</div>
+            </div>
+            <!-- Continue button -->
+            <button class="flex-shrink-0 px-3 py-[6px] rounded-full text-[13px] font-medium border transition-colors" style="border-color: var(--color-primary); color: var(--color-primary); background: transparent;">
+              继续学习
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 4. Menu List ========== -->
+
+      <!-- Group 1: 我的学习 -->
+      <div class="px-4 mt-3">
+        <div class="rounded-lg shadow-sm overflow-hidden" style="background: var(--color-surface);">
+          <!-- 我的课程 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="book-open" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">我的课程</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 学习记录 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="clock" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">学习记录</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 收藏课程 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="heart" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">收藏课程</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 学习证书 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="award" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">学习证书</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 2: 订单与服务 -->
+      <div class="px-4 mt-3">
+        <div class="rounded-lg shadow-sm overflow-hidden" style="background: var(--color-surface);">
+          <!-- 我的订单 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="receipt" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">我的订单</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 优惠券 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="ticket" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">优惠券</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 邀请好友 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="gift" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">邀请好友</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group 3: 其他 -->
+      <div class="px-4 mt-3">
+        <div class="rounded-lg shadow-sm overflow-hidden" style="background: var(--color-surface);">
+          <!-- 帮助中心 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="help-circle" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">帮助中心</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 意见反馈 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="message-square" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">意见反馈</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+          <div class="h-px mx-4" style="background: var(--color-divider);"></div>
+          <!-- 设置 -->
+          <div class="flex items-center px-4 h-12">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="settings" class="w-[16px] h-[16px]" style="color: var(--color-text-secondary);"></i>
+            </div>
+            <span class="flex-1 ml-3 text-[14px]" style="color: var(--color-text-primary);">设置</span>
+            <i data-lucide="chevron-right" class="w-[16px] h-[16px]" style="color: var(--color-text-tertiary);"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 5. Bottom spacing ========== -->
+      <div class="h-4"></div>
+
+      <!-- ===== Mini Program Tab Bar (visual chrome) ===== -->
+      <nav class="fixed bottom-0 left-0 right-0 flex items-stretch" style="height: calc(var(--tab-bar-height) + var(--safe-area-bottom)); padding-bottom: var(--safe-area-bottom); background: var(--color-surface); border-top: 1px solid var(--color-border);">
+        <a href="home.html" data-dom-id="tab-home" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+          <i data-lucide="home" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px;">首页</span>
+        </a>
+        <a href="course-list.html" data-dom-id="tab-course" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+          <i data-lucide="book-open" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px;">课程</span>
+        </a>
+        <a href="home.html" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+          <i data-lucide="play-circle" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px;">学习</span>
+        </a>
+        <a href="profile.html" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-primary);">
+          <i data-lucide="user" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px; font-weight: 600;">我的</span>
+        </a>
+      </nav>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

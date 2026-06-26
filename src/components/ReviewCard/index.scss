@@ -1,0 +1,62 @@
+@use '../../styles/variables.scss' as *;
+
+.review-card {
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  margin-bottom: $md;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: $sm;
+  margin-bottom: $sm;
+}
+
+.review-name {
+  flex: 1;
+  font-size: $font-sm;
+  font-weight: 500;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-stars {
+  display: flex;
+  gap: 2rpx;
+}
+
+.review-content {
+  display: block; /* 微信小程序 Text 默认 inline，margin-bottom 不生效 */
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.5;
+  margin-bottom: $sm;
+}
+
+.review-date {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.review-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.review-like {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: $font-xs;
+  color: $text-tertiary;
+
+  &.liked {
+    color: $error;
+  }
+}

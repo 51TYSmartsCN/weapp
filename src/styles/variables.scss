@@ -1,0 +1,65 @@
+// Color System
+$primary: #0D9488;
+$primary-light: #14B8A6;
+$primary-lighter: #99F6E4;
+$primary-lightest: #F0FDFA;
+$primary-dark: #0F766E;
+$primary-darker: #115E59;
+
+$bg: #FFFFFF;
+$bg-secondary: #F8FAFB;
+$bg-tertiary: #F1F5F9;
+$surface: #FFFFFF;
+$surface-hover: #F8FAFB;
+
+$text-primary: #0F172A;
+$text-secondary: #475569;
+$text-tertiary: #94A3B8;
+$text-inverse: #FFFFFF;
+$text-link: #0D9488;
+
+$border: #E2E8F0;
+$border-light: #F1F5F9;
+$divider: #F1F5F9;
+
+$success: #10B981;
+$warning: #F59E0B;
+$error: #EF4444;
+$info: #0D9488;
+
+// Typography
+$font-family-base: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+$font-xs: 20rpx;
+$font-sm: 24rpx;
+$font-base: 28rpx;
+$font-md: 32rpx;
+$font-lg: 36rpx;
+$font-xl: 44rpx;
+$font-2xl: 52rpx;
+$font-3xl: 60rpx;
+
+// Spacing
+$xs: 8rpx;
+$sm: 16rpx;
+$md: 24rpx;
+$base: 32rpx;
+$lg: 40rpx;
+$xl: 48rpx;
+$xxl: 64rpx;
+$xxxl: 80rpx;
+
+// Radius
+$radius-sm: 8rpx;
+$radius-md: 16rpx;
+$radius-lg: 24rpx;
+$radius-xl: 32rpx;
+$radius-full: 9999rpx;
+
+// Shadow
+$shadow-sm: 0 2rpx 4rpx 0 rgba(0, 0, 0, 0.04);
+$shadow-md: 0 4rpx 16rpx 0 rgba(0, 0, 0, 0.04);
+$shadow-lg: 0 8rpx 32rpx 0 rgba(0, 0, 0, 0.05);
+
+// Layout
+$tab-bar-height: 100rpx;

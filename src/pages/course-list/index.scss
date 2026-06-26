@@ -1,0 +1,123 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.course-list-page {
+  width: 100%;
+  height: 100vh;
+  background: $bg;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $sm $base $md;
+  flex-shrink: 0;
+  background: $bg;
+  border-bottom: 1rpx solid $border;
+}
+
+.list-title {
+  font-size: $font-xl;
+  font-weight: 700;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  @include flex-center;
+}
+
+.list-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// Left Sidebar
+.list-sidebar {
+  width: 180rpx;
+  background: $bg-secondary;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.skeleton-sidebar-tab {
+  height: 48rpx;
+  width: 70%;
+  border-radius: $radius-sm;
+  background: $bg-tertiary;
+  margin: $sm auto;
+}
+
+.sidebar-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $base $sm;
+  font-size: $font-sm;
+  font-weight: 500;
+  color: $text-secondary;
+  position: relative;
+  transition: all 0.2s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6rpx;
+    height: 0;
+    background: $primary;
+    border-radius: 0 3rpx 3rpx 0;
+    transition: height 0.2s;
+  }
+
+  &.active {
+    color: $primary;
+    background: $primary-lightest;
+
+    &::before {
+      height: 36rpx;
+    }
+  }
+}
+
+// Right Content
+.list-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+  padding: $base;
+}
+
+.load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $xs;
+  padding: $lg 0 $xl;
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+.load-icon {
+  transform: rotate(90deg);
+}

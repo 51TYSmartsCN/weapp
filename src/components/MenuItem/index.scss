@@ -1,0 +1,28 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 0 $base;
+  height: 96rpx;
+  background: $surface;
+}
+
+.menu-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  @include flex-center;
+  margin-right: $md;
+}
+
+.menu-label {
+  flex: 1;
+  font-size: $font-base;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

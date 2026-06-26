@@ -1,0 +1,48 @@
+@use '../../styles/variables.scss' as *;
+
+.instructor-card {
+  flex-shrink: 0;
+  margin-right: $md;
+  width: 240rpx;
+  padding: $md;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.instructor-name,
+.instructor-title,
+.instructor-service {
+  display: block;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instructor-name {
+  margin-top: $sm;
+  font-size: $font-sm;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.instructor-title {
+  margin-top: 8rpx;
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.instructor-service {
+  margin-top: 8rpx;
+  font-size: $font-xs;
+  color: $primary;
+}

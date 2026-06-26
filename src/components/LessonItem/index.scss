@@ -1,0 +1,47 @@
+@use '../../styles/variables.scss' as *;
+
+.lesson-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $md 0;
+  border-bottom: 1rpx solid $divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.lesson-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: $md;
+}
+
+.lesson-title {
+  flex: 1;
+  font-size: $font-base;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lesson-item.completed {
+  .lesson-title {
+    color: $text-tertiary;
+    text-decoration: line-through;
+  }
+}
+
+.lesson-duration {
+  flex-shrink: 0;
+  margin-left: $sm;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: $font-sm;
+  color: $text-tertiary;
+}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页</title>
+    <style id="theme-vars">
+:root {
+  /* ========== Color System ========== */
+  --color-primary: #0D9488;
+  --color-primary-light: #14B8A6;
+  --color-primary-lighter: #99F6E4;
+  --color-primary-lightest: #F0FDFA;
+  --color-primary-dark: #0F766E;
+  --color-primary-darker: #115E59;
+
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F8FAFB;
+
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+  --color-text-link: #0D9488;
+
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-divider: #F1F5F9;
+
+  --state-success: #10B981;
+  --state-warning: #F59E0B;
+  --state-error: #EF4444;
+  --state-info: #0D9488;
+
+  /* ========== Typography ========== */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+  --font-size-3xl: 30px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ========== Spacing ========== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 40px;
+
+  /* ========== Radius ========== */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ========== Shadow ========== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+
+  /* ========== Mini Program Specific ========== */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --tab-bar-height: 50px;
+  --status-bar-height: 44px;
+  --nav-bar-height: 44px;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+    --color-border: var(--color-border);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <!-- Mini Program System Capsule -->
+    <div class="w-[87px] h-8 flex items-center justify-center rounded-full mr-2 mt-1" style="position: fixed; top: 0; right: 0; padding-top: var(--safe-area-top); background: rgba(0,0,0,0.05); z-index: 50;">
+      <span class="w-px h-4 mr-1" style="background: rgba(0,0,0,0.15);"></span>
+      <span style="font-size: 12px;">···</span>
+      <span style="font-size: 12px;">×</span>
+    </div>
+    <main class="pb-6">
+
+      <!-- ===== Hero Banner ===== -->
+      <section class="px-4 pt-4">
+        <div class="relative w-full overflow-hidden rounded-[var(--radius-lg)]" style="height: 160px;">
+          <img
+            src="../assets/image_0_yi19x4.jpg"
+            alt="GEO Course Banner"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+          <!-- Gradient overlay for text readability -->
+          <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 60%, transparent 100%);"></div>
+          <!-- Content overlay -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 pb-5">
+            <h1 class="text-[var(--color-text-inverse)] font-bold leading-[var(--line-height-tight)]" style="font-size: 20px;">
+              掌握 GEO，领先 AI 搜索时代
+            </h1>
+            <p class="mt-1 text-[var(--color-text-inverse)] opacity-90" style="font-size: var(--font-size-sm);">
+              让 AI 引擎优先推荐你的内容
+            </p>
+            <button
+              data-dom-id="hero-cta"
+              class="mt-3 inline-flex items-center rounded-[var(--radius-full)] px-5 py-2 text-[var(--color-text-inverse)] font-semibold text-sm transition-opacity hover:opacity-90"
+              style="background: var(--color-primary); font-size: var(--font-size-base);"
+              onclick="window.location.href='course-list.html'"
+            >
+              立即探索
+              <i data-lucide="arrow-right" class="ml-1" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Search Bar ===== -->
+      <section class="px-4 mt-4">
+        <div class="flex items-center gap-2 rounded-[var(--radius-full)] px-4 py-2.5" style="background: var(--color-bg); border: 1.5px solid var(--color-border);">
+          <i data-lucide="search" style="width: 18px; height: 18px; color: var(--color-text-tertiary); flex-shrink: 0;"></i>
+          <input
+            type="text"
+            placeholder="搜索 GEO 课程..."
+            class="flex-1 bg-transparent outline-none text-sm"
+            style="font-size: var(--font-size-base); color: var(--color-text-primary);"
+          />
+        </div>
+      </section>
+
+      <!-- ===== Course Categories ===== -->
+      <section class="px-4 mt-4">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar">
+          <button
+            class="flex-shrink-0 rounded-[var(--radius-full)] px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            style="background: var(--color-primary); font-size: var(--font-size-sm);"
+          >
+            全部
+          </button>
+          <button
+            class="flex-shrink-0 rounded-[var(--radius-full)] px-4 py-1.5 text-sm font-medium transition-colors hover:opacity-80"
+            style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); font-size: var(--font-size-sm);"
+          >
+            GEO入门
+          </button>
+          <button
+            class="flex-shrink-0 rounded-[var(--radius-full)] px-4 py-1.5 text-sm font-medium transition-colors hover:opacity-80"
+            style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); font-size: var(--font-size-sm);"
+          >
+            内容优化
+          </button>
+          <button
+            class="flex-shrink-0 rounded-[var(--radius-full)] px-4 py-1.5 text-sm font-medium transition-colors hover:opacity-80"
+            style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); font-size: var(--font-size-sm);"
+          >
+            技术实战
+          </button>
+          <button
+            class="flex-shrink-0 rounded-[var(--radius-full)] px-4 py-1.5 text-sm font-medium transition-colors hover:opacity-80"
+            style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); font-size: var(--font-size-sm);"
+          >
+            企业培训
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== Recommended Courses ===== -->
+      <section class="px-4 mt-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold" style="font-size: var(--font-size-lg); color: var(--color-text-primary);">
+            热门课程
+          </h2>
+          <a
+            href="course-list.html"
+            data-dom-id="tab-course"
+            class="text-sm font-medium"
+            style="font-size: var(--font-size-sm); color: var(--color-primary);"
+          >
+            查看全部 &gt;
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+
+          <!-- Course Card 1 -->
+          <a
+            href="course-detail.html"
+            data-dom-id="course-card-1"
+            class="block rounded-[var(--radius-lg)] overflow-hidden transition-shadow"
+            style="background: var(--color-surface); box-shadow: var(--shadow-md);"
+          >
+            <!-- Course Image Placeholder -->
+            <div class="w-full flex items-center justify-center" style="height: 100px; background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-light) 100%);">
+              <i data-lucide="book-open" style="width: 32px; height: 32px; color: var(--color-primary-dark);"></i>
+            </div>
+            <div class="p-3">
+              <h3 class="font-semibold leading-[var(--line-height-tight)]" style="font-size: var(--font-size-base); color: var(--color-text-primary);">
+                GEO 实战入门
+              </h3>
+              <p class="mt-1 truncate" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">
+                从零理解生成式引擎优化
+              </p>
+              <div class="flex items-center gap-1 mt-1.5">
+                <i data-lucide="star" style="width: 12px; height: 12px; color: var(--state-warning); fill: var(--state-warning);"></i>
+                <span class="font-medium" style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">4.9分</span>
+              </div>
+              <div class="flex items-center justify-between mt-2">
+                <span class="font-bold" style="font-size: var(--font-size-md); color: var(--color-primary);">
+                  ¥199
+                </span>
+                <span class="flex items-center gap-0.5" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 11px; height: 11px;"></i>
+                  2368人已学
+                </span>
+              </div>
+            </div>
+          </a>
+
+          <!-- Course Card 2 -->
+          <a
+            href="course-detail.html"
+            data-dom-id="course-card-2"
+            class="block rounded-[var(--radius-lg)] overflow-hidden transition-shadow"
+            style="background: var(--color-surface); box-shadow: var(--shadow-md);"
+          >
+            <!-- Course Image Placeholder -->
+            <div class="w-full flex items-center justify-center" style="height: 100px; background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%);">
+              <i data-lucide="megaphone" style="width: 32px; height: 32px; color: #92400E;"></i>
+            </div>
+            <div class="p-3">
+              <h3 class="font-semibold leading-[var(--line-height-tight)]" style="font-size: var(--font-size-base); color: var(--color-text-primary);">
+                AI 内容营销策略
+              </h3>
+              <p class="mt-1 truncate" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">
+                打造高可见度品牌内容
+              </p>
+              <div class="flex items-center gap-1 mt-1.5">
+                <i data-lucide="star" style="width: 12px; height: 12px; color: var(--state-warning); fill: var(--state-warning);"></i>
+                <span class="font-medium" style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">4.8分</span>
+              </div>
+              <div class="flex items-center justify-between mt-2">
+                <span class="font-bold" style="font-size: var(--font-size-md); color: var(--color-primary);">
+                  ¥299
+                </span>
+                <span class="flex items-center gap-0.5" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 11px; height: 11px;"></i>
+                  1856人已学
+                </span>
+              </div>
+            </div>
+          </a>
+
+        </div>
+      </section>
+
+      <!-- ===== Instructor Spotlight ===== -->
+      <section class="px-4 mt-5">
+        <h2 class="font-bold mb-3" style="font-size: var(--font-size-lg); color: var(--color-text-primary);">
+          明星讲师
+        </h2>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+
+          <!-- Instructor 1 -->
+          <div class="flex-shrink-0 rounded-[var(--radius-lg)] p-3 flex flex-col items-center" style="width: 120px; background: var(--color-surface); box-shadow: var(--shadow-md);">
+            <div class="w-12 h-12 rounded-[var(--radius-full)] flex items-center justify-center text-white font-bold" style="background: var(--color-primary); font-size: var(--font-size-lg);">
+              陈
+            </div>
+            <p class="mt-2 font-semibold text-center" style="font-size: var(--font-size-sm); color: var(--color-text-primary);">陈志远</p>
+            <p class="text-center" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">GEO 优化专家</p>
+            <p class="mt-1 text-center" style="font-size: var(--font-size-xs); color: var(--color-primary);">已服务 500+ 企业</p>
+          </div>
+
+          <!-- Instructor 2 -->
+          <div class="flex-shrink-0 rounded-[var(--radius-lg)] p-3 flex flex-col items-center" style="width: 120px; background: var(--color-surface); box-shadow: var(--shadow-md);">
+            <div class="w-12 h-12 rounded-[var(--radius-full)] flex items-center justify-center text-white font-bold" style="background: #8B5CF6; font-size: var(--font-size-lg);">
+              李
+            </div>
+            <p class="mt-2 font-semibold text-center" style="font-size: var(--font-size-sm); color: var(--color-text-primary);">李思涵</p>
+            <p class="text-center" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">AI 营销总监</p>
+            <p class="mt-1 text-center" style="font-size: var(--font-size-xs); color: var(--color-primary);">已服务 300+ 企业</p>
+          </div>
+
+          <!-- Instructor 3 -->
+          <div class="flex-shrink-0 rounded-[var(--radius-lg)] p-3 flex flex-col items-center" style="width: 120px; background: var(--color-surface); box-shadow: var(--shadow-md);">
+            <div class="w-12 h-12 rounded-[var(--radius-full)] flex items-center justify-center text-white font-bold" style="background: #EC4899; font-size: var(--font-size-lg);">
+              王
+            </div>
+            <p class="mt-2 font-semibold text-center" style="font-size: var(--font-size-sm); color: var(--color-text-primary);">王子豪</p>
+            <p class="text-center" style="font-size: var(--font-size-xs); color: var(--color-text-tertiary);">内容策略顾问</p>
+            <p class="mt-1 text-center" style="font-size: var(--font-size-xs); color: var(--color-primary);">已服务 450+ 企业</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===== Trust Bar ===== -->
+      <section class="px-4 mt-5">
+        <div class="rounded-[var(--radius-lg)] p-4 flex items-center justify-around" style="background: var(--color-primary-lightest);">
+          <div class="flex flex-col items-center">
+            <p class="font-bold" style="font-size: var(--font-size-xl); color: var(--color-primary-dark);">10,000+</p>
+            <p class="mt-0.5" style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">学员</p>
+          </div>
+          <div class="w-px h-8" style="background: var(--color-primary-lighter);"></div>
+          <div class="flex flex-col items-center">
+            <p class="font-bold" style="font-size: var(--font-size-xl); color: var(--color-primary-dark);">200+</p>
+            <p class="mt-0.5" style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">企业客户</p>
+          </div>
+          <div class="w-px h-8" style="background: var(--color-primary-lighter);"></div>
+          <div class="flex flex-col items-center">
+            <p class="font-bold" style="font-size: var(--font-size-xl); color: var(--color-primary-dark);">98%</p>
+            <p class="mt-0.5" style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">好评率</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Mini Program Tab Bar (visual chrome) ===== -->
+      <nav class="fixed bottom-0 left-0 right-0 flex items-stretch" style="height: calc(var(--tab-bar-height) + var(--safe-area-bottom)); padding-bottom: var(--safe-area-bottom); background: var(--color-surface); border-top: 1px solid var(--color-border);">
+        <a href="home.html" data-dom-id="tab-home" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-primary);">
+          <i data-lucide="home" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px; font-weight: 600;">首页</span>
+        </a>
+        <a href="course-list.html" data-dom-id="tab-course" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+          <i data-lucide="book-open" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px;">课程</span>
+        </a>
+        <a href="home.html" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+          <i data-lucide="play-circle" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px;">学习</span>
+        </a>
+        <a href="profile.html" data-dom-id="tab-profile" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+          <i data-lucide="user" style="width: 22px; height: 22px;"></i>
+          <span style="font-size: 10px;">我的</span>
+        </a>
+      </nav>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

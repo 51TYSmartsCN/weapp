@@ -1,0 +1,268 @@
+@use '../../styles/variables.scss' as *;
+
+.course-detail-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.detail-scroll {
+  padding-bottom: 120rpx;
+}
+
+.skeleton-detail-cover {
+  width: 100%;
+  height: 420rpx;
+  background: $bg-tertiary;
+}
+
+.skeleton-tags {
+  display: flex;
+  gap: $sm;
+  margin-top: $sm;
+}
+
+.skeleton-tag {
+  width: 96rpx;
+  height: 36rpx;
+  border-radius: $radius-sm;
+  background: $bg-tertiary;
+}
+
+.detail-cover {
+  width: 100%;
+  height: 400rpx;
+  display: block;
+}
+
+.detail-info-card {
+  position: relative;
+  z-index: 2;
+  margin: -40rpx $base 0;
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+}
+
+.detail-title {
+  font-size: $font-xl;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.25;
+  margin-bottom: $sm;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.detail-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: $sm;
+  margin-bottom: $md;
+}
+
+.detail-price {
+  font-size: $font-2xl;
+  font-weight: 700;
+  color: $primary;
+}
+
+.detail-original {
+  font-size: $font-sm;
+  color: $text-tertiary;
+  text-decoration: line-through;
+}
+
+.detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: $sm;
+  margin-bottom: $md;
+}
+
+.detail-rating {
+  font-size: $font-sm;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.detail-divider {
+  width: 1rpx;
+  height: 24rpx;
+  background: $border;
+}
+
+.detail-meta-text {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+.detail-tags {
+  display: flex;
+  gap: $sm;
+  flex-wrap: wrap;
+}
+
+.detail-tag {
+  padding: 4rpx 18rpx;
+  border-radius: $radius-full;
+  background: $primary-lightest;
+  color: $primary;
+  font-size: $font-sm;
+  font-weight: 500;
+}
+
+.detail-section {
+  margin: $base $base 0;
+}
+
+.detail-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $base;
+}
+
+.detail-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: $sm;
+  margin-bottom: $md;
+}
+
+.title-main {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.title-sub {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+.instructor-detail-card {
+  display: flex;
+  gap: $md;
+}
+
+.instructor-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.instructor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $sm;
+}
+
+.instructor-name {
+  display: block;
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instructor-title {
+  display: block;
+  margin-top: 4rpx;
+  font-size: $font-sm;
+  color: $text-tertiary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.follow-btn {
+  flex-shrink: 0;
+  padding: 10rpx 30rpx;
+  border: 1rpx solid $primary;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $primary;
+  font-size: $font-sm;
+  font-weight: 500;
+  line-height: 1;
+
+  &.followed {
+    background: $primary;
+    color: $text-inverse;
+  }
+}
+
+.instructor-bio {
+  display: block;
+  margin-top: $sm;
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.more-lessons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $md 0 0;
+  color: $primary;
+  font-size: $font-base;
+  font-weight: 500;
+}
+
+.detail-bottom-space {
+  height: $base;
+}
+
+.detail-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $bg;
+  border-top: 1rpx solid $border-light;
+  padding: $sm $base;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+.detail-actions {
+  display: flex;
+  gap: $lg;
+}
+
+.icon-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rpx;
+  font-size: $font-xs;
+  color: $text-secondary;
+}
+
+.enroll-btn {
+  flex-shrink: 0;
+  padding: 18rpx 56rpx;
+  background: $primary;
+  color: $text-inverse;
+  font-size: $font-md;
+  font-weight: 600;
+  border-radius: $radius-full;
+  line-height: 1;
+}

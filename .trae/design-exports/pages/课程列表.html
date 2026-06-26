@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程列表</title>
+    <style id="theme-vars">
+:root {
+  /* ========== Color System ========== */
+  --color-primary: #0D9488;
+  --color-primary-light: #14B8A6;
+  --color-primary-lighter: #99F6E4;
+  --color-primary-lightest: #F0FDFA;
+  --color-primary-dark: #0F766E;
+  --color-primary-darker: #115E59;
+
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F8FAFB;
+
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+  --color-text-link: #0D9488;
+
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-divider: #F1F5F9;
+
+  --state-success: #10B981;
+  --state-warning: #F59E0B;
+  --state-error: #EF4444;
+  --state-info: #0D9488;
+
+  /* ========== Typography ========== */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+  --font-size-3xl: 30px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ========== Spacing ========== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 40px;
+
+  /* ========== Radius ========== */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ========== Shadow ========== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+
+  /* ========== Mini Program Specific ========== */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --tab-bar-height: 50px;
+  --status-bar-height: 44px;
+  --nav-bar-height: 44px;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+    --color-border: var(--color-border);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <!-- Mini Program System Capsule -->
+    <div class="w-[87px] h-8 flex items-center justify-center rounded-full mr-2 mt-1" style="position: fixed; top: 0; right: 0; padding-top: var(--safe-area-top); background: rgba(0,0,0,0.05); z-index: 50;">
+      <span class="w-px h-4 mr-1" style="background: rgba(0,0,0,0.15);"></span>
+      <span style="font-size: 12px;">···</span>
+      <span style="font-size: 12px;">×</span>
+    </div>
+    <main>
+      <!-- Page Header -->
+      <div class="flex items-center justify-between px-[var(--spacing-base)] pt-[var(--spacing-lg)] pb-[var(--spacing-md)]">
+        <h1 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary);">全部课程</h1>
+        <button class="flex items-center justify-center" style="width: 36px; height: 36px; border-radius: var(--radius-full); background: var(--color-bg-tertiary);">
+          <i data-lucide="filter" style="width: 18px; height: 18px; color: var(--color-text-secondary);"></i>
+        </button>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="no-scrollbar flex gap-[var(--spacing-lg)] overflow-x-auto px-[var(--spacing-base)] pb-[var(--spacing-base)]" style="border-bottom: 1px solid var(--color-divider);">
+        <button class="filter-tab flex-shrink-0 pb-[var(--spacing-sm)]" style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-primary); border-bottom: 2px solid var(--color-primary);">
+          推荐
+        </button>
+        <button class="filter-tab flex-shrink-0 pb-[var(--spacing-sm)]" style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-text-tertiary); border-bottom: 2px solid transparent;">
+          最新
+        </button>
+        <button class="filter-tab flex-shrink-0 pb-[var(--spacing-sm)]" style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-text-tertiary); border-bottom: 2px solid transparent;">
+          热门
+        </button>
+        <button class="filter-tab flex-shrink-0 pb-[var(--spacing-sm)]" style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-text-tertiary); border-bottom: 2px solid transparent;">
+          价格↑
+        </button>
+        <button class="filter-tab flex-shrink-0 pb-[var(--spacing-sm)]" style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-text-tertiary); border-bottom: 2px solid transparent;">
+          价格↓
+        </button>
+        </div>
+
+      <!-- Course List -->
+      <div class="flex flex-col gap-[var(--spacing-sm)] px-[var(--spacing-base)] pt-[var(--spacing-base)]">
+
+        <!-- Course Card 1 -->
+        <div class="flex flex-row gap-[var(--spacing-md)] p-[var(--spacing-md)]" data-dom-id="course-item-1"
+             style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));"></div>
+          <div class="flex flex-col justify-between flex-1 min-w-0">
+            <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); line-height: var(--line-height-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              GEO 实战入门：从零掌握 AI 搜索优化
+            </h3>
+            <div class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+              <span>张明远</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[var(--spacing-sm)]" style="font-size: var(--font-size-sm);">
+                <span class="flex items-center gap-[2px]" style="color: var(--state-warning);">
+                  <i data-lucide="star" style="width: 14px; height: 14px; fill: var(--state-warning);"></i>
+                  <span style="font-weight: var(--font-weight-medium); color: var(--color-text-primary);">4.9</span>
+                </span>
+                <span class="flex items-center gap-[2px]" style="color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                  <span>2368人</span>
+                </span>
+              </div>
+              <span style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-primary);">¥199</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 2 -->
+        <div class="flex flex-row gap-[var(--spacing-md)] p-[var(--spacing-md)]"
+             style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));"></div>
+          <div class="flex flex-col justify-between flex-1 min-w-0">
+            <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); line-height: var(--line-height-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              AI 时代的品牌内容策略
+            </h3>
+            <div class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+              <span>李婉清</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[var(--spacing-sm)]" style="font-size: var(--font-size-sm);">
+                <span class="flex items-center gap-[2px]" style="color: var(--state-warning);">
+                  <i data-lucide="star" style="width: 14px; height: 14px; fill: var(--state-warning);"></i>
+                  <span style="font-weight: var(--font-weight-medium); color: var(--color-text-primary);">4.8</span>
+                </span>
+                <span class="flex items-center gap-[2px]" style="color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                  <span>1856人</span>
+                </span>
+              </div>
+              <span style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-primary);">¥299</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 3 -->
+        <div class="flex flex-row gap-[var(--spacing-md)] p-[var(--spacing-md)]"
+             style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary), var(--color-primary-lighter));"></div>
+          <div class="flex flex-col justify-between flex-1 min-w-0">
+            <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); line-height: var(--line-height-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              企业级 GEO 落地指南
+            </h3>
+            <div class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+              <span>王志强</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[var(--spacing-sm)]" style="font-size: var(--font-size-sm);">
+                <span class="flex items-center gap-[2px]" style="color: var(--state-warning);">
+                  <i data-lucide="star" style="width: 14px; height: 14px; fill: var(--state-warning);"></i>
+                  <span style="font-weight: var(--font-weight-medium); color: var(--color-text-primary);">4.9</span>
+                </span>
+                <span class="flex items-center gap-[2px]" style="color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                  <span>1205人</span>
+                </span>
+              </div>
+              <span style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-primary);">¥599</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 4 -->
+        <div class="flex flex-row gap-[var(--spacing-md)] p-[var(--spacing-md)]" data-dom-id="course-item-2"
+             style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary-darker), var(--color-primary-dark));"></div>
+          <div class="flex flex-col justify-between flex-1 min-w-0">
+            <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); line-height: var(--line-height-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              提示词工程与内容生成
+            </h3>
+            <div class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+              <span>陈思雨</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[var(--spacing-sm)]" style="font-size: var(--font-size-sm);">
+                <span class="flex items-center gap-[2px]" style="color: var(--state-warning);">
+                  <i data-lucide="star" style="width: 14px; height: 14px; fill: var(--state-warning);"></i>
+                  <span style="font-weight: var(--font-weight-medium); color: var(--color-text-primary);">4.7</span>
+                </span>
+                <span class="flex items-center gap-[2px]" style="color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                  <span>3120人</span>
+                </span>
+              </div>
+              <span style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-primary);">¥249</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 5 -->
+        <div class="flex flex-row gap-[var(--spacing-md)] p-[var(--spacing-md)]"
+             style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light));"></div>
+          <div class="flex flex-col justify-between flex-1 min-w-0">
+            <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); line-height: var(--line-height-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              搜索意图分析实战
+            </h3>
+            <div class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+              <span>刘浩然</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[var(--spacing-sm)]" style="font-size: var(--font-size-sm);">
+                <span class="flex items-center gap-[2px]" style="color: var(--state-warning);">
+                  <i data-lucide="star" style="width: 14px; height: 14px; fill: var(--state-warning);"></i>
+                  <span style="font-weight: var(--font-weight-medium); color: var(--color-text-primary);">4.8</span>
+                </span>
+                <span class="flex items-center gap-[2px]" style="color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                  <span>980人</span>
+                </span>
+              </div>
+              <span style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-primary);">¥349</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 6 -->
+        <div class="flex flex-row gap-[var(--spacing-md)] p-[var(--spacing-md)]"
+             style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-primary-darker), var(--color-primary));"></div>
+          <div class="flex flex-col justify-between flex-1 min-w-0">
+            <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); line-height: var(--line-height-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              多语言 GEO 内容策略
+            </h3>
+            <div class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary);">
+              <span>赵雅琳</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[var(--spacing-sm)]" style="font-size: var(--font-size-sm);">
+                <span class="flex items-center gap-[2px]" style="color: var(--state-warning);">
+                  <i data-lucide="star" style="width: 14px; height: 14px; fill: var(--state-warning);"></i>
+                  <span style="font-weight: var(--font-weight-medium); color: var(--color-text-primary);">4.6</span>
+                </span>
+                <span class="flex items-center gap-[2px]" style="color: var(--color-text-tertiary);">
+                  <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                  <span>756人</span>
+                </span>
+              </div>
+              <span style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-primary);">¥399</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Load More -->
+        <div class="flex items-center justify-center pt-[var(--spacing-lg)] pb-[var(--spacing-xl)]">
+          <button class="flex items-center gap-[var(--spacing-xs)]" style="font-size: var(--font-size-sm); color: var(--color-text-tertiary); background: none; border: none; cursor: pointer;">
+            <span>加载更多</span>
+            <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
+
+      </div>
+    </main>
+    <!-- ===== Mini Program Tab Bar (visual chrome) ===== -->
+    <nav class="fixed bottom-0 left-0 right-0 flex items-stretch" style="height: calc(var(--tab-bar-height) + var(--safe-area-bottom)); padding-bottom: var(--safe-area-bottom); background: var(--color-surface); border-top: 1px solid var(--color-border);">
+      <a href="home.html" data-dom-id="tab-home" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+        <i data-lucide="home" style="width: 22px; height: 22px;"></i>
+        <span style="font-size: 10px;">首页</span>
+      </a>
+      <a href="course-list.html" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-primary);">
+        <i data-lucide="book-open" style="width: 22px; height: 22px;"></i>
+        <span style="font-size: 10px; font-weight: 600;">课程</span>
+      </a>
+      <a href="home.html" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+        <i data-lucide="play-circle" style="width: 22px; height: 22px;"></i>
+        <span style="font-size: 10px;">学习</span>
+      </a>
+      <a href="profile.html" data-dom-id="tab-profile" class="flex-1 flex flex-col items-center justify-center gap-0.5" style="color: var(--color-text-tertiary);">
+        <i data-lucide="user" style="width: 22px; height: 22px;"></i>
+        <span style="font-size: 10px;">我的</span>
+      </a>
+    </nav>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

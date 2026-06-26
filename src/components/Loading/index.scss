@@ -1,0 +1,30 @@
+@use '../../styles/variables.scss' as *;
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $lg 0;
+  gap: $sm;
+}
+
+.loading-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border: 4rpx solid $primary-lighter;
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: loading-spin 1s linear infinite;
+}
+
+.loading-text {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
