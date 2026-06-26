@@ -1,5 +1,8 @@
 import Taro from '@tarojs/taro'
 
+/** 后端服务地址 */
+export const BASE_URL = 'http://localhost:4000'
+
 /**
  * 后端统一响应结构
  * {
@@ -38,6 +41,7 @@ export async function request<T>(options: {
   try {
     const res = await Taro.request({
       ...options,
+      url: BASE_URL + options.url,
       method: options.method as any,
     })
     const body = res.data as ApiResponse<T>

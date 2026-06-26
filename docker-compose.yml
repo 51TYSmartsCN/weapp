@@ -1,0 +1,32 @@
+# MySQL 8.0 数据库服务
+# 端口 3307（避免与宿主机本地 MySQL 冲突）
+# 数据持久化到 named volume geo-mysql-data
+# 数据库初始化时自动执行 db/schema.sql 建表
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: geo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: geo_root_2024
+      MYSQL_DATABASE: geo_course
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"
+    volumes:
+      - geo-mysql-data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pgeo_root_2024"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  geo-mysql-data:
+    driver: local

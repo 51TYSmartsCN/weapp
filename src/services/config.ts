@@ -4,7 +4,7 @@
  * useLocal = false → 调后端 API（联调/生产）
  */
 export const apiConfig = {
-  useLocal: true,
+  useLocal: false,
 }
 
 /** 单个请求的选项，覆盖全局配置 */

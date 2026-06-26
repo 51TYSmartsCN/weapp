@@ -13,6 +13,19 @@ export {
 } from './course'
 
 export { getInstructors, getInstructorById } from './instructor'
-export { getLessons, getLessonById } from './lesson'
+export { getLessons, getLessonById, reportLessonProgress } from './lesson'
 export { getReviews } from './review'
 export { getUser, menuGroups } from './user'
+
+export { toggleFavorite, checkFavorite, getMyFavorites } from './favorite'
+export { toggleFollow, checkFollow, getMyFollows } from './follow'
+export { createOrder, getOrders, getOrderById } from './order'
+export { getLearningSummary, getMyCourses } from './learning'
+export {
+  getCoupons,
+  getInvitations,
+  getCertificates,
+  getStudyRecords,
+  createFeedback,
+  getHelpArticles,
+} from './profile'

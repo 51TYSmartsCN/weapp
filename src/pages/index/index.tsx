@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import SearchBar from '../../components/SearchBar'
+// import SearchBar from '../../components/SearchBar'
 import SafeTop from '../../components/SafeTop'
 import SectionHeader from '../../components/SectionHeader'
 import CourseCard from '../../components/CourseCard'
@@ -12,26 +12,26 @@ import Icon from '../../components/Icon'
 import { getAllCourses, getCategories, getInstructors, showApiError } from '../../services'
 import type { Course, Instructor } from '../../types'
 import { Category, CATEGORY_LABELS, CATEGORY_TAG } from '../../types'
-import { useAutoFill } from '../../hooks/useAutoFill'
+// import { useAutoFill } from '../../hooks/useAutoFill'
 import bannerImg from '../../assets/image_0_yi19x4.jpg'
 import './index.scss'
 
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState(0)
-  const [searchValue, setSearchValue] = useState('')
+  // const [searchValue, setSearchValue] = useState('')
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [instructors, setInstructors] = useState<Instructor[]>([])
   const [loading, setLoading] = useState(true)
 
-  const searchAutoFill = useAutoFill({
-    label: 'GEO 实战搜索',
-    fields: { keyword: 'GEO 实战入门' },
-    onFill: (fields) => {
-      setSearchValue(fields.keyword)
-      handleSearch(fields.keyword)
-    }
-  })
+  // const searchAutoFill = useAutoFill({
+  //   label: 'GEO 实战搜索',
+  //   fields: { keyword: 'GEO 实战入门' },
+  //   onFill: (fields) => {
+  //     setSearchValue(fields.keyword)
+  //     handleSearch(fields.keyword)
+  //   }
+  // })
 
   useEffect(() => {
     setLoading(true)
@@ -53,12 +53,12 @@ export default function Index() {
     Taro.switchTab({ url: '/pages/course-list/index' })
   }
 
-  const handleSearch = (value: string) => {
-    Taro.showToast({ title: `搜索：${value || '全部课程'}`, icon: 'none' })
-    if (value) {
-      setSearchValue('')
-    }
-  }
+  // const handleSearch = (value: string) => {
+  //   Taro.showToast({ title: `搜索：${value || '全部课程'}`, icon: 'none' })
+  //   if (value) {
+  //     setSearchValue('')
+  //   }
+  // }
 
   const filteredCourses = useMemo(() => {
     const cat = categories[activeCategory]
@@ -104,7 +104,7 @@ export default function Index() {
           </View>
 
           {/* Search */}
-          <View className='home-search'>
+          {/* <View className='home-search'>
             <SearchBar
               value={searchValue}
               onChange={setSearchValue}
@@ -116,7 +116,7 @@ export default function Index() {
                 <Text>一键填写</Text>
               </View>
             )}
-          </View>
+          </View> */}
 
           {/* Categories */}
           {categories.length > 0 && (
