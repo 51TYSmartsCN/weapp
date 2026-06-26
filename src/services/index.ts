@@ -13,6 +13,6 @@ export {
 } from './course'
 
 export { getInstructors, getInstructorById } from './instructor'
-export { getLessons } from './lesson'
+export { getLessons, getLessonById } from './lesson'
 export { getReviews } from './review'
 export { getUser, menuGroups } from './user'

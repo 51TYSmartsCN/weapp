@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "structured-spec",
+  "slug": "tab-bar",
+  "name": "TabBar",
+  "confidence": "medium",
+  "semanticTypeCandidates": ["navigation", "tab-bar"],
+  "variantDimensions": [],
+  "representativeVariants": [
+    { "name": "default", "traits": { "position": "fixed-bottom", "height": "50px", "background": "var(--color-surface)", "borderTop": "1px solid var(--color-border)", "paddingBottom": "env(safe-area-inset-bottom)", "items": 4, "iconSize": "22px", "labelSize": "10px", "activeColor": "var(--color-primary)", "inactiveColor": "var(--color-text-tertiary)" } }
+  ],
+  "anatomy": ["tab-item-icon", "tab-item-label"],
+  "structurePatterns": ["flex-row", "equal-width", "centered-column", "fixed-bottom"],
+  "usageHints": ["全局底部导航", "4个Tab（首页、课程、学习、我的）"],
+  "doNotInvent": ["badge-variant", "mid-tab-button", "slide-animation"],
+  "unknowns": []
+}

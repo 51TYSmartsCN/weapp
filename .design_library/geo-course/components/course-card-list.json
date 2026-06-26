@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "structured-spec",
+  "slug": "course-card-list",
+  "name": "CourseCardList",
+  "confidence": "medium",
+  "semanticTypeCandidates": ["card", "list-item"],
+  "variantDimensions": [],
+  "representativeVariants": [
+    { "name": "default", "traits": { "borderRadius": "var(--radius-lg)", "shadow": "var(--shadow-md)", "layout": "flex-row", "imageWidth": "120px", "imageHeight": "90px", "gap": "var(--space-md)", "padding": "var(--space-md)", "title": true, "instructor": true, "rating": true, "price": true, "enrollment": true } }
+  ],
+  "anatomy": ["thumbnail", "title", "instructor-name", "rating-star", "price", "enrollment-count"],
+  "structurePatterns": ["flex-row", "rounded-lg", "shadow-md", "gap"],
+  "usageHints": ["课程列表页", "纵向列表布局"],
+  "doNotInvent": ["horizontal-variant", "checkbox", "action-buttons"],
+  "unknowns": []
+}

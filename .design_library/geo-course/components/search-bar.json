@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "structured-spec",
+  "slug": "search-bar",
+  "name": "SearchBar",
+  "confidence": "medium",
+  "semanticTypeCandidates": ["input", "search"],
+  "variantDimensions": ["state"],
+  "representativeVariants": [
+    { "name": "default", "traits": { "borderRadius": "var(--radius-full)", "border": "1.5px solid var(--border)", "background": "var(--bg)", "icon": true, "placeholder": "搜索 GEO 课程..." } },
+    { "name": "focused", "traits": { "borderColor": "var(--color-primary)" } }
+  ],
+  "anatomy": ["icon", "input", "placeholder"],
+  "structurePatterns": ["flex-row", "rounded-full"],
+  "usageHints": ["课程搜索", "全局搜索入口"],
+  "doNotInvent": ["dark-variant", "search-with-button", "voice-input"],
+  "unknowns": []
+}

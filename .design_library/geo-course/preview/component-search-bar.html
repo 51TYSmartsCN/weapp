@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SearchBar — GEO Course</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  /* Page scaffold — NOT extracted */
+  body { margin: 0; padding: 12px; background: var(--color-background); font-family: var(--font-family-base); color: var(--color-text-primary); }
+  .row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--color-text-tertiary); width: 92px; flex-shrink: 0; }
+  .rail { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  hr.divider { border: none; border-top: 1px solid var(--color-border-light); margin: 4px 0 12px; }
+
+  /* @component-css-start */
+  /* Component definitions — extracted to components.css by deterministic script */
+  .search-bar { display: flex; align-items: center; gap: var(--space-sm); border: 1.5px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-background); padding: var(--space-sm) var(--space-base); height: 40px; width: 100%; transition: border-color .15s; }
+  .search-bar:focus-within { border-color: var(--color-primary); }
+  .search-bar__icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--color-text-tertiary); }
+  .search-bar__input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: var(--font-size-sm); color: var(--color-text-primary); font-family: inherit; line-height: 1; }
+  .search-bar__input::placeholder { color: var(--color-text-tertiary); }
+  /* @component-css-end */
+</style>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+
+  <div class="row">
+    <span class="label">Default</span>
+    <div class="rail">
+      <div class="search-bar">
+        <svg class="search-bar__icon"><use href="#icon-search"/></svg>
+        <input class="search-bar__input" type="text" placeholder="搜索 GEO 课程...">
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label">Focused</span>
+    <div class="rail">
+      <div class="search-bar search-bar--focused">
+        <svg class="search-bar__icon"><use href="#icon-search"/></svg>
+        <input class="search-bar__input" type="text" placeholder="搜索 GEO 课程..." value="TypeScript">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

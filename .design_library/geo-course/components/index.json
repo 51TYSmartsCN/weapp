@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    { "slug": "search-bar", "name": "SearchBar" },
+    { "slug": "course-card-grid", "name": "CourseCardGrid" },
+    { "slug": "course-card-list", "name": "CourseCardList" },
+    { "slug": "instructor-card", "name": "InstructorCard" },
+    { "slug": "tag-pill", "name": "TagPill" },
+    { "slug": "tab-bar", "name": "TabBar" }
+  ]
+}

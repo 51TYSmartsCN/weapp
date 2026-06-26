@@ -1,0 +1,86 @@
+/* ═══════════════════════════════════════════════════════════════
+   components.css — Design System Component Definitions
+   Auto-extracted from preview/component-*.html
+   DO NOT EDIT MANUALLY — regenerate via extract-components-css.mjs
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Course Card Grid ──────────────────────────────────────── */
+/* @anatomy
+   <span class="label">Default</span> <div class="course-grid"> <div class="course-card" data-evidence-sample="default"> <div class="course-card__image">
+*/
+.course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-base); width: 100%; }
+.course-card { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden; display: flex; flex-direction: column; transition: filter .15s; }
+.course-card:hover { filter: brightness(0.97); }
+.course-card__image { height: 100px; background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); }
+.course-card__body { padding: var(--space-md); display: flex; flex-direction: column; gap: var(--space-xs); flex: 1; min-width: 0; }
+.course-card__title { font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.course-card__subtitle { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+.course-card__meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: var(--space-xs); }
+.course-card__rating { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.course-card__rating-num { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-left: 2px; }
+.course-card__price { font-size: var(--font-size-md); font-weight: 700; color: var(--color-primary); white-space: nowrap; flex-shrink: 0; }
+.course-card__enroll { font-size: var(--font-size-xs); color: var(--color-text-tertiary); white-space: nowrap; }
+.star-icon { width: 12px; height: 12px; flex-shrink: 0; }
+
+/* ── Course Card List ──────────────────────────────────────── */
+/* @anatomy
+   <div class="ccl" data-evidence-sample="default"> <div class="ccl__thumb"><svg class="ccl__thumb-icon" width="32" height="32"><use href="#i-play"/></svg>
+*/
+.ccl { display: flex; flex-direction: row; align-items: center; background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-md); gap: var(--space-md); width: 100%; overflow: hidden; transition: filter .15s; }
+.ccl:hover { filter: brightness(0.97); }
+.ccl__thumb { width: 120px; height: 90px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--color-background-tertiary); display: flex; align-items: center; justify-content: center; }
+.ccl__thumb-icon { opacity: 0.25; }
+.ccl__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.ccl__title { font-size: var(--type-base); font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.ccl__meta { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--type-sm); color: var(--color-text-secondary); line-height: 1.4; }
+.ccl__star { display: inline-flex; align-items: center; gap: 2px; color: var(--color-warning); flex-shrink: 0; }
+.ccl__dot { color: var(--color-text-tertiary); flex-shrink: 0; }
+.ccl__footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+.ccl__price { font-size: var(--type-md); font-weight: 700; color: var(--color-error); white-space: nowrap; }
+.ccl__enroll { font-size: var(--type-sm); color: var(--color-text-tertiary); white-space: nowrap; }
+
+/* ── Instructor Card ───────────────────────────────────────── */
+/* @anatomy
+   <span class="label">默认讲师卡片</span> <div class="instructor-card"> <div class="instructor-card__avatar">王
+*/
+/* Component definitions — extracted to components.css by deterministic script */
+  .instructor-card { display: flex; flex-direction: column; align-items: center; width: 120px; padding: var(--space-md); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); flex-shrink: 0; transition: background .15s; }
+  .instructor-card:hover { background: var(--color-surface-hover); }
+  .instructor-card__avatar { width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--color-primary); display: flex; align-items: center; justify-content: center; color: var(--color-text-inverse); font-size: var(--type-md); font-weight: 600; margin-bottom: var(--space-sm); flex-shrink: 0; }
+  .instructor-card__name { font-size: var(--type-sm); font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; }
+  .instructor-card__title { font-size: var(--type-xs); color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; margin-top: 2px; }
+  .instructor-card__tagline { font-size: var(--type-xs); color: var(--color-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; margin-top: 2px; }
+
+/* ── Search Bar ────────────────────────────────────────────── */
+/* @anatomy
+   <div class="search-bar"> <svg class="search-bar__icon"><use href="#icon-search"/></svg> <input class="search-bar__input" type="text" placeholder="搜索 GEO 课程...">
+*/
+/* Component definitions — extracted to components.css by deterministic script */
+  .search-bar { display: flex; align-items: center; gap: var(--space-sm); border: 1.5px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-background); padding: var(--space-sm) var(--space-base); height: 40px; width: 100%; transition: border-color .15s; }
+  .search-bar:focus-within { border-color: var(--color-primary); }
+  .search-bar__icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--color-text-tertiary); }
+  .search-bar__input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: var(--font-size-sm); color: var(--color-text-primary); font-family: inherit; line-height: 1; }
+  .search-bar__input::placeholder { color: var(--color-text-tertiary); }
+
+/* ── Tab Bar ───────────────────────────────────────────────── */
+/* @anatomy
+   <span class="label">默认</span> <div class="tab-bar" data-evidence-sample="default"> <div class="tab-item active"><svg class="tab-item__icon" width="22" height="22"><use href="#i-home"/></svg><span class="tab-item__label">首页</span>
+*/
+.tab-bar{display:flex;align-items:center;height:var(--tab-bar-height);background:var(--color-surface);border-top:1px solid var(--color-border);padding-bottom:env(safe-area-inset-bottom);flex:1;min-width:0}
+.tab-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:1;height:100%;cursor:pointer;transition:background .15s}
+.tab-item:hover{background:var(--color-surface-hover)}
+.tab-item.active .tab-item__icon{color:var(--color-primary)}
+.tab-item.active .tab-item__label{color:var(--color-primary);font-weight:600}
+.tab-item__icon{width:22px;height:22px;color:var(--color-text-tertiary)}
+.tab-item__label{font-size:var(--type-xs);color:var(--color-text-tertiary);white-space:nowrap}
+
+/* ── Tag Pill ──────────────────────────────────────────────── */
+/* @anatomy
+   <span class="label">Active</span> <span class="tag-pill tag-pill--active">编程开发</span> <span class="tag-pill tag-pill--active">UI设计</span> <span class="tag-pill tag-pill--active">数据分析</span>
+*/
+/* Component definitions — extracted to components.css by deterministic script */
+  .tag-pill { display: inline-flex; align-items: center; border-radius: var(--radius-full); padding: var(--space-xs) var(--space-md); font-size: var(--font-size-sm); font-weight: 500; white-space: nowrap; cursor: pointer; flex-shrink: 0; line-height: 1.5; min-height: 28px; min-width: 28px; transition: filter .15s, background .15s; }
+  .tag-pill--active { background: var(--color-primary); color: var(--color-text-inverse); }
+  .tag-pill--active:hover { filter: brightness(1.08); }
+  .tag-pill--inactive { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+  .tag-pill--inactive:hover { filter: brightness(.95); }

@@ -1,0 +1,119 @@
+/* @light-only */
+/* Source: structured-spec */
+
+:root {
+
+  /* primary */
+  --primary: #0D9488;
+  --primary-light: #14B8A6;
+  --primary-lighter: #99F6E4;
+  --primary-lightest: #F0FDFA;
+  --primary-dark: #0F766E;
+  --primary-darker: #115E59;
+
+  /* bg */
+  --bg: #FFFFFF;
+  --bg-secondary: #F8FAFB;
+  --bg-tertiary: #F1F5F9;
+
+  /* surface */
+  --surface: #FFFFFF;
+  --surface-hover: #F8FAFB;
+
+  /* text */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --text-inverse: #FFFFFF;
+  --text-link: #0D9488;
+
+  /* border */
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --divider: #F1F5F9;
+
+  /* status */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #0D9488;
+
+  /* font */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+  --font-size-3xl: 30px;
+
+  /* spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-base: 16px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+
+  /* radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* shadow */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+
+  /* layout */
+  --tab-bar-height: 50px;
+
+  /* === Portable Alias Layer === */
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-lighter: var(--primary-lighter);
+  --color-primary-lightest: var(--primary-lightest);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-darker: var(--primary-darker);
+  --color-background: var(--bg);
+  --color-background-secondary: var(--bg-secondary);
+  --color-background-tertiary: var(--bg-tertiary);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-link: var(--text-link);
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+  --color-divider: var(--divider);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --type-xs: var(--font-size-xs);
+  --type-sm: var(--font-size-sm);
+  --type-base: var(--font-size-base);
+  --type-md: var(--font-size-md);
+  --type-lg: var(--font-size-lg);
+  --type-xl: var(--font-size-xl);
+  --type-2xl: var(--font-size-2xl);
+  --type-3xl: var(--font-size-3xl);
+}
+
+/* Typography utility classes */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-md { font-size: var(--font-size-md); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }

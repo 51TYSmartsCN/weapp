@@ -9,3 +9,10 @@ export async function getLessons(options?: RequestOptions): Promise<Lesson[]> {
   // TODO: return Taro.request({ url: '/api/lessons' })
   return lessons
 }
+
+/** 获取单个课时 */
+export async function getLessonById(id: number, options?: RequestOptions): Promise<Lesson | undefined> {
+  if (shouldUseLocal(options)) return lessons.find((l) => l.id === id)
+  // TODO: return Taro.request({ url: `/api/lessons/${id}` })
+  return lessons.find((l) => l.id === id)
+}

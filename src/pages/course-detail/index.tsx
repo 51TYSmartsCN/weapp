@@ -152,7 +152,7 @@ export default function CourseDetail() {
                   <Text className='title-sub'>共 12 节课 · 总时长 6.5 小时</Text>
                 </View>
                 {lessons.map((lesson, index) => (
-                  <LessonItem key={lesson.id} lesson={lesson} completed={index < 2} />
+                  <LessonItem key={lesson.id} lesson={lesson} completed={index < 2} courseId={courseId} />
                 ))}
                 <View className='more-lessons'>
                   <Text>+ 更多课程</Text>

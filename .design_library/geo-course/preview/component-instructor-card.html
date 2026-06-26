@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InstructorCard - GEO Course</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  /* Page scaffold — NOT extracted */
+  body { margin: 0; padding: 12px; background: var(--color-background); font-family: var(--font-family-base); color: var(--color-text-primary); }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .label { font-size: var(--type-xs); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; min-width: 92px; flex-shrink: 0; }
+
+  /* @component-css-start */
+  /* Component definitions — extracted to components.css by deterministic script */
+  .instructor-card { display: flex; flex-direction: column; align-items: center; width: 120px; padding: var(--space-md); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); flex-shrink: 0; transition: background .15s; }
+  .instructor-card:hover { background: var(--color-surface-hover); }
+  .instructor-card__avatar { width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--color-primary); display: flex; align-items: center; justify-content: center; color: var(--color-text-inverse); font-size: var(--type-md); font-weight: 600; margin-bottom: var(--space-sm); flex-shrink: 0; }
+  .instructor-card__name { font-size: var(--type-sm); font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; }
+  .instructor-card__title { font-size: var(--type-xs); color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; margin-top: 2px; }
+  .instructor-card__tagline { font-size: var(--type-xs); color: var(--color-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; margin-top: 2px; }
+  /* @component-css-end */
+</style>
+</head>
+<body>
+  <div class="row">
+    <span class="label">默认讲师卡片</span>
+    <div class="instructor-card">
+      <div class="instructor-card__avatar">王</div>
+      <div class="instructor-card__name">王明远</div>
+      <div class="instructor-card__title">首席讲师</div>
+      <div class="instructor-card__tagline">10年教学经验</div>
+    </div>
+    <div class="instructor-card">
+      <div class="instructor-card__avatar">李</div>
+      <div class="instructor-card__name">李思涵</div>
+      <div class="instructor-card__title">高级讲师</div>
+      <div class="instructor-card__tagline">留学规划专家</div>
+    </div>
+    <div class="instructor-card">
+      <div class="instructor-card__avatar">张</div>
+      <div class="instructor-card__name">张文博</div>
+      <div class="instructor-card__title">特邀讲师</div>
+      <div class="instructor-card__tagline">语言教学研究</div>
+    </div>
+    <div class="instructor-card">
+      <div class="instructor-card__avatar">陈</div>
+      <div class="instructor-card__name">陈雨萱</div>
+      <div class="instructor-card__title">金牌讲师</div>
+      <div class="instructor-card__tagline">雅思9分得主</div>
+    </div>
+  </div>
+</body>
+</html>

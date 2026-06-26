@@ -7,11 +7,15 @@ import './index.scss'
 interface LessonItemProps {
   lesson: Lesson
   completed?: boolean
+  courseId?: number
 }
 
-export default function LessonItem({ lesson, completed = false }: LessonItemProps) {
+export default function LessonItem({ lesson, completed = false, courseId }: LessonItemProps) {
   const handleClick = () => {
-    Taro.showToast({ title: `播放：${lesson.title}`, icon: 'none' })
+    const params: Record<string, string | number> = { lessonId: lesson.id }
+    if (courseId) params.courseId = courseId
+    const query = Object.entries(params).map(([k, v]) => `${k}=${v}`).join('&')
+    Taro.navigateTo({ url: `/pages/lesson-player/index?${query}` })
   }
 
   return (

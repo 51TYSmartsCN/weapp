@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "structured-spec",
+  "slug": "course-card-grid",
+  "name": "CourseCardGrid",
+  "confidence": "medium",
+  "semanticTypeCandidates": ["card", "media-card"],
+  "variantDimensions": [],
+  "representativeVariants": [
+    { "name": "default", "traits": { "borderRadius": "var(--radius-lg)", "shadow": "var(--shadow-md)", "imageHeight": "100px", "imageGradient": "linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light))", "padding": "var(--space-md)", "title": true, "subtitle": true, "rating": true, "price": true, "enrollment": true } }
+  ],
+  "anatomy": ["image-area", "title", "subtitle", "rating-star", "price", "enrollment-count"],
+  "structurePatterns": ["column", "rounded-lg", "shadow-md", "overflow-hidden"],
+  "usageHints": ["首页热门课程展示", "2列网格布局"],
+  "doNotInvent": ["horizontal-variant", "badge-overlay", "action-buttons"],
+  "unknowns": []
+}

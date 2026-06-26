@@ -1,0 +1,169 @@
+{
+  "data": [
+    {
+      "id": "page-index",
+      "title": "首页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782478000000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": [
+          {
+            "domId": "cta-course-list",
+            "targetPageId": "page-course-list",
+            "transitionLabel": "立即探索"
+          },
+          {
+            "domId": "link-course-list",
+            "targetPageId": "page-course-list",
+            "transitionLabel": "查看全部"
+          },
+          {
+            "domId": "link-course-detail-1",
+            "targetPageId": "page-course-detail",
+            "hideEdge": true,
+            "transitionLabel": "查看课程"
+          },
+          {
+            "domId": "link-course-detail-2",
+            "targetPageId": "page-course-detail",
+            "hideEdge": true,
+            "transitionLabel": "查看课程"
+          },
+          {
+            "domId": "tab-course",
+            "targetPageId": "page-course-list",
+            "hideEdge": true,
+            "transitionLabel": "课程"
+          },
+          {
+            "domId": "tab-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-course-list",
+      "title": "课程列表",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782478001000,
+      "canvasData": {
+        "x": 420,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/course-list.html",
+        "interactions": [
+          {
+            "domId": "tab-home",
+            "targetPageId": "page-index",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "tab-profile",
+            "targetPageId": "page-profile",
+            "hideEdge": true,
+            "transitionLabel": "我的"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-course-detail",
+      "title": "课程详情",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782478002000,
+      "canvasData": {
+        "x": 0,
+        "y": 642,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/course-detail.html",
+        "interactions": [
+          {
+            "domId": "back-course-list",
+            "targetPageId": "page-course-list",
+            "hideEdge": true,
+            "transitionLabel": "返回"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-profile",
+      "title": "我的",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782478003000,
+      "canvasData": {
+        "x": 420,
+        "y": 642,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/profile.html",
+        "interactions": [
+          {
+            "domId": "tab-home",
+            "targetPageId": "page-index",
+            "hideEdge": true,
+            "transitionLabel": "首页"
+          },
+          {
+            "domId": "tab-course",
+            "targetPageId": "page-course-list",
+            "hideEdge": true,
+            "transitionLabel": "课程"
+          }
+        ]
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "首页 Banner",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1782478004000,
+      "canvasData": {
+        "x": 0,
+        "y": 1516
+      },
+      "devMetadata": {
+        "imageSrc": "assets/hero-banner.jpg"
+      }
+    },
+    {
+      "id": "image-002",
+      "title": "课程封面",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1782478005000,
+      "canvasData": {
+        "x": 420,
+        "y": 1516
+      },
+      "devMetadata": {
+        "imageSrc": "assets/course-cover.jpg"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": false,
+    "deviceType": "mobile",
+    "projectName": "GEO 课程小程序"
+  }
+}

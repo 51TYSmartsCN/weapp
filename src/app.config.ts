@@ -4,6 +4,7 @@ export default defineAppConfig({
     'pages/course-list/index',
     'pages/learning/index',
     'pages/course-detail/index',
+    'pages/lesson-player/index',
     'pages/profile/index'
   ],
   tabBar: {

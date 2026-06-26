@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO Course — UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="../../components.css">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<style>
+/* Page-level layout classes only — component CSS loaded via components.css */
+.uikit-shell{width:100%;max-width:1184px;margin:0 auto;overflow:hidden}
+.uikit-main{min-width:0}
+.uikit-truncate{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Phone frame — app kit canvas */
+.phone-frame{width:390px;height:780px;border-radius:40px;border:8px solid var(--text-primary);overflow:hidden;position:relative;margin:40px auto;box-shadow:var(--shadow-lg)}
+.phone-frame>*{border-radius:inherit}
+.phone-status-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 8px;font-size:var(--font-size-sm);font-weight:600;color:var(--text-primary);background:var(--bg)}
+.phone-content{flex:1;display:flex;flex-direction:column;height:calc(100% - var(--tab-bar-height) - 36px);overflow-y:auto;background:var(--bg-secondary)}
+.phone-home-indicator{width:134px;height:5px;border-radius:3px;background:var(--text-primary);margin:8px auto;opacity:.25}
+
+/* Screen layout */
+.screen-header{position:sticky;top:0;z-index:10;background:var(--bg);padding:var(--space-base);border-bottom:1px solid var(--border-light)}
+.screen-body{padding:var(--space-base);flex:1}
+
+/* Section titles */
+.section-title{font-size:var(--font-size-md);font-weight:600;color:var(--text-primary);margin-bottom:var(--space-md)}
+
+/* Tag row */
+.tag-row{display:flex;gap:var(--space-sm);overflow-x:auto;padding-bottom:var(--space-sm)}
+
+/* Instructor row */
+.instructor-row{display:flex;gap:var(--space-md);overflow-x:auto;padding-bottom:var(--space-sm)}
+
+/* List spacing */
+.list-section{margin-top:var(--space-lg)}
+
+/* Screen transition */
+.screen-slide-enter{opacity:1;transform:translateX(0);transition:opacity .25s ease,transform .25s ease}
+.screen-slide-back{opacity:1;transform:translateX(0);transition:opacity .25s ease,transform .25s ease}
+
+/* Detail page */
+.detail-hero{width:100%;height:180px;background:linear-gradient(135deg,var(--primary-lighter),var(--primary-light));position:relative}
+.detail-back{position:absolute;top:12px;left:12px;width:32px;height:32px;border-radius:var(--radius-full);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm)}
+.detail-back:hover{background:var(--surface-hover)}
+.detail-info{padding:var(--space-lg);background:var(--bg);margin-top:-16px;border-radius:var(--radius-xl) var(--radius-xl) 0 0;position:relative}
+.detail-title{font-size:var(--font-size-xl);font-weight:700;color:var(--text-primary);line-height:1.3;margin-bottom:var(--space-xs)}
+.detail-subtitle{font-size:var(--font-size-sm);color:var(--text-secondary);margin-bottom:var(--space-md)}
+.detail-meta{display:flex;align-items:center;gap:var(--space-md);font-size:var(--font-size-sm);color:var(--text-secondary);margin-bottom:var(--space-lg)}
+.detail-action{width:100%;padding:var(--space-md);background:var(--primary);color:var(--text-inverse);border:none;border-radius:var(--radius-lg);font-size:var(--font-size-md);font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:filter .15s}
+.detail-action:hover{filter:brightness(1.08)}
+.detail-action:active{transform:scale(.97)}
+.detail-divider{height:1px;background:var(--border-light);margin:var(--space-lg) 0}
+
+/* Profile page */
+.profile-header{display:flex;flex-direction:column;align-items:center;padding:var(--space-2xl) var(--space-base);background:var(--bg)}
+.profile-avatar{width:64px;height:64px;border-radius:var(--radius-full);background:var(--primary);display:flex;align-items:center;justify-content:center;color:var(--text-inverse);font-size:var(--font-size-xl);font-weight:600;margin-bottom:var(--space-md)}
+.profile-name{font-size:var(--font-size-md);font-weight:600;color:var(--text-primary)}
+.profile-desc{font-size:var(--font-size-sm);color:var(--text-secondary);margin-top:var(--space-xs)}
+.profile-stats{display:flex;gap:var(--space-xl);margin-top:var(--space-lg)}
+.profile-stat{text-align:center}
+.profile-stat-num{font-size:var(--font-size-md);font-weight:700;color:var(--text-primary)}
+.profile-stat-label{font-size:var(--font-size-xs);color:var(--text-tertiary);margin-top:2px}
+.menu-list{background:var(--bg);border-radius:var(--radius-lg);overflow:hidden;margin:0 var(--space-base)}
+.menu-item{display:flex;align-items:center;padding:var(--space-md) var(--space-base);border-bottom:1px solid var(--border-light);cursor:pointer;transition:background .15s}
+.menu-item:last-child{border-bottom:none}
+.menu-item:hover{background:var(--surface-hover)}
+.menu-item-icon{width:20px;height:20px;color:var(--primary);margin-right:var(--space-md);flex-shrink:0}
+.menu-item-label{flex:1;font-size:var(--font-size-base);color:var(--text-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-item-arrow{width:16px;height:16px;color:var(--text-tertiary);flex-shrink:0}
+
+/* Banner */
+.home-banner{margin:var(--space-base);border-radius:var(--radius-lg);padding:var(--space-lg);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:var(--text-inverse);position:relative;overflow:hidden}
+.home-banner-title{font-size:var(--font-size-lg);font-weight:700;margin-bottom:var(--space-xs)}
+.home-banner-desc{font-size:var(--font-size-sm);opacity:.85}
+.home-banner-tag{display:inline-block;padding:var(--space-xs) var(--space-md);background:rgba(255,255,255,.2);border-radius:var(--radius-full);font-size:var(--font-size-xs);margin-top:var(--space-md)}
+
+/* CTA button (page-level positioning of component class) */
+.cta-btn{width:100%;padding:var(--space-md);border:none;border-radius:var(--radius-lg);font-size:var(--font-size-md);font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:filter .15s,transform .1s}
+.cta-btn:hover{filter:brightness(1.08)}
+.cta-btn:active{transform:scale(.97)}
+.cta-btn--primary{background:var(--primary);color:var(--text-inverse)}
+
+/* Pull to refresh indicator */
+.pull-indicator{display:flex;align-items:center;justify-content:center;padding:var(--space-md);font-size:var(--font-size-xs);color:var(--text-tertiary)}
+
+@media (max-width: 640px){
+  .phone-frame{width:100%;border-radius:0;border:none;margin:0;box-shadow:none;height:100vh}
+  .uikit-shell{max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="uikit-shell" data-layout-guard="uikit-v1" id="root"></div>
+
+<script type="text/babel">
+const { useState, useCallback } = React;
+
+/* SVG symbol defs for icons used in the kit */
+const IconSymbols = () => (
+  <svg style={{display:'none'}} xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-star" viewBox="0 0 24 24"><path fill="#F59E0B" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+    <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="icon-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></symbol>
+    <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></symbol>
+    <symbol id="icon-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="icon-help-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <symbol id="icon-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></symbol>
+    <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+  </svg>
+);
+
+/* Tab bar icons from components.css anatomy */
+const tabItems = [
+  { icon: 'icon-home', label: '首页' },
+  { icon: 'icon-book', label: '课程' },
+  { icon: 'icon-play', label: '学习' },
+  { icon: 'icon-user', label: '我的' },
+];
+
+/* SearchBar component (data-component: search-bar) */
+function SearchBar({ placeholder }) {
+  return (
+    <div data-component="search-bar" className="search-bar">
+      <svg className="search-bar__icon"><use href="#icon-search"/></svg>
+      <input className="search-bar__input" type="text" placeholder={placeholder || '搜索课程、讲师'} readOnly />
+    </div>
+  );
+}
+
+/* TagPill component (data-component: tag-pill) */
+function TagPill({ label, active, onClick }) {
+  return (
+    <span data-component="tag-pill"
+      className={`tag-pill tag-pill--${active ? 'active' : 'inactive'}`}
+      onClick={onClick}>
+      {label}
+    </span>
+  );
+}
+
+/* CourseCardGrid (data-component: course-card-grid) */
+function CourseCardGrid({ courses }) {
+  return (
+    <div data-component="course-card-grid" className="course-grid">
+      {courses.map((c, i) => (
+        <div key={i} className="course-card" onClick={() => {}}>
+          <div className="course-card__image" style={{background: c.gradient || 'linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light))'}}></div>
+          <div className="course-card__body">
+            <div className="course-card__title uikit-truncate">{c.title}</div>
+            <div className="course-card__subtitle">{c.instructor}</div>
+            <div className="course-card__meta">
+              <div className="course-card__rating">
+                <svg className="star-icon"><use href="#icon-star"/></svg>
+                <span className="course-card__rating-num">{c.rating}</span>
+              </div>
+              <span className="course-card__price">{c.price}</span>
+            </div>
+            <div className="course-card__enroll">{c.enroll}人已报名</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* CourseCardList (data-component: course-card-list) */
+function CourseCardList({ courses }) {
+  return (
+    <div data-component="course-card-list" style={{display:'flex',flexDirection:'column',gap:'var(--space-md)'}}>
+      {courses.map((c, i) => (
+        <div key={i} className="ccl" onClick={() => {}}>
+          <div className="ccl__thumb" style={{background: c.gradient || 'var(--color-background-tertiary)'}}>
+            <svg className="ccl__thumb-icon" width="32" height="32"><use href="#icon-play"/></svg>
+          </div>
+          <div className="ccl__body">
+            <div className="ccl__title">{c.title}</div>
+            <div className="ccl__meta">
+              <span className="ccl__star">
+                <svg width="12" height="12"><use href="#icon-star"/></svg>
+                {c.rating}
+              </span>
+              <span className="ccl__dot">·</span>
+              <span>{c.lessons}课时</span>
+              <span className="ccl__dot">·</span>
+              <span>{c.enroll}人</span>
+            </div>
+            <div className="ccl__footer">
+              <span className="ccl__price">{c.price}</span>
+              <span className="ccl__enroll">{c.enroll}人已报名</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* InstructorCard (data-component: instructor-card) */
+function InstructorCard({ name, title, tagline }) {
+  return (
+    <div data-component="instructor-card" className="instructor-card">
+      <div className="instructor-card__avatar">{name[0]}</div>
+      <div className="instructor-card__name uikit-truncate">{name}</div>
+      <div className="instructor-card__title uikit-truncate">{title}</div>
+      <div className="instructor-card__tagline uikit-truncate">{tagline}</div>
+    </div>
+  );
+}
+
+/* TabBar component (data-component: tab-bar) */
+function TabBar({ active, onTabChange }) {
+  return (
+    <div data-component="tab-bar" className="tab-bar">
+      {tabItems.map((t, i) => (
+        <div key={i} className={`tab-item${active === i ? ' active' : ''}`} onClick={() => onTabChange(i)}>
+          <svg className="tab-item__icon" width="22" height="22"><use href={`#${t.icon}`}/></svg>
+          <span className="tab-item__label">{t.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* Mock data */
+const categories = ['全部', '编程开发', 'UI设计', '数据分析', '产品运营', '人工智能'];
+const hotCourses = [
+  { title: 'Python 数据分析实战', instructor: '王明教授', rating: '4.9', price: '¥199', enroll: '3,256', gradient: 'linear-gradient(135deg, #99F6E4, #14B8A6)' },
+  { title: 'React 前端开发进阶', instructor: '李华', rating: '4.8', price: '¥168', enroll: '2,891', gradient: 'linear-gradient(135deg, #FDE68A, #F59E0B)' },
+  { title: '机器学习基础与实践', instructor: '张博士', rating: '4.9', price: '¥299', enroll: '5,102', gradient: 'linear-gradient(135deg, #C7D2FE, #818CF8)' },
+  { title: 'UI/UX 设计原理', instructor: '陈设计师', rating: '4.7', price: '¥128', enroll: '1,780', gradient: 'linear-gradient(135deg, #FBCFE8, #F472B6)' },
+];
+const listCourses = [
+  { title: 'TypeScript 全栈开发', instructor: '刘工', rating: '4.8', price: '¥228', enroll: '1,450', lessons: 48, gradient: 'linear-gradient(135deg, #99F6E4, #0D9488)' },
+  { title: '数据分析入门到精通', instructor: '赵教授', rating: '4.6', price: '¥158', enroll: '3,200', lessons: 36, gradient: 'linear-gradient(135deg, #FDE68A, #D97706)' },
+  { title: '产品经理实战课', instructor: '孙总监', rating: '4.7', price: '¥188', enroll: '2,100', lessons: 32, gradient: 'linear-gradient(135deg, #C7D2FE, #6366F1)' },
+];
+const instructors = [
+  { name: '王明', title: '数据科学家', tagline: '10年经验' },
+  { name: '李华', title: '前端架构师', tagline: '8年经验' },
+  { name: '张伟', title: 'AI 研究员', tagline: '12年经验' },
+  { name: '陈静', title: 'UI 设计总监', tagline: '9年经验' },
+];
+const menuItems = [
+  { icon: 'icon-bookmark', label: '我的收藏' },
+  { icon: 'icon-download', label: '离线课程' },
+  { icon: 'icon-award', label: '学习证书' },
+  { icon: 'icon-help-circle', label: '帮助与反馈' },
+  { icon: 'icon-settings', label: '设置' },
+];
+
+/* Home screen */
+function HomeScreen({ onNavigate }) {
+  const [activeCat, setActiveCat] = useState(0);
+  return (
+    <div className="screen-body">
+      <div className="pull-indicator">下拉刷新</div>
+      <div data-component="search-bar" className="search-bar" style={{marginBottom:'var(--space-base)'}}>
+        <svg className="search-bar__icon"><use href="#icon-search"/></svg>
+        <input className="search-bar__input" type="text" placeholder="搜索课程、讲师" readOnly />
+      </div>
+      <div className="home-banner">
+        <div className="home-banner-title">系统学习，成就职业进阶</div>
+        <div className="home-banner-desc">精选课程，名师授课，实战驱动</div>
+        <div className="home-banner-tag">限时优惠进行中</div>
+      </div>
+      <div style={{marginTop:'var(--space-lg)'}}>
+        <div className="section-title">课程分类</div>
+        <div className="tag-row">
+          {categories.map((c, i) => (
+            <TagPill key={i} label={c} active={i === activeCat} onClick={() => setActiveCat(i)} />
+          ))}
+        </div>
+      </div>
+      <div className="list-section">
+        <div className="section-title">热门课程</div>
+        <CourseCardGrid courses={hotCourses} />
+      </div>
+      <div className="list-section">
+        <div className="section-title">人气讲师</div>
+        <div className="instructor-row">
+          {instructors.map((ins, i) => (
+            <InstructorCard key={i} {...ins} />
+          ))}
+        </div>
+      </div>
+      <div className="list-section" style={{paddingBottom:'var(--space-lg)'}}>
+        <div className="section-title">推荐课程</div>
+        <CourseCardList courses={listCourses} />
+      </div>
+    </div>
+  );
+}
+
+/* Course Detail screen */
+function DetailScreen({ onBack }) {
+  return (
+    <div className="phone-content" style={{background:'var(--bg-secondary)',padding:0}}>
+      <div className="detail-hero">
+        <div className="detail-back" onClick={onBack}>
+          <svg width="18" height="18"><use href="#icon-chevron-left"/></svg>
+        </div>
+      </div>
+      <div className="detail-info">
+        <div className="detail-title">Python 数据分析实战</div>
+        <div className="detail-subtitle">王明教授 · 数据科学家</div>
+        <div className="detail-meta">
+          <span style={{display:'inline-flex',alignItems:'center',gap:'2px'}}>
+            <svg width="14" height="14"><use href="#icon-star"/></svg>
+            <span>4.9</span>
+          </span>
+          <span style={{display:'inline-flex',alignItems:'center',gap:'4px'}}>
+            <svg width="14" height="14" style={{color:'var(--text-tertiary)'}}><use href="#icon-users"/></svg>
+            <span>3,256人</span>
+          </span>
+          <span style={{display:'inline-flex',alignItems:'center',gap:'4px'}}>
+            <svg width="14" height="14" style={{color:'var(--text-tertiary)'}}><use href="#icon-clock"/></svg>
+            <span>48课时</span>
+          </span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'var(--space-md)'}}>
+          <span style={{fontSize:'var(--font-size-xl)',fontWeight:700,color:'var(--primary)'}}>¥199</span>
+          <span style={{fontSize:'var(--font-size-xs)',color:'var(--text-tertiary)',textDecoration:'line-through'}}>¥399</span>
+        </div>
+        <button className="cta-btn cta-btn--primary">立即报名</button>
+      </div>
+      <div style={{padding:'var(--space-lg)',background:'var(--bg)'}}>
+        <div className="section-title">课程大纲</div>
+        <CourseCardList courses={listCourses.slice(0, 2)} />
+        <div className="detail-divider"></div>
+        <div className="section-title">授课讲师</div>
+        <div style={{display:'flex',gap:'var(--space-md)'}}>
+          <InstructorCard name="王明" title="数据科学家" tagline="10年经验" />
+          <InstructorCard name="赵教授" title="统计学家" tagline="15年经验" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Profile screen */
+function ProfileScreen() {
+  return (
+    <div className="phone-content" style={{padding:0}}>
+      <div className="profile-header">
+        <div className="profile-avatar">李</div>
+        <div className="profile-name">李同学</div>
+        <div className="profile-desc">坚持学习，每天进步一点点</div>
+        <div className="profile-stats">
+          <div className="profile-stat"><div className="profile-stat-num">12</div><div className="profile-stat-label">已学课程</div></div>
+          <div className="profile-stat"><div className="profile-stat-num">86</div><div className="profile-stat-label">学习小时</div></div>
+          <div className="profile-stat"><div className="profile-stat-num">3</div><div className="profile-stat-label">获得证书</div></div>
+        </div>
+      </div>
+      <div style={{padding:'var(--space-base) 0'}}>
+        <div className="menu-list">
+          {menuItems.map((m, i) => (
+            <div key={i} className="menu-item">
+              <svg className="menu-item-icon" width="20" height="20"><use href={`#${m.icon}`}/></svg>
+              <span className="menu-item-label">{m.label}</span>
+              <svg className="menu-item-arrow" width="16" height="16"><use href="#icon-chevron-left" style={{transform:'rotate(180deg)'}}/></svg>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Main App */
+function App() {
+  const [activeTab, setActiveTab] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
+
+  const handleTabChange = useCallback((i) => {
+    setActiveTab(i);
+    setShowDetail(false);
+  }, []);
+
+  return (
+    <div className="uikit-shell" data-layout-guard="uikit-v1" style={{display:'flex',justifyContent:'center',padding:'40px 0'}}>
+      <div className="phone-frame">
+        <IconSymbols />
+        <div className="phone-status-bar">
+          <span>9:41</span>
+          <span style={{display:'flex',gap:'6px',alignItems:'center'}}>
+            <svg width="16" height="16" fill="currentColor"><use href="#icon-signal" /></svg>
+            <svg width="16" height="16" fill="currentColor"><use href="#icon-wifi" /></svg>
+            <svg width="16" height="16" fill="currentColor"><use href="#icon-battery" /></svg>
+          </span>
+        </div>
+        {showDetail ? (
+          <DetailScreen onBack={() => setShowDetail(false)} />
+        ) : (
+          <>
+            <div className="phone-content" style={{background:'var(--bg-secondary)'}}>
+              {activeTab === 0 && <HomeScreen onNavigate={setShowDetail} />}
+              {activeTab === 1 && (
+                <div className="screen-body">
+                  <div data-component="search-bar" className="search-bar" style={{marginBottom:'var(--space-md)'}}>
+                    <svg className="search-bar__icon"><use href="#icon-search"/></svg>
+                    <input className="search-bar__input" type="text" placeholder="搜索课程、讲师" readOnly />
+                  </div>
+                  <div className="tag-row" style={{marginBottom:'var(--space-base)'}}>
+                    {categories.slice(1).map((c, i) => (
+                      <TagPill key={i} label={c} active={i === 0} />
+                    ))}
+                  </div>
+                  <CourseCardGrid courses={hotCourses} />
+                  <div className="list-section">
+                    <div className="section-title">最新课程</div>
+                    <CourseCardList courses={listCourses} />
+                  </div>
+                </div>
+              )}
+              {activeTab === 2 && (
+                <div className="screen-body" style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center'}}>
+                  <svg width="48" height="48" style={{color:'var(--text-tertiary)',marginBottom:'var(--space-base)'}}><use href="#icon-play"/></svg>
+                  <div style={{fontSize:'var(--font-size-md)',color:'var(--text-secondary)',marginBottom:'var(--space-xs)'}}>继续学习</div>
+                  <div style={{fontSize:'var(--font-size-sm)',color:'var(--text-tertiary)',marginBottom:'var(--space-lg)'}}>Python 数据分析实战 · 第12课时</div>
+                  <div style={{width:'100%',height:'8px',borderRadius:'var(--radius-full)',background:'var(--bg-tertiary)',overflow:'hidden'}}>
+                    <div style={{width:'25%',height:'100%',borderRadius:'var(--radius-full)',background:'var(--primary)',transition:'width .3s'}}></div>
+                  </div>
+                  <div style={{fontSize:'var(--font-size-xs)',color:'var(--text-tertiary)',marginTop:'var(--space-sm)'}}>已完成 25%</div>
+                </div>
+              )}
+              {activeTab === 3 && <ProfileScreen />}
+            </div>
+          </>
+        )}
+        <TabBar active={showDetail ? -1 : activeTab} onTabChange={handleTabChange} />
+        <div className="phone-home-indicator"></div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

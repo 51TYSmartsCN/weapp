@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CourseCardList - GEO Course</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+/* Page scaffold — NOT extracted */
+body { margin: 0; padding: 12px; background: var(--color-background-secondary); font-family: var(--font-family-base); color: var(--color-text-primary); }
+.specimen { display: flex; flex-direction: column; gap: 8px; }
+.story { display: flex; flex-direction: column; gap: 8px; }
+.rail { display: flex; flex-direction: column; gap: var(--space-base); width: 100%; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.label { font-size: var(--type-xs); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; min-width: 92px; flex-shrink: 0; }
+.divider { border: none; border-top: 1px solid var(--color-border-light); margin: 4px 0; }
+
+/* @component-css-start */
+.ccl { display: flex; flex-direction: row; align-items: center; background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-md); gap: var(--space-md); width: 100%; overflow: hidden; transition: filter .15s; }
+.ccl:hover { filter: brightness(0.97); }
+.ccl__thumb { width: 120px; height: 90px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--color-background-tertiary); display: flex; align-items: center; justify-content: center; }
+.ccl__thumb-icon { opacity: 0.25; }
+.ccl__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.ccl__title { font-size: var(--type-base); font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.ccl__meta { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--type-sm); color: var(--color-text-secondary); line-height: 1.4; }
+.ccl__star { display: inline-flex; align-items: center; gap: 2px; color: var(--color-warning); flex-shrink: 0; }
+.ccl__dot { color: var(--color-text-tertiary); flex-shrink: 0; }
+.ccl__footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+.ccl__price { font-size: var(--type-md); font-weight: 700; color: var(--color-error); white-space: nowrap; }
+.ccl__enroll { font-size: var(--type-sm); color: var(--color-text-tertiary); white-space: nowrap; }
+/* @component-css-end */
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><polygon fill="currentColor" points="5 3 19 12 5 21 5 3"/></symbol>
+</svg>
+<div class="specimen">
+<div class="story">
+<div class="row"><span class="label">默认列表</span></div>
+<div class="rail">
+<div class="ccl" data-evidence-sample="default">
+<div class="ccl__thumb"><svg class="ccl__thumb-icon" width="32" height="32"><use href="#i-play"/></svg></div>
+<div class="ccl__body">
+<span class="ccl__title">Python数据分析实战</span>
+<div class="ccl__meta">
+<span class="ccl__star"><svg width="12" height="12"><use href="#i-star"/></svg>4.9</span>
+<span class="ccl__dot">·</span>
+<span>张明教授</span>
+<span class="ccl__dot">·</span>
+<span>12,580人学习</span>
+</div>
+<div class="ccl__footer">
+<span class="ccl__price">¥199</span>
+</div>
+</div>
+</div>
+<div class="ccl" data-evidence-sample="default">
+<div class="ccl__thumb"><svg class="ccl__thumb-icon" width="32" height="32"><use href="#i-play"/></svg></div>
+<div class="ccl__body">
+<span class="ccl__title">UI设计基础入门</span>
+<div class="ccl__meta">
+<span class="ccl__star"><svg width="12" height="12"><use href="#i-star"/></svg>4.7</span>
+<span class="ccl__dot">·</span>
+<span>李晓红老师</span>
+<span class="ccl__dot">·</span>
+<span>8,340人学习</span>
+</div>
+<div class="ccl__footer">
+<span class="ccl__price">¥99</span>
+</div>
+</div>
+</div>
+<div class="ccl" data-evidence-sample="default">
+<div class="ccl__thumb"><svg class="ccl__thumb-icon" width="32" height="32"><use href="#i-play"/></svg></div>
+<div class="ccl__body">
+<span class="ccl__title">React前端开发进阶</span>
+<div class="ccl__meta">
+<span class="ccl__star"><svg width="12" height="12"><use href="#i-star"/></svg>4.8</span>
+<span class="ccl__dot">·</span>
+<span>王建国博士</span>
+<span class="ccl__dot">·</span>
+<span>15,200人学习</span>
+</div>
+<div class="ccl__footer">
+<span class="ccl__price">¥299</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

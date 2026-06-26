@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TagPill - GEO Course</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  /* Page scaffold — NOT extracted */
+  body { margin: 0; padding: 12px; background: var(--color-surface); font-family: var(--font-family-base); color: var(--color-text-primary); }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .label { font-size: var(--font-size-xs); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; min-width: 92px; }
+  hr.divider { border: none; border-top: 1px solid var(--color-border-light); margin: 12px 0; }
+
+  /* @component-css-start */
+  /* Component definitions — extracted to components.css by deterministic script */
+  .tag-pill { display: inline-flex; align-items: center; border-radius: var(--radius-full); padding: var(--space-xs) var(--space-md); font-size: var(--font-size-sm); font-weight: 500; white-space: nowrap; cursor: pointer; flex-shrink: 0; line-height: 1.5; min-height: 28px; min-width: 28px; transition: filter .15s, background .15s; }
+  .tag-pill--active { background: var(--color-primary); color: var(--color-text-inverse); }
+  .tag-pill--active:hover { filter: brightness(1.08); }
+  .tag-pill--inactive { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+  .tag-pill--inactive:hover { filter: brightness(.95); }
+  /* @component-css-end */
+</style>
+</head>
+<body>
+  <div class="row">
+    <span class="label">Active</span>
+    <span class="tag-pill tag-pill--active">编程开发</span>
+    <span class="tag-pill tag-pill--active">UI设计</span>
+    <span class="tag-pill tag-pill--active">数据分析</span>
+  </div>
+  <hr class="divider">
+  <div class="row">
+    <span class="label">Inactive</span>
+    <span class="tag-pill tag-pill--inactive">产品经理</span>
+    <span class="tag-pill tag-pill--inactive">人工智能</span>
+    <span class="tag-pill tag-pill--inactive">商业思维</span>
+  </div>
+</body>
+</html>

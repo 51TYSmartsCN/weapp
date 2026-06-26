@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "structured-spec",
+  "slug": "instructor-card",
+  "name": "InstructorCard",
+  "confidence": "medium",
+  "semanticTypeCandidates": ["card", "avatar-card"],
+  "variantDimensions": [],
+  "representativeVariants": [
+    { "name": "default", "traits": { "borderRadius": "var(--radius-lg)", "shadow": "var(--shadow-md)", "width": "120px", "padding": "var(--space-md)", "avatarSize": "48px", "avatarBackground": "var(--color-primary)", "avatarText": true, "name": true, "title": true, "tagline": true } }
+  ],
+  "anatomy": ["avatar", "name", "title", "tagline"],
+  "structurePatterns": ["column", "centered", "rounded-lg", "shadow-md", "flex-shrink-0"],
+  "usageHints": ["首页明星讲师展示", "横向滚动列表"],
+  "doNotInvent": ["horizontal-variant", "follow-button", "rating"],
+  "unknowns": []
+}

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "headBoilerplate": "<link rel=\"stylesheet\" href=\"../../colors_and_type.css\">",
+  "corePreviewComponents": [
+    {
+      "slug": "course-card-grid",
+      "reason": "fixed slot \"card\"; semantic=card:0.75; policy=fixed-slots-first",
+      "evidenceFile": "components/course-card-grid.json",
+      "priority": 1,
+      "slot": "card"
+    },
+    {
+      "slug": "tag-pill",
+      "reason": "fixed slot \"tag\"; semantic=tag:0.75; policy=fixed-slots-first",
+      "evidenceFile": "components/tag-pill.json",
+      "priority": 2,
+      "slot": "tag"
+    },
+    {
+      "slug": "course-card-list",
+      "reason": "fallback after fixed slots; semantic=card:0.75; policy=fixed-slots-first",
+      "evidenceFile": "components/course-card-list.json",
+      "priority": 3
+    },
+    {
+      "slug": "instructor-card",
+      "reason": "fallback after fixed slots; semantic=card:0.75; policy=fixed-slots-first",
+      "evidenceFile": "components/instructor-card.json",
+      "priority": 4
+    },
+    {
+      "slug": "search-bar",
+      "reason": "fallback after fixed slots; semantic=input:0.75; policy=fixed-slots-first",
+      "evidenceFile": "components/search-bar.json",
+      "priority": 5
+    }
+  ],
+  "supportEvidenceComponents": [
+    {
+      "slug": "tab-bar",
+      "reason": "fixed slot \"tabs\"; semantic=tabs:0.75; policy=fixed-slots-first",
+      "evidenceFile": "components/tab-bar.json",
+      "priority": 6,
+      "slot": "tabs"
+    }
+  ],
+  "allowedComponents": [
+    "course-card-grid",
+    "tag-pill",
+    "course-card-list",
+    "instructor-card",
+    "search-bar",
+    "tab-bar"
+  ],
+  "screenBlueprints": [
+    {
+      "name": null,
+      "componentSlugs": [],
+      "role": "primary"
+    },
+    {
+      "name": null,
+      "componentSlugs": [],
+      "role": "secondary"
+    },
+    {
+      "name": null,
+      "componentSlugs": [],
+      "role": "secondary"
+    }
+  ],
+  "productContext": {
+    "kitType": null,
+    "productType": null,
+    "dominantCopy": [],
+    "pageNames": [],
+    "selectedFrameNames": []
+  },
+  "selectionPolicy": "fixed-slots-first",
+  "slotAssignments": [
+    {
+      "slot": "card",
+      "slug": "course-card-grid",
+      "reason": "semantic"
+    },
+    {
+      "slot": "tag",
+      "slug": "tag-pill",
+      "reason": "semantic"
+    },
+    {
+      "slot": "tabs",
+      "slug": "tab-bar",
+      "reason": "semantic",
+      "preferredSupport": true
+    }
+  ],
+  "missingFixedSlots": [
+    "button",
+    "navigation",
+    "menu",
+    "table"
+  ],
+  "fallbackComponents": [
+    "course-card-list",
+    "instructor-card",
+    "search-bar"
+  ],
+  "needsNarrative": false,
+  "forbiddenInventedComponents": [],
+  "lowConfidence": false,
+  "warnings": [
+    "missing-fixed-slot:button",
+    "missing-fixed-slot:navigation",
+    "missing-fixed-slot:menu",
+    "missing-fixed-slot:table"
+  ]
+}

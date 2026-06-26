@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TabBar — GEO Course</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:12px;background:var(--color-background-secondary);font-family:var(--font-family-base);color:var(--color-text-primary)}
+.specimen{max-width:412px;margin:0 auto}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;width:100%}
+.label{font-size:var(--type-xs);color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;width:92px;flex-shrink:0}
+.divider{border:none;border-top:1px solid var(--color-border-light);margin:12px 0}
+
+/* @component-css-start */
+.tab-bar{display:flex;align-items:center;height:var(--tab-bar-height);background:var(--color-surface);border-top:1px solid var(--color-border);padding-bottom:env(safe-area-inset-bottom);flex:1;min-width:0}
+.tab-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:1;height:100%;cursor:pointer;transition:background .15s}
+.tab-item:hover{background:var(--color-surface-hover)}
+.tab-item.active .tab-item__icon{color:var(--color-primary)}
+.tab-item.active .tab-item__label{color:var(--color-primary);font-weight:600}
+.tab-item__icon{width:22px;height:22px;color:var(--color-text-tertiary)}
+.tab-item__label{font-size:var(--type-xs);color:var(--color-text-tertiary);white-space:nowrap}
+/* @component-css-end */
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+</svg>
+<div class="specimen">
+<div class="row">
+<span class="label">默认</span>
+<div class="tab-bar" data-evidence-sample="default">
+<div class="tab-item active"><svg class="tab-item__icon" width="22" height="22"><use href="#i-home"/></svg><span class="tab-item__label">首页</span></div>
+<div class="tab-item"><svg class="tab-item__icon" width="22" height="22"><use href="#i-book"/></svg><span class="tab-item__label">课程</span></div>
+<div class="tab-item"><svg class="tab-item__icon" width="22" height="22"><use href="#i-play"/></svg><span class="tab-item__label">学习</span></div>
+<div class="tab-item"><svg class="tab-item__icon" width="22" height="22"><use href="#i-user"/></svg><span class="tab-item__label">我的</span></div>
+</div>
+</div>
+<hr class="divider">
+<div class="row">
+<span class="label">选中 — 学习</span>
+<div class="tab-bar">
+<div class="tab-item"><svg class="tab-item__icon" width="22" height="22"><use href="#i-home"/></svg><span class="tab-item__label">首页</span></div>
+<div class="tab-item"><svg class="tab-item__icon" width="22" height="22"><use href="#i-book"/></svg><span class="tab-item__label">课程</span></div>
+<div class="tab-item active"><svg class="tab-item__icon" width="22" height="22"><use href="#i-play"/></svg><span class="tab-item__label">学习</span></div>
+<div class="tab-item"><svg class="tab-item__icon" width="22" height="22"><use href="#i-user"/></svg><span class="tab-item__label">我的</span></div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "structured-spec",
+  "slug": "tag-pill",
+  "name": "TagPill",
+  "confidence": "medium",
+  "semanticTypeCandidates": ["button", "tag", "chip"],
+  "variantDimensions": ["state"],
+  "representativeVariants": [
+    { "name": "active", "traits": { "borderRadius": "var(--radius-full)", "background": "var(--color-primary)", "color": "var(--color-text-inverse)", "padding": "var(--space-xs) var(--space-md)", "fontWeight": "500" } },
+    { "name": "inactive", "traits": { "background": "var(--color-background-tertiary)", "color": "var(--color-text-secondary)" } }
+  ],
+  "anatomy": ["label"],
+  "structurePatterns": ["rounded-full", "inline-flex", "flex-shrink-0"],
+  "usageHints": ["课程分类筛选", "横向滚动标签组"],
+  "doNotInvent": ["icon-variant", "close-button", "large-variant"],
+  "unknowns": []
+}

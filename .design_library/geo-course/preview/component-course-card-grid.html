@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CourseCardGrid – GEO Course</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+/* Page scaffold — NOT extracted */
+body { margin: 0; padding: 12px; background: var(--color-background-secondary); font-family: var(--font-family-base); color: var(--color-text-primary); }
+.row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
+.label { min-width: 92px; font-size: var(--font-size-xs); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .5px; padding-top: 4px; flex-shrink: 0; line-height: 1; }
+.divider { border: none; border-top: 1px solid var(--color-divider); margin: 8px 0; }
+
+/* @component-css-start */
+.course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-base); width: 100%; }
+.course-card { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden; display: flex; flex-direction: column; transition: filter .15s; }
+.course-card:hover { filter: brightness(0.97); }
+.course-card__image { height: 100px; background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); }
+.course-card__body { padding: var(--space-md); display: flex; flex-direction: column; gap: var(--space-xs); flex: 1; min-width: 0; }
+.course-card__title { font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-primary); line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.course-card__subtitle { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+.course-card__meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: var(--space-xs); }
+.course-card__rating { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.course-card__rating-num { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-left: 2px; }
+.course-card__price { font-size: var(--font-size-md); font-weight: 700; color: var(--color-primary); white-space: nowrap; flex-shrink: 0; }
+.course-card__enroll { font-size: var(--font-size-xs); color: var(--color-text-tertiary); white-space: nowrap; }
+.star-icon { width: 12px; height: 12px; flex-shrink: 0; }
+/* @component-css-end */
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="icon-star" viewBox="0 0 24 24"><path fill="#F59E0B" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
+</svg>
+
+<div class="row">
+<span class="label">Default</span>
+<div class="course-grid">
+<div class="course-card" data-evidence-sample="default">
+<div class="course-card__image"></div>
+<div class="course-card__body">
+<div class="course-card__title">Python 数据分析实战</div>
+<div class="course-card__subtitle">王明教授</div>
+<div class="course-card__meta">
+<div class="course-card__rating"><svg class="star-icon"><use href="#icon-star"/></svg><span class="course-card__rating-num">4.9</span></div>
+<span class="course-card__price">¥199</span>
+</div>
+<div class="course-card__enroll">3,256人已报名</div>
+</div>
+</div>
+<div class="course-card" data-evidence-sample="default">
+<div class="course-card__image"></div>
+<div class="course-card__body">
+<div class="course-card__title">React 前端开发进阶</div>
+<div class="course-card__subtitle">李华</div>
+<div class="course-card__meta">
+<div class="course-card__rating"><svg class="star-icon"><use href="#icon-star"/></svg><span class="course-card__rating-num">4.8</span></div>
+<span class="course-card__price">¥168</span>
+</div>
+<div class="course-card__enroll">2,891人已报名</div>
+</div>
+</div>
+<div class="course-card" data-evidence-sample="default">
+<div class="course-card__image"></div>
+<div class="course-card__body">
+<div class="course-card__title">机器学习基础与实践</div>
+<div class="course-card__subtitle">张博士</div>
+<div class="course-card__meta">
+<div class="course-card__rating"><svg class="star-icon"><use href="#icon-star"/></svg><span class="course-card__rating-num">4.9</span></div>
+<span class="course-card__price">¥299</span>
+</div>
+<div class="course-card__enroll">5,102人已报名</div>
+</div>
+</div>
+<div class="course-card" data-evidence-sample="default">
+<div class="course-card__image"></div>
+<div class="course-card__body">
+<div class="course-card__title">UI/UX 设计原理</div>
+<div class="course-card__subtitle">陈设计师</div>
+<div class="course-card__meta">
+<div class="course-card__rating"><svg class="star-icon"><use href="#icon-star"/></svg><span class="course-card__rating-num">4.7</span></div>
+<span class="course-card__price">¥128</span>
+</div>
+<div class="course-card__enroll">1,780人已报名</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
