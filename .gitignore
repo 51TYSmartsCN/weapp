@@ -4,6 +4,11 @@ node_modules/
 .rn_temp/
 .swc/
 *.log
+*.tsbuildinfo
 .DS_Store
 cli_extract
 comp_extract
+
+# 开发服务 PID 与日志
+.dev-*.pid
+.dev-*.log

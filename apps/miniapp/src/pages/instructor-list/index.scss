@@ -1,0 +1,92 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.instructor-list-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-list-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 页面顶部介绍 */
+.page-intro {
+  padding: $base;
+  background: linear-gradient(135deg, $primary-lightest 0%, $primary-lighter 100%);
+  border-radius: $radius-lg;
+  margin-bottom: $lg;
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+}
+
+.page-intro-title {
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.page-intro-desc {
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.5;
+}
+
+/* 讲师列表 */
+.instructor-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.instructor-item {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+}
+
+.instructor-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.instructor-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: $sm;
+}
+
+.instructor-name {
+  font-size: $font-md;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.instructor-title {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+.instructor-service {
+  font-size: $font-xs;
+  color: $primary;
+}
+
+.instructor-bio {
+  font-size: $font-xs;
+  color: $text-secondary;
+  line-height: 1.4;
+}

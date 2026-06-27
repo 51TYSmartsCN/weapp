@@ -1,0 +1,166 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.instructor-detail-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-detail-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 头部：头像 + 信息 */
+.instructor-header {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  margin-bottom: $md;
+}
+
+.instructor-head-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.instructor-name {
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.instructor-title {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+.instructor-service {
+  font-size: $font-xs;
+  color: $primary;
+}
+
+/* 数据统计 */
+.instructor-stats {
+  display: flex;
+  align-items: center;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  padding: $md 0;
+  margin-bottom: $md;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.stat-value {
+  font-size: $font-md;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 48rpx;
+  background: $border;
+}
+
+/* 介绍区块 */
+.instructor-section {
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  margin-bottom: $md;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.section-title {
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.section-content {
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.6;
+}
+
+/* 专长标签 */
+.expertise-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $sm;
+}
+
+.expertise-tag {
+  padding: 8rpx 20rpx;
+  border: 1rpx solid;
+  border-radius: $radius-full;
+  font-size: $font-xs;
+  background: transparent;
+}
+
+/* 成就列表 */
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $sm;
+}
+
+.achievement-text {
+  flex: 1;
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.5;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: $lg * 2 $base;
+  display: flex;
+  justify-content: center;
+}
+
+.empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}

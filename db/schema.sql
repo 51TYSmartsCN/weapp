@@ -40,6 +40,11 @@ CREATE TABLE `instructors` (
   `bio` TEXT NULL COMMENT '简介',
   `color` VARCHAR(16) NOT NULL COMMENT '头像背景色',
   `avatar` VARCHAR(32) NULL COMMENT '头像文字',
+  `expertise` VARCHAR(256) NULL COMMENT '专长领域，逗号分隔',
+  `years` INT NULL COMMENT '从业年限',
+  `student_count` INT NULL COMMENT '累计学员数',
+  `course_count` INT NULL COMMENT '累计课程数',
+  `achievements` TEXT NULL COMMENT '个人成就，换行分隔',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='讲师表';
@@ -316,6 +321,24 @@ CREATE TABLE `feedbacks` (
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_fb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='意见反馈表';
+
+-- ------------------------------------------------------------
+-- 表名：banners（首页 Banner 表）
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `banners`;
+CREATE TABLE `banners` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `title` VARCHAR(128) NOT NULL COMMENT '标题',
+  `subtitle` VARCHAR(256) NULL COMMENT '副标题',
+  `image` VARCHAR(512) NOT NULL COMMENT '图片 URL',
+  `link_type` VARCHAR(16) NOT NULL DEFAULT 'none' COMMENT '跳转类型 none/course/page',
+  `link_value` VARCHAR(128) NULL COMMENT '跳转值（课程ID 或页面路径）',
+  `sort` INT NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用 0=否 1=是',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_sort` (`sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页 Banner 表';
 
 -- ------------------------------------------------------------
 -- 表名：help_articles（帮助文章表）

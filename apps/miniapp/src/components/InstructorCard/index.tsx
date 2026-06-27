@@ -1,0 +1,30 @@
+import { View, Text } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+import Avatar from '../Avatar'
+import type { Instructor } from '../../types'
+import './index.scss'
+
+interface InstructorCardProps {
+  instructor: Instructor
+  /** 点击回调，不传则默认 toast 提示 */
+  onClick?: (instructor: Instructor) => void
+}
+
+export default function InstructorCard({ instructor, onClick }: InstructorCardProps) {
+  const handleClick = () => {
+    if (onClick) {
+      onClick(instructor)
+    } else {
+      Taro.showToast({ title: `${instructor.name} · ${instructor.title}`, icon: 'none' })
+    }
+  }
+
+  return (
+    <View className='instructor-card' onClick={handleClick}>
+      <Avatar text={instructor.name[0]} size={96} bg={instructor.color} />
+      <Text className='instructor-name'>{instructor.name}</Text>
+      <Text className='instructor-title'>{instructor.title}</Text>
+      <Text className='instructor-service'>{instructor.service}</Text>
+    </View>
+  )
+}
