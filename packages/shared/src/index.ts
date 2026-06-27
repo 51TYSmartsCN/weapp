@@ -73,6 +73,8 @@ export interface User {
   } | null
   id?: number
   vipExpireAt?: string
+  /** 是否已完善资料（昵称 + 头像）。后端登录/资料接口返回 */
+  hasProfile?: boolean
 }
 
 export interface MenuItemData {

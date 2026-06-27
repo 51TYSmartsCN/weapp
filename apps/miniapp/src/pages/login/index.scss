@@ -155,3 +155,90 @@
 .login-bottom-space {
   height: 40rpx;
 }
+
+/* 资料完善表单 */
+.profile-setup {
+  margin-top: $xxxl;
+  padding: 0 $sm;
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.profile-setup-tip {
+  font-size: $font-sm;
+  color: $text-tertiary;
+  text-align: center;
+  margin-bottom: $sm;
+}
+
+.profile-setup-row {
+  display: flex;
+  align-items: center;
+  background: $surface;
+  border-radius: $radius-lg;
+  padding: $md $base;
+  box-shadow: $shadow-sm;
+}
+
+.profile-setup-label {
+  width: 96rpx;
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+  flex-shrink: 0;
+}
+
+/* chooseAvatar 按钮：重置为圆形头像容器 */
+.profile-avatar-btn {
+  width: 128rpx;
+  height: 128rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  line-height: 1;
+
+  &::after {
+    border: none;
+  }
+}
+
+.profile-avatar-img {
+  width: 128rpx;
+  height: 128rpx;
+  display: block;
+}
+
+.profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-nickname-input {
+  flex: 1;
+  font-size: $font-md;
+  color: $text-primary;
+  height: 80rpx;
+  line-height: 80rpx;
+}
+
+.profile-skip {
+  margin-top: $md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-skip-text {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}

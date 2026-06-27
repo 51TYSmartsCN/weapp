@@ -18,8 +18,11 @@ export async function getAllCourses(
 ): Promise<Course[]> {
   if (shouldUseLocal(options)) return allCourses
   const { page, size } = options || {}
+  const data: Record<string, number> = {}
+  if (page != null) data.page = page
+  if (size != null) data.size = size
   // TODO: return Taro.request({ url: '/api/courses' })
-  return request<Course[]>({ url: '/api/courses', method: 'GET', data: { page, size } })
+  return request<Course[]>({ url: '/api/courses', method: 'GET', data })
 }
 
 /** 根据 ID 获取课程详情 */

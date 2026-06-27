@@ -1,0 +1,90 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.help-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.help-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 空状态 */
+.help-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxxl $base;
+  gap: $md;
+}
+
+.help-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}
+
+/* 分类分组 */
+.help-section {
+  margin-bottom: $lg;
+}
+
+.help-section-title {
+  display: block;
+  font-size: $font-sm;
+  font-weight: 700;
+  color: $text-secondary;
+  margin-bottom: $sm;
+  padding: 0 $xs;
+}
+
+/* 文章卡片 */
+.help-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.help-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $base;
+  gap: $md;
+}
+
+.help-item-title {
+  flex: 1;
+  font-size: $font-base;
+  font-weight: 500;
+  color: $text-primary;
+  line-height: 1.4;
+}
+
+.help-item-content {
+  padding: 0 $base $base;
+}
+
+.help-item-content-text {
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.6;
+}
+
+.help-divider {
+  height: 1rpx;
+  margin: 0 $base;
+  background: $divider;
+}
+
+/* 展开时箭头旋转朝下 */
+.help-chevron--expanded {
+  transform: rotate(90deg);
+}

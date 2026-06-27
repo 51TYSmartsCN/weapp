@@ -1,0 +1,48 @@
+@use '../../styles/variables.scss' as *;
+
+.favorites-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.favorites-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+/* 空状态 */
+.favorites-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxxl $base;
+  gap: $md;
+}
+
+.favorites-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}
+
+.favorites-empty-btn {
+  margin-top: $sm;
+  padding: $sm $lg;
+  background: $primary;
+  border-radius: $radius-full;
+}
+
+.favorites-empty-btn-text {
+  font-size: $font-base;
+  color: $text-inverse;
+}

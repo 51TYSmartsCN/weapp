@@ -43,5 +43,12 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.6.0",
-  "condition": {}
+  "condition": {},
+  "packOptions": {
+    "ignore": [
+      { "type": "file", "value": "project.config.json" },
+      { "type": "file", "value": "project.private.config.json" }
+    ],
+    "include": []
+  }
 }

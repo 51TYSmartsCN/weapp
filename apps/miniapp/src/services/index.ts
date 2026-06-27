@@ -7,11 +7,13 @@ export type { ApiResponse } from './request'
 export {
   login,
   logout,
+  updateProfile,
   getToken,
   setToken,
   removeToken,
   isLoggedIn,
 } from './auth'
+export type { UpdateProfilePayload } from './auth'
 
 export {
   getHotCourses,

@@ -1,0 +1,84 @@
+@use '../../styles/variables.scss' as *;
+
+.certificates-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.certificates-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.certificates-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.certificate-card {
+  padding: $base;
+  background: linear-gradient(135deg, $primary-lightest 0%, #ffffff 100%);
+  border: 2rpx solid $primary-light;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+}
+
+.certificate-head {
+  display: flex;
+  align-items: center;
+  gap: $sm;
+}
+
+.certificate-no {
+  font-size: $font-sm;
+  font-weight: 600;
+  color: $primary-dark;
+  letter-spacing: 1rpx;
+}
+
+.certificate-course {
+  font-size: $font-md;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.certificate-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $sm;
+  border-top: 2rpx solid $primary-lighter;
+}
+
+.certificate-label {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.certificate-date {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+/* 空状态 */
+.certificates-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxxl $base;
+  gap: $md;
+}
+
+.certificates-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}

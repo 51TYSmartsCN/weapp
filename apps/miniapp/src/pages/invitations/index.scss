@@ -1,0 +1,132 @@
+@use '../../styles/variables.scss' as *;
+
+.invitations-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.invitations-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.invite-summary {
+  background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
+  border-radius: $radius-lg;
+  padding: $lg $base;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: $shadow-md;
+  margin-bottom: $lg;
+}
+
+.invite-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $xs;
+}
+
+.invite-stat-value {
+  font-size: $font-2xl;
+  font-weight: 700;
+  color: $text-inverse;
+}
+
+.invite-stat-label {
+  font-size: $font-sm;
+  color: $text-inverse;
+  opacity: 0.9;
+}
+
+.invite-stat-divider {
+  width: 2rpx;
+  height: 60rpx;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.invite-section-title {
+  font-size: $font-md;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: $md;
+  display: block;
+}
+
+.invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.invite-item {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+}
+
+.invite-item-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  background: $primary-lightest;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.invite-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  min-width: 0;
+}
+
+.invite-item-name {
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.invite-item-date {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.invite-item-reward {
+  font-size: $font-md;
+  font-weight: 700;
+  color: $primary;
+}
+
+.invite-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxl 0;
+  gap: $sm;
+}
+
+.invite-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}
+
+.invite-empty-hint {
+  font-size: $font-sm;
+  color: $text-tertiary;
+  opacity: 0.8;
+}

@@ -1,3 +1,4 @@
+import { orders } from '../data'
 import { OrderStatus } from '../types'
 import type { CreateOrderPayload, Order } from '../types'
 import type { RequestOptions } from './config'
@@ -24,7 +25,7 @@ export async function createOrder(payload: CreateOrderPayload, options?: Request
 
 /** 获取当前用户订单列表 */
 export async function getOrders(options?: RequestOptions): Promise<Order[]> {
-  if (shouldUseLocal(options)) return []
+  if (shouldUseLocal(options)) return orders
   // TODO: return Taro.request({ url: '/api/orders' })
   return request<Order[]>({ url: '/api/orders', method: 'GET' })
 }

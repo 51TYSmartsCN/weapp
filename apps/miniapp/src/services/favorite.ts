@@ -1,3 +1,4 @@
+import { favorites } from '../data'
 import type { Favorite } from '../types'
 import type { RequestOptions } from './config'
 import { shouldUseLocal } from './config'
@@ -19,7 +20,7 @@ export async function checkFavorite(courseId: number, options?: RequestOptions):
 
 /** 获取当前用户收藏列表 */
 export async function getMyFavorites(options?: RequestOptions): Promise<Favorite[]> {
-  if (shouldUseLocal(options)) return []
+  if (shouldUseLocal(options)) return favorites
   // TODO: return Taro.request({ url: '/api/favorites' })
   return request<Favorite[]>({ url: '/api/favorites', method: 'GET' })
 }

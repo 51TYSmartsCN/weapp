@@ -1,0 +1,45 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.settings-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 设置卡片 */
+.settings-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.settings-divider {
+  height: 1rpx;
+  margin: 0 $base;
+  background: $divider;
+}
+
+/* 退出登录 */
+.settings-logout {
+  margin-top: $base;
+  height: 96rpx;
+  background: $surface;
+  border-radius: $radius-lg;
+  @include flex-center;
+  box-shadow: $shadow-sm;
+}
+
+.settings-logout-text {
+  font-size: $font-md;
+  color: $error;
+}

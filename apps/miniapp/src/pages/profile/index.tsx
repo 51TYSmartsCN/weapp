@@ -24,7 +24,40 @@ export default function Profile() {
   }, [])
 
   const handleMenuClick = (label: string) => {
-    Taro.showToast({ title: label, icon: 'none' })
+    switch (label) {
+      case '我的课程':
+        Taro.switchTab({ url: '/pages/learning/index' })
+        break
+      case '学习记录':
+        Taro.navigateTo({ url: '/pages/study-records/index' })
+        break
+      case '收藏课程':
+        Taro.navigateTo({ url: '/pages/favorites/index' })
+        break
+      case '学习证书':
+        Taro.navigateTo({ url: '/pages/certificates/index' })
+        break
+      case '我的订单':
+        Taro.navigateTo({ url: '/pages/orders/index' })
+        break
+      case '优惠券':
+        Taro.navigateTo({ url: '/pages/coupons/index' })
+        break
+      case '邀请好友':
+        Taro.navigateTo({ url: '/pages/invitations/index' })
+        break
+      case '帮助中心':
+        Taro.navigateTo({ url: '/pages/help/index' })
+        break
+      case '意见反馈':
+        Taro.navigateTo({ url: '/pages/feedback/index' })
+        break
+      case '设置':
+        Taro.navigateTo({ url: '/pages/settings/index' })
+        break
+      default:
+        break
+    }
   }
 
   const handleContinue = () => {
@@ -80,7 +113,11 @@ export default function Profile() {
           <View className='profile-header'>
             <View className='profile-header-card'>
               <View className='profile-user'>
-                <Avatar text={user?.avatar ?? ''} size={120} />
+                <Avatar
+                  src={user?.avatar}
+                  text={user?.name?.charAt(0) ?? ''}
+                  size={120}
+                />
                 <View className='profile-name-wrap'>
                   <View className='profile-name'>{user?.name}</View>
                   {user?.vip && <Text className='profile-vip'>VIP 会员</Text>}

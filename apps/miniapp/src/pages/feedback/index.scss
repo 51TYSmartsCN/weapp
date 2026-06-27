@@ -1,0 +1,128 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.feedback-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.feedback-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 表单分组 */
+.feedback-section {
+  margin-bottom: $lg;
+}
+
+.feedback-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $sm;
+}
+
+.feedback-label {
+  display: block;
+  font-size: $font-sm;
+  font-weight: 600;
+  color: $text-secondary;
+  margin-bottom: $sm;
+}
+
+.feedback-label-row .feedback-label {
+  margin-bottom: 0;
+}
+
+.feedback-counter {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+/* 类型胶囊 */
+.feedback-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $sm;
+}
+
+.feedback-pill {
+  padding: $sm $base;
+  border-radius: $radius-full;
+  background: $surface;
+  border: 1rpx solid $border;
+}
+
+.feedback-pill--active {
+  background: $primary-lightest;
+  border-color: $primary;
+}
+
+.feedback-pill-text {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+.feedback-pill--active .feedback-pill-text {
+  color: $primary;
+  font-weight: 500;
+}
+
+/* 多行输入 */
+.feedback-textarea-wrap {
+  background: $surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border;
+  padding: $base;
+}
+
+.feedback-textarea {
+  width: 100%;
+  min-height: 240rpx;
+  font-size: $font-base;
+  color: $text-primary;
+  line-height: 1.6;
+}
+
+.feedback-placeholder {
+  color: $text-tertiary;
+}
+
+/* 单行输入 */
+.feedback-input-wrap {
+  background: $surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border;
+  padding: 0 $base;
+}
+
+.feedback-input {
+  width: 100%;
+  height: 96rpx;
+  font-size: $font-base;
+  color: $text-primary;
+}
+
+/* 提交按钮 */
+.feedback-submit {
+  margin-top: $lg;
+  height: 96rpx;
+  border-radius: $radius-lg;
+  background: $primary;
+  @include flex-center;
+}
+
+.feedback-submit--disabled {
+  opacity: 0.6;
+}
+
+.feedback-submit-text {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-inverse;
+}

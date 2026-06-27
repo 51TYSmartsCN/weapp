@@ -1,0 +1,111 @@
+@use '../../styles/variables.scss' as *;
+
+.coupons-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.coupons-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.coupons-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.coupon-card {
+  display: flex;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-md;
+  min-height: 200rpx;
+}
+
+.coupon-card--dimmed {
+  opacity: 0.5;
+}
+
+.coupon-left {
+  width: 220rpx;
+  background: $primary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $xs;
+}
+
+.coupon-value {
+  font-size: $font-2xl;
+  font-weight: 700;
+  color: $text-inverse;
+}
+
+.coupon-type-desc {
+  font-size: $font-xs;
+  color: $text-inverse;
+  opacity: 0.85;
+}
+
+.coupon-right {
+  flex: 1;
+  background: $surface;
+  border-left: 2rpx dashed $border;
+  padding: $base;
+  display: flex;
+  flex-direction: column;
+  gap: $xs;
+  position: relative;
+}
+
+.coupon-code {
+  font-size: $font-base;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.coupon-min {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+.coupon-expire {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.coupon-status-tag {
+  align-self: flex-end;
+  padding: 4rpx $sm;
+  border-radius: $radius-full;
+  background: $primary-lightest;
+  color: $primary;
+  font-size: $font-xs;
+  line-height: 1.5;
+}
+
+.coupon-status-tag--gray {
+  background: $bg-tertiary;
+  color: $text-tertiary;
+}
+
+.coupons-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxl 0;
+  gap: $md;
+}
+
+.coupons-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}

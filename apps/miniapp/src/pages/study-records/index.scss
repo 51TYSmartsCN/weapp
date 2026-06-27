@@ -1,0 +1,99 @@
+@use '../../styles/variables.scss' as *;
+
+.study-records-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.study-records-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.study-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+}
+
+.record-icon {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-lightest;
+  border-radius: $radius-full;
+}
+
+.record-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $xs;
+}
+
+.record-course {
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.record-meta {
+  display: flex;
+  align-items: center;
+  gap: $md;
+}
+
+.record-lesson {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+.record-duration {
+  display: flex;
+  align-items: center;
+  gap: $xs;
+}
+
+.record-duration-text {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+.record-date {
+  flex-shrink: 0;
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+/* 空状态 */
+.study-records-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxxl $base;
+  gap: $md;
+}
+
+.study-records-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}

@@ -7,6 +7,7 @@ export const user: User = {
   boughtCourses: 3,
   finishedLessons: 12,
   studyHours: 86,
+  hasProfile: true,
   continueCourse: {
     title: 'GEO 实战入门',
     progress: 65,

@@ -77,6 +77,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
       finishedLessons: u.finished_lessons,
       studyHours: u.study_hours,
       continueCourse,
+      hasProfile: !!u.name && u.name !== '微信用户' && !!u.avatar && u.avatar !== 'U',
     })
   } catch (err) {
     console.error('[user] info error:', err)

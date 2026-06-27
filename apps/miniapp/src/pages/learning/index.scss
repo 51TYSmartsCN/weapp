@@ -19,58 +19,12 @@
   color: $text-primary;
 }
 
-.skeleton-learning-stats {
-  display: flex;
-  justify-content: space-around;
-  padding: $sm 0;
-}
-
-.skeleton-learning-stat {
-  width: 96rpx;
-  height: 72rpx;
-  border-radius: $radius-sm;
-  background: $bg-tertiary;
-}
-
-.learning-stats {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: $sm 0;
-}
-
-.learning-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $xs;
-}
-
-.stat-value {
-  font-size: 44rpx;
-  font-weight: 700;
-  color: #0F766E;
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: $font-xs;
-  color: $text-tertiary;
-}
-
 .learning-section {
   margin-top: $base;
   padding: 0 $base;
 }
 
-.section-title {
-  display: block; /* 微信小程序 Text 默认 inline，margin-bottom 不生效 */
-  font-size: $font-md;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: $md;
-}
-
+/* === 继续学习 === */
 .continue-card {
   background: $surface;
   border-radius: $radius-lg;
@@ -135,13 +89,58 @@
   font-size: $font-sm;
   font-weight: 500;
   line-height: 1;
+}
 
-  /* 覆盖 Taro Button 在 H5 端的默认宽高 */
-  &::after {
-    border: none;
+.continue-empty {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $xl $base;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $md;
+}
+
+.continue-empty-text {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+.continue-empty-btn {
+  padding: $sm $lg;
+  background: $primary;
+  color: $text-inverse;
+  font-size: $font-sm;
+  font-weight: 500;
+  border-radius: $radius-full;
+  line-height: 1;
+}
+
+/* === 我的课程 - 状态 Tabs === */
+.status-tabs {
+  display: flex;
+  align-items: center;
+  gap: $sm;
+  margin-bottom: $md;
+}
+
+.status-tab {
+  flex-shrink: 0;
+  padding: $xs $md;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  color: $text-secondary;
+  font-size: $font-sm;
+  line-height: 1.2;
+
+  &.active {
+    background: $primary;
+    color: $text-inverse;
   }
 }
 
+/* === 课程项 === */
 .course-item {
   display: flex;
   align-items: center;
@@ -158,6 +157,8 @@
   height: 90rpx;
   border-radius: $radius-md;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
 }
 
 .course-item-info {
@@ -180,21 +181,97 @@
   margin-top: $sm;
   font-size: $font-sm;
   color: $text-tertiary;
-
-  &::before {
-    content: '';
-    display: inline-block;
-    width: 1rpx;
-    height: 16rpx;
-    background: $border;
-    margin-right: 10rpx;
-    vertical-align: middle;
-  }
 }
 
+/* === 学习记录 === */
+.study-record-item {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $md;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  margin-bottom: $sm;
+}
+
+.study-record-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.study-record-title {
+  font-size: $font-base;
+  font-weight: 500;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-record-meta {
+  display: block;
+  margin-top: $xs;
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+/* === 学习证书入口 === */
+.certificate-card {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  padding: $base;
+  background: linear-gradient(135deg, $primary-lightest, $primary-lighter);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.certificate-icon {
+  flex-shrink: 0;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-full;
+  background: $surface;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.certificate-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.certificate-title {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.certificate-count {
+  display: block;
+  margin-top: $xs;
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+.certificate-link {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: $xs;
+  font-size: $font-sm;
+  color: $primary;
+  font-weight: 500;
+}
+
+/* === 空状态 === */
 .empty-tip {
   text-align: center;
   padding: $xl 0;
   font-size: $font-sm;
   color: $text-tertiary;
+  background: $surface;
+  border-radius: $radius-lg;
 }

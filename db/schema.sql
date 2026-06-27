@@ -15,7 +15,7 @@ CREATE TABLE `users` (
   `openid` VARCHAR(64) NOT NULL COMMENT '微信 openid',
   `unionid` VARCHAR(64) NULL COMMENT '微信 unionid',
   `name` VARCHAR(64) NOT NULL COMMENT '昵称',
-  `avatar` VARCHAR(32) NOT NULL COMMENT '头像文字或 URL',
+  `avatar` VARCHAR(512) NOT NULL COMMENT '头像文字或 URL',
   `vip` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否 VIP（0=否 1=是）',
   `vip_expire_at` DATETIME NULL COMMENT 'VIP 到期时间',
   `bought_courses` INT NOT NULL DEFAULT 0 COMMENT '已购课程数（冗余）',

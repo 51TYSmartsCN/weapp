@@ -1,0 +1,101 @@
+@use '../../styles/variables.scss' as *;
+
+.orders-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.orders-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: $md;
+}
+
+.order-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  padding: $base;
+  box-shadow: $shadow-md;
+  display: flex;
+  flex-direction: column;
+  gap: $sm;
+}
+
+.order-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $sm;
+}
+
+.order-course-title {
+  flex: 1;
+  font-size: $font-md;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.order-status-tag {
+  flex-shrink: 0;
+  padding: 4rpx $sm;
+  border-radius: $radius-full;
+  font-size: $font-xs;
+  line-height: 1.5;
+}
+
+.order-no {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-date {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+.order-amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: $sm;
+}
+
+.order-original-amount {
+  font-size: $font-sm;
+  color: $text-tertiary;
+  text-decoration: line-through;
+}
+
+.order-amount {
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $primary;
+}
+
+.orders-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $xxl 0;
+  gap: $md;
+}
+
+.orders-empty-text {
+  font-size: $font-base;
+  color: $text-tertiary;
+}

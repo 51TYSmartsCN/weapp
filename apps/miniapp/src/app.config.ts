@@ -8,7 +8,16 @@ export default defineAppConfig({
     'pages/lesson-player/index',
     'pages/instructor-list/index',
     'pages/instructor-detail/index',
-    'pages/profile/index'
+    'pages/profile/index',
+    'pages/favorites/index',
+    'pages/study-records/index',
+    'pages/certificates/index',
+    'pages/orders/index',
+    'pages/coupons/index',
+    'pages/invitations/index',
+    'pages/help/index',
+    'pages/feedback/index',
+    'pages/settings/index'
   ],
   tabBar: {
     color: '#94A3B8',
