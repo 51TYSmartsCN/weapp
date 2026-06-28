@@ -17,6 +17,7 @@ export default function Login() {
   // 完善资料表单
   const [avatarTempPath, setAvatarTempPath] = useState<string>('')
   const [nickname, setNickname] = useState('')
+  const [nicknameInputFocus, setNicknameInputFocus] = useState(false)
 
   /** 步骤 1：微信一键登录 */
   const handleLogin = async () => {
@@ -54,7 +55,7 @@ export default function Login() {
     if (loading) return
     const name = nickname.trim()
     if (!name) {
-      Taro.showToast({ title: '请输入昵称', icon: 'none' })
+      Taro.showToast({ title: '请先选择微信昵称', icon: 'none' })
       return
     }
     if (!avatarTempPath) {
@@ -139,7 +140,26 @@ export default function Login() {
                 {agreed && <Icon name='check' size={20} color='#FFFFFF' />}
               </View>
               <Text className='login-agreement-text'>
-                我已阅读并同意《用户协议》和《隐私政策》
+                我已阅读并同意
+                <Text
+                  className='login-agreement-link'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    Taro.navigateTo({ url: '/pages/agreement/index' })
+                  }}
+                >
+                  《用户协议》
+                </Text>
+                和
+                <Text
+                  className='login-agreement-link'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    Taro.navigateTo({ url: '/pages/privacy/index' })
+                  }}
+                >
+                  《隐私政策》
+                </Text>
               </Text>
             </View>
 
@@ -163,35 +183,44 @@ export default function Login() {
             </Text>
 
             {/* 头像选择：必须用 Button openType="chooseAvatar" */}
-            <View className='profile-setup-row'>
-              <View className='profile-setup-label'>头像</View>
-              <Button
-                className='profile-avatar-btn'
-                openType='chooseAvatar'
-                onChooseAvatar={handleChooseAvatar}
-              >
-                {avatarTempPath ? (
-                  <Image className='profile-avatar-img' src={avatarTempPath} mode='aspectFill' />
-                ) : (
-                  <View className='profile-avatar-placeholder'>
-                    <Icon name='user' size={48} color='#94A3B8' />
-                  </View>
-                )}
-              </Button>
-            </View>
+            <Button
+              className='profile-avatar-btn'
+              openType='chooseAvatar'
+              onChooseAvatar={handleChooseAvatar}
+            >
+              {avatarTempPath ? (
+                <Image className='profile-avatar-img' src={avatarTempPath} mode='aspectFill' />
+              ) : (
+                <View className='profile-avatar-placeholder'>
+                  <Icon name='user' size={48} color='#94A3B8' />
+                </View>
+              )}
+            </Button>
 
-            {/* 昵称输入：必须用 Input type="nickname" */}
-            <View className='profile-setup-row'>
-              <View className='profile-setup-label'>昵称</View>
-              <Input
-                className='profile-nickname-input'
-                type='nickname'
-                placeholder='点击获取微信昵称或自定义'
-                value={nickname}
-                onInput={(e) => setNickname(e.detail.value)}
-                maxlength={20}
-              />
+            {/* 昵称选择：显示层 + 隐藏 Input
+                - 显示层：View 展示昵称/占位文案，点击触发隐藏 Input 聚焦
+                - 隐藏 Input：type='nickname' 承载微信原生昵称面板能力，脱离可视区域
+                - onInput 实时同步值到 state，面板选中昵称即可拿到
+                - 因为没有可见输入框，从根本上禁止手动键入；自由编辑放在后续"修改名称"页 */}
+            <View
+              className='profile-nickname'
+              onClick={() => setNicknameInputFocus(true)}
+            >
+              {nickname ? (
+                <Text className='profile-nickname-value'>{nickname}</Text>
+              ) : (
+                <Text className='profile-nickname-placeholder'>点击获取微信昵称</Text>
+              )}
             </View>
+            <Input
+              className='profile-nickname-hidden-input'
+              type='nickname'
+              focus={nicknameInputFocus}
+              value={nickname}
+              onInput={(e) => setNickname(e.detail.value)}
+              onBlur={() => setNicknameInputFocus(false)}
+              maxlength={64}
+            />
           </View>
 
           <View className='login-footer'>

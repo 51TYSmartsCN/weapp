@@ -13,11 +13,15 @@ export default defineAppConfig({
     'pages/study-records/index',
     'pages/certificates/index',
     'pages/orders/index',
+    'pages/order-center/index',
     'pages/coupons/index',
     'pages/invitations/index',
     'pages/help/index',
     'pages/feedback/index',
-    'pages/settings/index'
+    'pages/contact-wx/index',
+    'pages/settings/index',
+    'pages/agreement/index',
+    'pages/privacy/index'
   ],
   tabBar: {
     color: '#94A3B8',

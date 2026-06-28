@@ -66,6 +66,9 @@ export const courseApi = {
   toggleHot(id: number) {
     return request({ method: 'PUT', url: `/admin/courses/${id}/hot` })
   },
+  toggleAccess(id: number) {
+    return request<{ requiresAccess: boolean }>({ method: 'PUT', url: `/admin/courses/${id}/access` })
+  },
 }
 
 // ===================== Instructors =====================
@@ -209,6 +212,60 @@ export const helpArticleApi = {
   },
   remove(id: number) {
     return request({ method: 'DELETE', url: `/admin/help-articles/${id}` })
+  },
+}
+
+// ===================== App Configs（应用配置） =====================
+
+interface TabItem {
+  text: string
+  iconUrl: string
+  activeIconUrl: string
+}
+
+interface ThemeConfig {
+  primary: string
+  primaryLight: string
+  primaryLighter: string
+  primaryLightest: string
+  primaryDark: string
+  primaryDarker: string
+  tabBarSelectedColor: string
+  tabBarColor: string
+  tabBarBgColor: string
+  /** TabBar 图标配置（4 个 tab） */
+  tabItems?: TabItem[]
+}
+
+export const appConfigApi = {
+  getTheme() {
+    return request<any>({ url: '/admin/app-configs/theme' })
+  },
+  updateTheme(data: ThemeConfig) {
+    return request({ method: 'PUT', url: '/admin/app-configs/theme', data: { value: data, description: '小程序主题与 TabBar 配置' } })
+  },
+  /** 上传 TabBar 图标 */
+  uploadTabIcon(index: number, state: 'normal' | 'active', file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request<{ url: string }>({
+      method: 'POST',
+      url: `/admin/app-configs/tabbar/icon/${index}/${state}`,
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+  /** 获取模块展示模式配置 */
+  getModuleModes() {
+    return request<any>({ url: '/admin/app-configs/module-modes' })
+  },
+  /** 更新模块展示模式配置 */
+  updateModuleModes(data: Record<string, any>) {
+    return request({
+      method: 'PUT',
+      url: '/admin/app-configs/module-modes',
+      data: { value: data, description: '模块展示模式配置（lessonPlayer.contentMode / courseDetailCover.mode）' },
+    })
   },
 }
 

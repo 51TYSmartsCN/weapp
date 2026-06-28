@@ -28,6 +28,7 @@ interface LessonItem {
   duration: string
   durationSeconds?: number
   videoUrl?: string
+  content?: string
   sort: number
   createdAt: string
 }
@@ -42,6 +43,7 @@ interface FormValues {
   duration: string
   durationSeconds?: number
   videoUrl?: string
+  content?: string
   sort: number
 }
 
@@ -117,6 +119,7 @@ export default function Lessons() {
       duration: record.duration,
       durationSeconds: record.durationSeconds,
       videoUrl: record.videoUrl,
+      content: record.content,
       sort: record.sort,
     })
     setModalOpen(true)
@@ -286,6 +289,13 @@ export default function Lessons() {
           </Form.Item>
           <Form.Item name="videoUrl" label="视频地址">
             <Input placeholder="请输入视频地址" />
+          </Form.Item>
+          <Form.Item name="content" label="图文教程内容" tooltip="当模块展示模式为「图文」时，小程序课时播放页会展示此内容。支持换行。">
+            <Input.TextArea
+              rows={6}
+              placeholder="请输入图文教程内容（模块展示模式切换为「图文」时使用）"
+              showCount
+            />
           </Form.Item>
           <Form.Item name="sort" label="排序">
             <InputNumber min={1} style={{ width: '100%' }} placeholder="请输入排序值" />

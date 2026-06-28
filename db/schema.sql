@@ -65,12 +65,14 @@ CREATE TABLE `courses` (
   `cover` VARCHAR(256) NOT NULL COMMENT '封面',
   `is_hot` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否热门（0=否 1=是）',
   `status` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '上下架（0=下架 1=上架）',
+  `requires_access` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否需要购课权限才能观看视频（0=开放观看 1=需要购买/登录）',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_instructor_id` (`instructor_id`),
   KEY `idx_is_hot` (`is_hot`),
   KEY `idx_status` (`status`),
+  KEY `idx_requires_access` (`requires_access`),
   CONSTRAINT `fk_courses_instructor` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程表';
 
@@ -113,6 +115,7 @@ CREATE TABLE `lessons` (
   `duration` VARCHAR(16) NOT NULL COMMENT '时长描述（形如 15min）',
   `duration_seconds` INT NULL COMMENT '实际秒数',
   `video_url` VARCHAR(512) NULL COMMENT '视频地址',
+  `content` TEXT NULL COMMENT '图文教程内容（模块展示模式为 text-image 时使用）',
   `sort` INT NOT NULL DEFAULT 0 COMMENT '排序',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
@@ -244,12 +247,14 @@ CREATE TABLE `orders` (
   `original_amount` DECIMAL(10,2) NULL COMMENT '原价',
   `coupon_id` BIGINT NULL COMMENT '优惠券ID',
   `status` TINYINT NOT NULL COMMENT '订单状态（0=待支付 1=已支付 2=已退款 3=已取消）',
+  `source` TINYINT NOT NULL DEFAULT 0 COMMENT '订单来源（0=小程序内购 1=微信小店）',
   `pay_method` VARCHAR(16) NULL COMMENT '支付方式',
   `paid_at` DATETIME NULL COMMENT '支付时间',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_user_status` (`user_id`, `status`),
+  KEY `idx_source` (`source`),
   CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_orders_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_orders_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
@@ -353,5 +358,27 @@ CREATE TABLE `help_articles` (
   PRIMARY KEY (`id`),
   KEY `idx_category_sort` (`category`, `sort`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帮助文章表';
+
+-- ------------------------------------------------------------
+-- 表名：app_configs（应用配置表）
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `app_configs`;
+CREATE TABLE `app_configs` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `key` VARCHAR(64) NOT NULL COMMENT '配置键',
+  `value` TEXT NOT NULL COMMENT '配置值（JSON 字符串）',
+  `description` VARCHAR(256) NULL COMMENT '描述',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用配置表';
+
+-- 初始主题配置（蓝紫色系）
+INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
+('theme', '{"primary": "#6366F1", "primaryLight": "#818CF8", "primaryLighter": "#C7D2FE", "primaryLightest": "#EEF2FF", "primaryDark": "#4F46E5", "primaryDarker": "#4338CA"}', '小程序主题色配置');
+
+-- 模块展示模式配置（控制各模块在视频/图文之间切换）
+INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
+('module_modes', '{"lessonPlayer":{"contentMode":"video"},"courseDetailCover":{"mode":"image"}}', '模块展示模式配置（lessonPlayer.contentMode / courseDetailCover.mode）');
 
 SET FOREIGN_KEY_CHECKS = 1;

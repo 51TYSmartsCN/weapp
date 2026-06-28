@@ -1,11 +1,11 @@
 @use '../../styles/variables.scss' as *;
 
 .login-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
   background: linear-gradient(180deg, #F0FDFA 0%, #FFFFFF 40%);
-  padding: 0 $lg;
+  padding: 0 $lg calc(180rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
@@ -91,8 +91,8 @@
 
 /* 底部登录区 */
 .login-footer {
-  margin-top: auto;
-  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  width: 100%;
+  padding-bottom: 40rpx;
 }
 
 .login-agreement {
@@ -123,6 +123,11 @@
   margin-left: $sm;
   font-size: $font-sm;
   color: $text-tertiary;
+  flex: 1;
+}
+
+.login-agreement-link {
+  color: $primary;
 }
 
 .login-btn {
@@ -156,12 +161,13 @@
   height: 40rpx;
 }
 
-/* 资料完善表单 */
+/* 资料完善表单：头像 + 昵称垂直居中堆叠 */
 .profile-setup {
   margin-top: $xxxl;
   padding: 0 $sm;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: $md;
 }
 
@@ -172,27 +178,10 @@
   margin-bottom: $sm;
 }
 
-.profile-setup-row {
-  display: flex;
-  align-items: center;
-  background: $surface;
-  border-radius: $radius-lg;
-  padding: $md $base;
-  box-shadow: $shadow-sm;
-}
-
-.profile-setup-label {
-  width: 96rpx;
-  font-size: $font-md;
-  font-weight: 600;
-  color: $text-primary;
-  flex-shrink: 0;
-}
-
 /* chooseAvatar 按钮：重置为圆形头像容器 */
 .profile-avatar-btn {
-  width: 128rpx;
-  height: 128rpx;
+  width: 160rpx;
+  height: 160rpx;
   padding: 0;
   margin: 0;
   border: none;
@@ -210,8 +199,8 @@
 }
 
 .profile-avatar-img {
-  width: 128rpx;
-  height: 128rpx;
+  width: 160rpx;
+  height: 160rpx;
   display: block;
 }
 
@@ -223,12 +212,35 @@
   justify-content: center;
 }
 
-.profile-nickname-input {
-  flex: 1;
+/* 昵称选择显示层：看起来像输入框但实际不可手动键入，
+   点击后由隐藏的 type='nickname' Input 弹出原生昵称面板 */
+.profile-nickname {
+  width: 80%;
+  font-size: $font-md;
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+}
+
+.profile-nickname-value {
   font-size: $font-md;
   color: $text-primary;
-  height: 80rpx;
-  line-height: 80rpx;
+  font-weight: 500;
+}
+
+.profile-nickname-placeholder {
+  font-size: $font-md;
+  color: $text-tertiary;
+}
+
+/* 隐藏的昵称 Input：脱离可视区域，仅承载原生 type='nickname' 面板能力 */
+.profile-nickname-hidden-input {
+  position: fixed;
+  left: -9999rpx;
+  top: -9999rpx;
+  width: 1rpx;
+  height: 1rpx;
+  opacity: 0;
 }
 
 .profile-skip {

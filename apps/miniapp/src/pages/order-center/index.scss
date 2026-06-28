@@ -1,0 +1,173 @@
+@use '../../styles/variables.scss' as *;
+
+.order-center-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg;
+  box-sizing: border-box;
+}
+
+.oc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $lg;
+  color: $text-tertiary;
+  font-size: $font-base;
+}
+
+.oc-content {
+  padding: $sm $sm $base;
+}
+
+/* --- 目标订单(从微信小店跳来时顶部突出展示) --- */
+.oc-target-section {
+  margin-bottom: $md;
+  padding: $md $base;
+  background: linear-gradient(135deg, $primary-lightest, #fff);
+  border-radius: $radius-lg;
+  border: 2rpx solid $primary-lighter;
+}
+
+.oc-target-title {
+  display: flex;
+  align-items: center;
+  gap: $sm;
+  margin-bottom: $sm;
+}
+
+.oc-target-title-text {
+  font-size: $font-md;
+  font-weight: 700;
+  color: $primary;
+}
+
+/* --- 订单卡片 --- */
+.oc-order-card {
+  background: #fff;
+  border-radius: $radius-lg;
+  padding: $base;
+  margin-bottom: $sm;
+  box-shadow: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
+}
+
+.oc-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $sm;
+}
+
+.oc-order-no {
+  font-size: $font-sm;
+  color: $text-secondary;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oc-order-status {
+  font-size: $font-sm;
+  font-weight: 600;
+  padding: $xs $sm;
+  border-radius: $radius-full;
+
+  &--0 {  // 待支付
+    color: #F59E0B;
+    background: #FEF3C7;
+  }
+  &--1 {  // 已支付
+    color: $primary;
+    background: $primary-lightest;
+  }
+  &--2 {  // 已退款
+    color: #94A3B8;
+    background: #F1F5F9;
+  }
+  &--3 {  // 已取消
+    color: #94A3B8;
+    background: #F1F5F9;
+  }
+}
+
+.oc-order-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: $sm;
+}
+
+.oc-order-info {
+  display: flex;
+  flex-direction: column;
+  gap: $xs;
+}
+
+.oc-order-source,
+.oc-order-time {
+  font-size: $font-xs;
+  color: $text-tertiary;
+}
+
+.oc-order-amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: $xs;
+}
+
+.oc-order-amount {
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $primary;
+}
+
+.oc-order-original {
+  font-size: $font-xs;
+  color: $text-tertiary;
+  text-decoration: line-through;
+}
+
+.oc-order-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $sm;
+  padding-top: $sm;
+  border-top: 2rpx dashed #E2E8F0;
+}
+
+.oc-order-btn {
+  padding: $xs $md;
+  background: $primary;
+  color: $text-inverse;
+  font-size: $font-sm;
+  font-weight: 600;
+  border-radius: $radius-full;
+}
+
+/* --- 订单列表区 --- */
+.oc-list-section {
+  margin-top: $md;
+}
+
+.oc-list-title {
+  display: block;
+  font-size: $font-md;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: $sm;
+  padding-left: $xs;
+}
+
+.oc-empty {
+  padding: $lg;
+  text-align: center;
+  color: $text-tertiary;
+  font-size: $font-sm;
+  background: #fff;
+  border-radius: $radius-lg;
+}
+
+.oc-bottom-safe {
+  height: $md;
+}

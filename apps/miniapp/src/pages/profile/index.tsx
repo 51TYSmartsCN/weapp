@@ -49,6 +49,9 @@ export default function Profile() {
       case '帮助中心':
         Taro.navigateTo({ url: '/pages/help/index' })
         break
+      case '加企业微信':
+        Taro.navigateTo({ url: '/pages/contact-wx/index' })
+        break
       case '意见反馈':
         Taro.navigateTo({ url: '/pages/feedback/index' })
         break
@@ -70,11 +73,15 @@ export default function Profile() {
       content: '确定要退出当前账号吗？',
       confirmText: '退出',
       confirmColor: '#EF4444',
-      success: (res) => {
-        if (res.confirm) {
-          logout()
-          Taro.reLaunch({ url: '/pages/login/index' })
+      success: async (res) => {
+        if (!res.confirm) return
+        Taro.showLoading({ title: '退出中...', mask: true })
+        try {
+          await logout()
+        } finally {
+          Taro.hideLoading()
         }
+        Taro.reLaunch({ url: '/pages/login/index' })
       },
     })
   }
@@ -205,11 +212,14 @@ export default function Profile() {
         </View>
       ))}
 
-      {/* 退出登录 */}
-      <View className='profile-logout' onClick={handleLogout}>
-        <Text className='profile-logout-text'>退出登录</Text>
+      {/* 退出登录：放在菜单末尾的卡片式按钮，跟随滚动 */}
+      <View className='profile-menu-group'>
+        <View className='menu-card profile-logout-card' onClick={handleLogout}>
+          <Text className='profile-logout-text'>退出登录</Text>
+        </View>
       </View>
 
+      {/* 底部留白，避免被 TabBar 遮挡 */}
       <View className='profile-bottom-space' />
     </ScrollView>
   )

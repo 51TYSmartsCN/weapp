@@ -21,12 +21,13 @@ export {
   getCourseById,
   getCategories,
   getCoursesByCategory,
+  getCourseAccess,
 } from './course'
 
 export { getBanners } from './banner'
 
 export { getInstructors, getInstructorById } from './instructor'
-export { getLessons, getLessonById, reportLessonProgress } from './lesson'
+export { getLessons, getLessonById, getLessonPlayUrl, reportLessonProgress } from './lesson'
 export { getReviews } from './review'
 export { getUser, menuGroups } from './user'
 
@@ -42,3 +43,14 @@ export {
   createFeedback,
   getHelpArticles,
 } from './profile'
+
+export { getThemeConfigSync, fetchThemeConfig, initTheme, refreshTheme, cacheThemeConfig, applyTabBarTheme, applyTabBarIcons } from './app-config'
+export type { ThemeConfig, TabItem } from './app-config'
+export {
+  getModuleModesSync,
+  fetchModuleModes,
+  cacheModuleModes,
+  refreshModuleModes,
+  initModuleModes,
+} from './app-config'
+export type { ModuleDisplayModes } from './app-config'

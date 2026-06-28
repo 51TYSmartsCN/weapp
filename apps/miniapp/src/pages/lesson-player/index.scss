@@ -47,6 +47,75 @@
   width: 100%;
 }
 
+/* --- 图文教程模式 --- */
+.player-article {
+  width: 100%;
+  min-height: 420rpx;
+  padding: $base;
+  box-sizing: border-box;
+  background: $bg-secondary;
+}
+
+.player-article-title {
+  display: block;
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.4;
+  margin-bottom: $md;
+}
+
+.player-article-content {
+  display: block;
+  font-size: $font-base;
+  color: $text-secondary;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- 无权限锁屏 --- */
+.player-lock {
+  width: 100%;
+  min-height: 420rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $md;
+  padding: $lg $base;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+}
+
+.player-lock-title {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-inverse;
+  margin-top: $sm;
+}
+
+.player-lock-desc {
+  font-size: $font-sm;
+  color: #94A3B8;
+  text-align: center;
+  max-width: 80%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.player-lock-btn {
+  margin-top: $md;
+  padding: $sm $lg;
+  background: $primary;
+  color: $text-inverse;
+  font-size: $font-base;
+  border-radius: $radius-full;
+  font-weight: 600;
+}
+
 /* --- 课时信息 --- */
 .player-info {
   padding: $base $base $sm;

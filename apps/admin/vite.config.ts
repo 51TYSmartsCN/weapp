@@ -9,9 +9,13 @@ export default defineConfig({
     port: 4005,
     // 允许任意 host 访问（局域网调试方便）
     host: true,
-    // 将 /api 请求代理到后端服务（geo-course-server，默认监听 4000）
+    // 将 /api 与 /images 请求代理到后端服务（geo-course-server，默认监听 4000）
     proxy: {
       '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/images': {
         target: 'http://localhost:4000',
         changeOrigin: true,
       },

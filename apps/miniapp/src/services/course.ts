@@ -1,5 +1,5 @@
 import { allCourses, hotCourses, categories } from '../data'
-import type { Course } from '../types'
+import type { Course, CourseAccess } from '../types'
 import { Category, CATEGORY_TAG } from '../types'
 import type { RequestOptions } from './config'
 import { shouldUseLocal } from './config'
@@ -51,4 +51,22 @@ export async function getCoursesByCategory(category: Category, options?: Request
   }
   // TODO: return Taro.request({ url: `/api/courses?category=${category}` })
   return request<Course[]>({ url: '/api/courses', method: 'GET', data: { category } })
+}
+
+/**
+ * 查询当前用户对该课程的访问权限
+ * - 免费课程(price=0):canLearn=true
+ * - 付费课程:用户在 user_courses 中存在记录 → canLearn=true
+ * - 未登录场景:仅免费课 canLearn=true
+ *
+ * 本地 mock:price=0 即可学
+ */
+export async function getCourseAccess(courseId: number, options?: RequestOptions): Promise<CourseAccess> {
+  if (shouldUseLocal(options)) {
+    const course = allCourses.find((c) => c.id === courseId)
+    const isFree = !course || course.price === 0
+    return { courseId, isFree, purchased: isFree, canLearn: isFree }
+  }
+  // TODO: return Taro.request({ url: `/api/courses/${courseId}/access` })
+  return request<CourseAccess>({ url: `/api/courses/${courseId}/access`, method: 'GET' })
 }

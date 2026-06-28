@@ -13,6 +13,7 @@ function mapLessonRow(row: any) {
     duration: row.duration,
     durationSeconds: row.duration_seconds,
     videoUrl: row.video_url,
+    content: row.content ?? '',
     sort: row.sort,
     createdAt: row.created_at,
   }
@@ -38,11 +39,11 @@ router.get('/lessons', authMiddleware, async (req, res) => {
 /** POST /api/admin/lessons */
 router.post('/lessons', authMiddleware, async (req, res) => {
   try {
-    const { courseId, title, duration, durationSeconds, videoUrl, sort } = req.body
+    const { courseId, title, duration, durationSeconds, videoUrl, content, sort } = req.body
     const [result] = await pool.query(
-      `INSERT INTO lessons (course_id, title, duration, duration_seconds, video_url, sort, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [courseId, title, duration ?? '', durationSeconds ?? 0, videoUrl ?? '', sort ?? 0]
+      `INSERT INTO lessons (course_id, title, duration, duration_seconds, video_url, content, sort, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [courseId, title, duration ?? '', durationSeconds ?? 0, videoUrl ?? '', content ?? '', sort ?? 0]
     ) as any
     return ok(res, { id: (result as any).insertId })
   } catch (err) {
@@ -55,11 +56,11 @@ router.post('/lessons', authMiddleware, async (req, res) => {
 router.put('/lessons/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const { courseId, title, duration, durationSeconds, videoUrl, sort } = req.body
+    const { courseId, title, duration, durationSeconds, videoUrl, content, sort } = req.body
     await pool.query(
-      `UPDATE lessons SET course_id=?, title=?, duration=?, duration_seconds=?, video_url=?, sort=?
+      `UPDATE lessons SET course_id=?, title=?, duration=?, duration_seconds=?, video_url=?, content=?, sort=?
        WHERE id=?`,
-      [courseId, title, duration ?? '', durationSeconds ?? 0, videoUrl ?? '', sort ?? 0, id]
+      [courseId, title, duration ?? '', durationSeconds ?? 0, videoUrl ?? '', content ?? '', sort ?? 0, id]
     )
     return ok(res, null)
   } catch (err) {

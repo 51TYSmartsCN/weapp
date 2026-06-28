@@ -1,10 +1,12 @@
 // Color System
-$primary: #0D9488;
-$primary-light: #14B8A6;
-$primary-lighter: #99F6E4;
-$primary-lightest: #F0FDFA;
-$primary-dark: #0F766E;
-$primary-darker: #115E59;
+// 主题色通过 CSS 变量实现动态切换，运行时由后台配置控制
+// 第二个参数为兜底色（默认青绿系），确保 CSS 变量未定义时仍有颜色
+$primary: var(--theme-primary, #0D9488);
+$primary-light: var(--theme-primary-light, #14B8A6);
+$primary-lighter: var(--theme-primary-lighter, #99F6E4);
+$primary-lightest: var(--theme-primary-lightest, #F0FDFA);
+$primary-dark: var(--theme-primary-dark, #0F766E);
+$primary-darker: var(--theme-primary-darker, #115E59);
 
 $bg: #FFFFFF;
 $bg-secondary: #F8FAFB;
@@ -16,7 +18,7 @@ $text-primary: #0F172A;
 $text-secondary: #475569;
 $text-tertiary: #94A3B8;
 $text-inverse: #FFFFFF;
-$text-link: #0D9488;
+$text-link: var(--theme-primary, #0D9488);
 
 $border: #E2E8F0;
 $border-light: #F1F5F9;
@@ -25,7 +27,7 @@ $divider: #F1F5F9;
 $success: #10B981;
 $warning: #F59E0B;
 $error: #EF4444;
-$info: #0D9488;
+$info: var(--theme-primary, #0D9488);
 
 // Typography
 $font-family-base: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;

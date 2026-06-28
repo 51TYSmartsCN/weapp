@@ -1,0 +1,150 @@
+@use '../../styles/variables.scss' as *;
+
+.contact-wx-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-wx-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 助教信息卡 */
+.contact-wx-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  padding: $lg $base $base;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: $shadow-md;
+}
+
+.contact-wx-avatar {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: $radius-full;
+  background: $primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $md;
+}
+
+.contact-wx-name {
+  font-size: $font-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $xs;
+}
+
+.contact-wx-desc {
+  font-size: $font-sm;
+  color: $text-secondary;
+  margin-bottom: $lg;
+}
+
+/* 二维码区域 */
+.contact-wx-qrcode-wrap {
+  width: 420rpx;
+  height: 420rpx;
+  background: $surface;
+  border-radius: $radius-md;
+  border: 1rpx solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $md;
+  box-sizing: border-box;
+}
+
+/* 替换为真实 Image 时使用 */
+.contact-wx-qrcode {
+  width: 100%;
+  height: 100%;
+}
+
+/* 占位 View（未配置二维码时显示） */
+.contact-wx-qrcode-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-wx-placeholder-title {
+  font-size: $font-sm;
+  color: $text-tertiary;
+  margin-top: $sm;
+}
+
+.contact-wx-placeholder-hint {
+  font-size: $font-xs;
+  color: $text-tertiary;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: $xs;
+}
+
+/* 长按提示 */
+.contact-wx-tip {
+  display: flex;
+  align-items: center;
+  gap: $xs;
+  margin-top: $xs;
+}
+
+.contact-wx-tip-text {
+  font-size: $font-sm;
+  color: $text-secondary;
+}
+
+/* 福利清单 */
+.contact-wx-benefits {
+  margin-top: $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  padding: $base;
+  box-shadow: $shadow-sm;
+}
+
+.contact-wx-benefits-title {
+  display: block;
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $md;
+}
+
+.contact-wx-benefit-item {
+  display: flex;
+  align-items: center;
+  padding: $sm 0;
+}
+
+.contact-wx-benefit-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-full;
+  background: $primary-lightest;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $md;
+  flex-shrink: 0;
+}
+
+.contact-wx-benefit-text {
+  font-size: $font-base;
+  color: $text-primary;
+}
+
+.contact-wx-divider {
+  height: 1rpx;
+  background: $divider;
+}

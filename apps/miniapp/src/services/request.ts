@@ -1,7 +1,10 @@
 import Taro from '@tarojs/taro'
 
-/** 后端服务地址 */
-export const BASE_URL = 'http://localhost:4000'
+/** 后端服务地址
+ * - 微信开发者工具内调试可用 localhost
+ * - 真机调试 / 预览必须改为 Mac 的局域网 IP，否则 localhost 指向手机自身无法连通
+ */
+export const BASE_URL = 'http://192.168.3.4:4000'
 
 /** 本地存储中保存 token 的 key（与 auth.ts 保持一致） */
 const TOKEN_KEY = 'geo_token'

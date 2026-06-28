@@ -36,6 +36,7 @@ interface CourseItem {
   cover: string
   isHot: boolean
   status: number
+  requiresAccess: boolean
   createdAt: string
   updatedAt: string
 }
@@ -65,6 +66,7 @@ interface CourseFormData {
   cover: string
   isHot: boolean
   status: number
+  requiresAccess: boolean
 }
 
 // ===================== 组件实现 =====================
@@ -138,7 +140,7 @@ export default function Courses() {
   const openCreate = () => {
     setEditingRecord(null)
     form.resetFields()
-    form.setFieldsValue({ status: true, isHot: false, price: 0, originalPrice: 0, cover: '' })
+    form.setFieldsValue({ status: true, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true })
     setModalOpen(true)
   }
 
@@ -153,6 +155,7 @@ export default function Courses() {
       cover: record.cover,
       isHot: record.isHot,
       status: record.status === 1,
+      requiresAccess: record.requiresAccess !== false,
     })
     setModalOpen(true)
   }
@@ -196,6 +199,17 @@ export default function Courses() {
     try {
       await courseApi.toggleHot(record.id)
       message.success(record.isHot ? '已取消热门' : '已设为热门')
+      loadList()
+    } catch {
+      message.error('操作失败')
+    }
+  }
+
+  // ---------- 切换权限校验 ----------
+  const handleToggleAccess = async (record: CourseItem) => {
+    try {
+      await courseApi.toggleAccess(record.id)
+      message.success(record.requiresAccess ? '已开放观看（测试模式）' : '已恢复购课权限校验')
       loadList()
     } catch {
       message.error('操作失败')
@@ -299,6 +313,17 @@ export default function Courses() {
         isHot ? <Tag color="orange">热门</Tag> : <Tag>普通</Tag>,
     },
     {
+      title: '观看权限',
+      dataIndex: 'requiresAccess',
+      width: 100,
+      render: (requiresAccess: boolean) =>
+        requiresAccess ? (
+          <Tag color="blue">需购买</Tag>
+        ) : (
+          <Tag color="green">开放观看</Tag>
+        ),
+    },
+    {
       title: '状态',
       dataIndex: 'status',
       width: 80,
@@ -315,7 +340,7 @@ export default function Courses() {
       title: '操作',
       key: 'action',
       fixed: 'right',
-      width: 240,
+      width: 320,
       render: (_: any, record: CourseItem) => (
         <Space size="small" wrap>
           <Button type="link" size="small" onClick={() => openEdit(record)}>
@@ -326,6 +351,9 @@ export default function Courses() {
           </Button>
           <Button type="link" size="small" onClick={() => handleToggleHot(record)}>
             {record.isHot ? '取消热门' : '设为热门'}
+          </Button>
+          <Button type="link" size="small" onClick={() => handleToggleAccess(record)}>
+            {record.requiresAccess ? '开放观看' : '恢复权限'}
           </Button>
           <Popconfirm
             title="确定要删除该课程吗？"
@@ -380,7 +408,7 @@ export default function Courses() {
         columns={columns}
         dataSource={list}
         loading={loading}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1300 }}
         pagination={{
           current: page,
           pageSize: size,
@@ -404,7 +432,7 @@ export default function Courses() {
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ status: true, isHot: false, price: 0, originalPrice: 0, cover: '' }}
+          initialValues={{ status: true, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true }}
         >
           <Form.Item
             label="课程标题"
@@ -449,6 +477,19 @@ export default function Courses() {
 
           <Form.Item label="热门推荐" name="isHot" valuePropName="checked">
             <Switch />
+          </Form.Item>
+
+          <Form.Item
+            label="观看权限"
+            name="requiresAccess"
+            valuePropName="checked"
+            tooltip="开启后用户需购买或登录才能观看视频；关闭后任何人都可观看（用于测试）"
+          >
+            <Switch
+              checkedChildren="需购买"
+              unCheckedChildren="开放观看"
+              defaultChecked
+            />
           </Form.Item>
 
           <Form.Item label="上架状态" name="status" valuePropName="checked" normalize={(val) => (val ? 1 : 0)}>

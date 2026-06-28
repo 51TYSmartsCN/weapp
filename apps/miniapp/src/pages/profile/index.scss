@@ -219,16 +219,12 @@
   height: $base;
 }
 
-/* 退出登录 */
-.profile-logout {
-  margin: $base 0 $sm;
+/* 退出登录卡片：跟随菜单流式布局，简洁居中 */
+.profile-logout-card {
   height: 96rpx;
-  background: $surface;
-  border-radius: $radius-lg;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: $shadow-sm;
 }
 
 .profile-logout-text {

@@ -14,6 +14,8 @@ import Orders from './pages/orders'
 import Reviews from './pages/reviews'
 import Feedbacks from './pages/feedbacks'
 import HelpArticles from './pages/help-articles'
+import Theme from './pages/theme'
+import ModuleModes from './pages/module-modes'
 
 /** 路由守卫：未登录则跳转登录页 */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -48,6 +50,8 @@ export default function App() {
             <Route path="reviews" element={<Reviews />} />
             <Route path="feedbacks" element={<Feedbacks />} />
             <Route path="help-articles" element={<HelpArticles />} />
+            <Route path="theme" element={<Theme />} />
+            <Route path="module-modes" element={<ModuleModes />} />
           </Route>
         </Routes>
       </AntApp>

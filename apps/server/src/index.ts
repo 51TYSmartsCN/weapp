@@ -1,8 +1,7 @@
 import express from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import path from 'path'
-import { port } from './config'
+import { port, env } from './config'
 import { pool } from './db'
 import userRoutes from './routes/user'
 import favoriteRoutes from './routes/favorite'
@@ -15,6 +14,7 @@ import lessonRoutes from './routes/lesson'
 import reviewRoutes from './routes/review'
 import profileRoutes from './routes/profile'
 import bannerRoutes from './routes/banner'
+import wxshopRoutes from './routes/wxshop'
 import adminLoginRoutes from './routes/admin/index'
 import adminDashboardRoutes from './routes/admin/dashboard'
 import adminCourseRoutes from './routes/admin/course'
@@ -27,9 +27,10 @@ import adminOrderRoutes from './routes/admin/order'
 import adminReviewRoutes from './routes/admin/review'
 import adminFeedbackRoutes from './routes/admin/feedback'
 import adminHelpArticleRoutes from './routes/admin/help-article'
+import adminAppConfigRoutes from './routes/admin/app-config'
 
-// 加载 .env 环境变量
-dotenv.config()
+// 注意：dotenv 已在 ./config 里按 NODE_ENV 加载 .env + .env.{NODE_ENV}
+// 这里不再重复 dotenv.config()
 
 const app = express()
 
@@ -68,6 +69,8 @@ app.use('/api/user', userRoutes) // /api/user, /api/user/learning/summary, /api/
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/follows', followRoutes)
 app.use('/api/orders', orderRoutes)
+// 微信小店订单回调(无需登录,签名校验)
+app.use('/api/wxshop', wxshopRoutes)
 
 // Admin 管理后台路由
 app.use('/api/admin', adminLoginRoutes)       // POST /api/admin/login
@@ -82,6 +85,8 @@ app.use('/api/admin', adminOrderRoutes)       // /api/admin/orders
 app.use('/api/admin', adminReviewRoutes)      // /api/admin/reviews
 app.use('/api/admin', adminFeedbackRoutes)   // /api/admin/feedbacks
 app.use('/api/admin', adminHelpArticleRoutes) // /api/admin/help-articles
+app.use('/api/admin', adminAppConfigRoutes)   // /api/admin/app-configs
+app.use('/api', adminAppConfigRoutes)          // /api/app-configs/theme（小程序用）
 
 // 健康检查占位
 app.get('/api/health', (req, res) => res.json({ code: 0, data: { status: 'ok' } }))
@@ -90,7 +95,7 @@ app.get('/api/health', (req, res) => res.json({ code: 0, data: { status: 'ok' } 
 async function bootstrap() {
   await testDbConnection()
   app.listen(port, () => {
-    console.log(`[Server] GEO 课程后端服务已启动: http://localhost:${port}`)
+    console.log(`[Server] GEO 课程后端服务已启动 (env=${env}): http://localhost:${port}`)
   })
 }
 

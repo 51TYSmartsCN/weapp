@@ -1,0 +1,45 @@
+@use '../../styles/variables.scss' as *;
+
+.agreement-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: $bg;
+}
+
+.agreement-body {
+  flex: 1;
+  height: 0;
+}
+
+.agreement-content {
+  padding: $lg $base;
+}
+
+.agreement-updated {
+  display: block;
+  font-size: $font-sm;
+  color: $text-tertiary;
+  margin-bottom: $md;
+}
+
+.agreement-h2 {
+  display: block;
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+  margin-top: $lg;
+  margin-bottom: $sm;
+}
+
+.agreement-p {
+  display: block;
+  font-size: $font-base;
+  color: $text-secondary;
+  line-height: 1.7;
+  margin-bottom: $sm;
+}
+
+.agreement-bottom-space {
+  height: 80rpx;
+}

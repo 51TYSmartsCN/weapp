@@ -1,4 +1,4 @@
-import { OrderStatus } from '../types'
+import { OrderStatus, OrderSource } from '../types'
 import type { Order } from '../types'
 
 /** 订单列表（覆盖已支付 / 待支付 / 已取消三种状态） */
@@ -10,6 +10,7 @@ export const orders: Order[] = [
     courseId: 1,
     amount: 199,
     status: OrderStatus.Paid,
+    source: OrderSource.MiniApp,
     payMethod: 'wechat',
     paidAt: '2026-05-01T10:01:00.000Z',
     createdAt: '2026-05-01T10:00:00.000Z',
@@ -22,6 +23,7 @@ export const orders: Order[] = [
     amount: 599,
     originalAmount: 799,
     status: OrderStatus.Paid,
+    source: OrderSource.MiniApp,
     payMethod: 'wechat',
     paidAt: '2026-05-15T14:02:00.000Z',
     createdAt: '2026-05-15T14:00:00.000Z',
@@ -33,6 +35,7 @@ export const orders: Order[] = [
     courseId: 4,
     amount: 249,
     status: OrderStatus.Pending,
+    source: OrderSource.MiniApp,
     createdAt: '2026-06-20T11:00:00.000Z',
   },
   {
@@ -42,6 +45,19 @@ export const orders: Order[] = [
     courseId: 6,
     amount: 399,
     status: OrderStatus.Cancelled,
+    source: OrderSource.MiniApp,
     createdAt: '2026-06-01T09:00:00.000Z',
+  },
+  {
+    id: 5,
+    orderNo: 'WXSHOP20260625005',
+    userId: 1,
+    courseId: 2,
+    amount: 299,
+    status: OrderStatus.Paid,
+    source: OrderSource.WxShop,
+    payMethod: 'wxshop',
+    paidAt: '2026-06-25T09:30:00.000Z',
+    createdAt: '2026-06-25T09:30:00.000Z',
   },
 ]

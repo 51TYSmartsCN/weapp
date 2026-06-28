@@ -1,5 +1,24 @@
 @use './styles/variables.scss' as *;
 
+// app-root 仅用于承载主题 CSS 变量，display:contents 让它不参与布局
+// 避免多包一层 View 影响页面结构、事件冒泡
+.app-root {
+  display: contents;
+}
+
+// 主题 CSS 变量兜底值（运行时由 app.ts 根节点 inline style 覆盖）
+// 这里用固定色值而非 $primary，避免循环引用
+page,
+body,
+#app {
+  --theme-primary: #6366F1;
+  --theme-primary-light: #818CF8;
+  --theme-primary-lighter: #C7D2FE;
+  --theme-primary-lightest: #EEF2FF;
+  --theme-primary-dark: #4F46E5;
+  --theme-primary-darker: #4338CA;
+}
+
 page,
 body,
 #app {

@@ -18,6 +18,7 @@ function mapCourseRow(row: any) {
     cover: row.cover,
     isHot: !!row.is_hot,
     status: row.status,
+    requiresAccess: !!row.requires_access,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -74,13 +75,14 @@ router.get('/courses', authMiddleware, async (req, res) => {
 /** POST /api/admin/courses */
 router.post('/courses', authMiddleware, async (req, res) => {
   try {
-    const { title, desc, instructorId, rating, students, price, originalPrice, cover, isHot, status } = req.body
+    const { title, desc, instructorId, rating, students, price, originalPrice, cover, isHot, status, requiresAccess } = req.body
     const [result] = await pool.query(
-      `INSERT INTO courses (title, \`desc\`, instructor_id, rating, students, price, original_price, cover, is_hot, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      `INSERT INTO courses (title, \`desc\`, instructor_id, rating, students, price, original_price, cover, is_hot, status, requires_access, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         title, desc, instructorId ?? null, rating ?? 5.0, students ?? 0,
         price ?? 0, originalPrice ?? null, cover ?? '', isHot ? 1 : 0, status ?? 0,
+        requiresAccess === false ? 0 : 1,
       ]
     ) as any
     return ok(res, { id: (result as any).insertId })
@@ -94,13 +96,14 @@ router.post('/courses', authMiddleware, async (req, res) => {
 router.put('/courses/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const { title, desc, instructorId, rating, students, price, originalPrice, cover, isHot, status } = req.body
+    const { title, desc, instructorId, rating, students, price, originalPrice, cover, isHot, status, requiresAccess } = req.body
     await pool.query(
-      `UPDATE courses SET title=?, \`desc\`=?, instructor_id=?, rating=?, students=?, price=?, original_price=?, cover=?, is_hot=?, status=?, updated_at=NOW()
+      `UPDATE courses SET title=?, \`desc\`=?, instructor_id=?, rating=?, students=?, price=?, original_price=?, cover=?, is_hot=?, status=?, requires_access=?, updated_at=NOW()
        WHERE id=?`,
       [
         title, desc, instructorId ?? null, rating ?? 5.0, students ?? 0,
-        price ?? 0, originalPrice ?? null, cover ?? '', isHot ? 1 : 0, status ?? 0, id,
+        price ?? 0, originalPrice ?? null, cover ?? '', isHot ? 1 : 0, status ?? 0,
+        requiresAccess === false ? 0 : 1, id,
       ]
     )
     return ok(res, null)
@@ -136,6 +139,29 @@ router.put('/courses/:id/hot', authMiddleware, async (req, res) => {
     const newHot = row.is_hot === 1 ? 0 : 1
     await pool.query('UPDATE courses SET is_hot = ?, updated_at = NOW() WHERE id = ?', [newHot, id])
     return ok(res, { isHot: !!newHot })
+  } catch (err) {
+    console.error(err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/** PUT /api/admin/courses/:id/access
+ * 切换课程是否需要购课权限才能观看视频
+ * - requires_access=1：需要购买/登录（默认）
+ * - requires_access=0：开放观看（测试用，任何人都可播放视频）
+ */
+router.put('/courses/:id/access', authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    const [rows] = await pool.query('SELECT requires_access FROM courses WHERE id = ?', [id]) as any
+    const row = (rows as any[])[0]
+    if (!row) return fail(res, 404, '课程不存在')
+    const newAccess = row.requires_access === 1 ? 0 : 1
+    await pool.query(
+      'UPDATE courses SET requires_access = ?, updated_at = NOW() WHERE id = ?',
+      [newAccess, id]
+    )
+    return ok(res, { requiresAccess: !!newAccess })
   } catch (err) {
     console.error(err)
     return fail(res, 500, '服务器错误')

@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { pool } from '../db'
 import { ok, fail } from '../utils'
-import { signToken, authMiddleware, AuthRequest } from '../auth'
+import { signToken, authMiddleware, AuthRequest, blacklistToken } from '../auth'
 import { wechatConfig } from '../config'
 
 const router = Router()
@@ -96,6 +96,18 @@ router.post('/login', async (req: Request, res: Response) => {
     console.error('[auth] login error:', err)
     return fail(res, 500, err instanceof Error ? err.message : '登录失败')
   }
+})
+
+/** POST /api/auth/logout
+ * 已登录用户登出：将当前 token 加入黑名单，前端清本地 token。
+ * - 黑名单校验在 authMiddleware 中生效，登出后原 token 立即失效
+ * - 进程重启后黑名单清空（生产应换 Redis 持久化）
+ */
+router.post('/logout', authMiddleware, (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (token) blacklistToken(token)
+  return ok(res, { success: true })
 })
 
 /** POST /api/auth/profile

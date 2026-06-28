@@ -34,11 +34,15 @@ export default function Settings() {
       content: '确定要退出当前账号吗？',
       confirmText: '退出',
       confirmColor: '#EF4444',
-      success: (res) => {
-        if (res.confirm) {
-          logout()
-          Taro.reLaunch({ url: '/pages/login/index' })
+      success: async (res) => {
+        if (!res.confirm) return
+        Taro.showLoading({ title: '退出中...', mask: true })
+        try {
+          await logout()
+        } finally {
+          Taro.hideLoading()
         }
+        Taro.reLaunch({ url: '/pages/login/index' })
       },
     })
   }

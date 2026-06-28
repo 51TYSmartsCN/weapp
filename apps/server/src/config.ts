@@ -1,14 +1,22 @@
 import dotenv from 'dotenv'
+import path from 'path'
 
-// 加载 .env 环境变量
-dotenv.config()
+/**
+ * 多环境变量加载策略：
+ * 1. 先加载 .env（共享基础配置）
+ * 2. 再按 NODE_ENV 加载 .env.development / .env.production（覆盖同名项）
+ *
+ * NODE_ENV 未设置时默认按 'development' 处理，确保本地直接 ts-node-dev 启动
+ * 也能拿到 NODE_TLS_REJECT_UNAUTHORIZED=0 等开发期 override。
+ */
+const NODE_ENV = process.env.NODE_ENV || 'development'
+const envOverrideFile = `.env.${NODE_ENV}`
 
-// dev 环境下，公司 VPN / Zscaler 会替换 HTTPS 证书导致 Node 调用微信 API 失败
-// （UNABLE_TO_GET_ISSUER_CERT_LOCALLY）。.env 里设了 NODE_TLS_REJECT_UNAUTHORIZED=0
-// 时显式赋值给 process.env，确保无论 dotenv 加载顺序如何都生效。
-if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-}
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
+dotenv.config({ path: path.resolve(__dirname, '..', envOverrideFile) })
+
+/** 当前运行环境（便于日志/调试） */
+export const env: string = NODE_ENV
 
 /** 服务端口 */
 export const port: number = Number(process.env.PORT) || 4000
@@ -34,4 +42,15 @@ export const jwtConfig = {
 export const wechatConfig = {
   appid: process.env.WECHAT_APPID || '',
   secret: process.env.WECHAT_SECRET || '',
+}
+
+/** 微信小店订单回调配置
+ * - callbackToken:在小店后台「开发配置 → 订单更新回调」设置的 Token,用于校验签名
+ * - callbackSalt:落库订单号时拼接的盐值(可选,增强订单号不可预测性)
+ * - mockMode:未配置 callbackToken 或显式设置 WXSHOP_MOCK=1 时,回调接口降级为不校验签名(仅供本地联调)
+ */
+export const wxshopConfig = {
+  callbackToken: process.env.WXSHOP_CALLBACK_TOKEN || '',
+  callbackSalt: process.env.WXSHOP_CALLBACK_SALT || 'geo_wxshop_salt',
+  mockMode: process.env.WXSHOP_MOCK === '1' || !process.env.WXSHOP_CALLBACK_TOKEN,
 }

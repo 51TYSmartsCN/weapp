@@ -5,7 +5,7 @@ import { authMiddleware, AuthRequest } from '../auth'
 
 const router = Router()
 
-/** 将 lessons 行转换为 camelCase */
+/** 将 lessons 行转换为 camelCase(列表/详情不返回 videoUrl) */
 function mapLesson(row: any) {
   return {
     id: row.id,
@@ -13,12 +13,12 @@ function mapLesson(row: any) {
     title: row.title,
     duration: row.duration,
     durationSeconds: row.duration_seconds,
-    videoUrl: row.video_url,
+    content: row.content ?? '',
     sort: row.sort,
   }
 }
 
-/** GET /api/lessons - 全部课时 */
+/** GET /api/lessons - 全部课时(不返回 videoUrl) */
 router.get('/', async (req: Request, res: Response) => {
   try {
     const [rows] = await pool.query(
@@ -31,7 +31,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 })
 
-/** GET /api/lessons/:id - 单个课时 */
+/** GET /api/lessons/:id - 单个课时(不返回 videoUrl) */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id)
@@ -43,6 +43,63 @@ router.get('/:id', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('[lesson] detail error:', err)
     fail(res, 500, '获取课时失败')
+  }
+})
+
+/**
+ * GET /api/lessons/:id/play
+ * 鉴权后下发视频地址
+ * - 必须登录
+ * - 课程 requires_access=0（开放观看）→ 返回 videoUrl
+ * - 课程免费(price=0)→ 返回 videoUrl
+ * - 课程付费 → 用户在 user_courses 中存在记录才返回 videoUrl,否则 403
+ *
+ * 返回 LessonPlayUrl: { lessonId, courseId, videoUrl }
+ */
+router.get('/:id/play', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthRequest).userId!
+    const lessonId = Number(req.params.id)
+    if (!Number.isFinite(lessonId)) return fail(res, 400, '参数错误')
+
+    // 1. 查课时
+    const [lessonRows] = await pool.query('SELECT * FROM lessons WHERE id = ?', [lessonId])
+    const lessonRow = (lessonRows as any[])[0]
+    if (!lessonRow) return fail(res, 404, '课时不存在')
+    const courseId = lessonRow.course_id
+
+    // 2. 查课程价格与权限开关
+    const [courseRows] = await pool.query(
+      'SELECT price, requires_access FROM courses WHERE id = ?',
+      [courseId]
+    )
+    const courseRow = (courseRows as any[])[0]
+    if (!courseRow) return fail(res, 404, '课程不存在')
+
+    const isFree = Number(courseRow.price) === 0
+    // requires_access=0 表示后台已关闭权限校验（测试用），任何人可观看
+    const accessOpen = !courseRow.requires_access || Number(courseRow.requires_access) === 0
+
+    // 3. 非免费且未开放 → 必须已购
+    if (!isFree && !accessOpen) {
+      const [ucRows] = await pool.query(
+        'SELECT id FROM user_courses WHERE user_id = ? AND course_id = ?',
+        [userId, courseId]
+      )
+      if ((ucRows as any[]).length === 0) {
+        return fail(res, 403, '请先购买课程')
+      }
+    }
+
+    // 4. 返回视频地址
+    return ok(res, {
+      lessonId,
+      courseId,
+      videoUrl: lessonRow.video_url || '',
+    })
+  } catch (err) {
+    console.error('[lesson] play error:', err)
+    return fail(res, 500, '获取视频地址失败')
   }
 })
 

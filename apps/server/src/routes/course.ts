@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { pool } from '../db'
 import { ok, fail } from '../utils'
+import { optionalAuthMiddleware, AuthRequest } from '../auth'
 
 const router = Router()
 
@@ -19,6 +20,7 @@ function mapCourse(row: any) {
     cover: row.cover,
     isHot: !!row.is_hot,
     status: row.status,
+    requiresAccess: !!row.requires_access,
   }
 }
 
@@ -110,7 +112,9 @@ router.get('/categories', async (req, res) => {
   }
 })
 
-/** GET /api/courses/:courseId/lessons 课程大纲 */
+/** GET /api/courses/:courseId/lessons 课程大纲
+ * 注意:此接口不再返回 videoUrl,改由 GET /api/lessons/:id/play 鉴权后下发
+ */
 router.get('/courses/:courseId/lessons', async (req, res) => {
   try {
     const courseId = Number(req.params.courseId)
@@ -124,12 +128,73 @@ router.get('/courses/:courseId/lessons', async (req, res) => {
       title: r.title,
       duration: r.duration,
       durationSeconds: r.duration_seconds,
-      videoUrl: r.video_url,
+      content: r.content ?? '',
       sort: r.sort,
     }))
     return ok(res, data)
   } catch (err) {
     console.error(err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/**
+ * GET /api/courses/:id/access
+ * 查询当前用户对该课程的访问权限
+ * - 课程 requires_access=0（开放观看）：canLearn=true
+ * - 免费课程(price=0):canLearn=true
+ * - 付费课程:用户在 user_courses 中存在记录 → canLearn=true
+ * - 未登录用户:仅免费课或开放观看课 canLearn=true
+ *
+ * 返回 CourseAccess: { courseId, isFree, purchased, canLearn }
+ */
+router.get('/courses/:id/access', optionalAuthMiddleware, async (req, res) => {
+  try {
+    const courseId = Number(req.params.id)
+    if (!Number.isFinite(courseId)) return fail(res, 400, '参数错误')
+
+    // 查课程
+    const [courseRows] = await pool.query(
+      'SELECT price, requires_access FROM courses WHERE id = ?',
+      [courseId]
+    )
+    const courseRow = (courseRows as any[])[0]
+    if (!courseRow) return fail(res, 404, '课程不存在')
+
+    const isFree = Number(courseRow.price) === 0
+    // requires_access=0 表示后台已关闭权限校验，任何人都可观看（测试用）
+    const accessOpen = !courseRow.requires_access || Number(courseRow.requires_access) === 0
+
+    // 未登录场景:免费课或开放观看课 canLearn=true
+    const authReq = req as AuthRequest
+    if (!authReq.userId) {
+      const canLearn = isFree || accessOpen
+      return ok(res, {
+        courseId,
+        isFree,
+        purchased: canLearn,
+        canLearn,
+      })
+    }
+
+    // 已登录:免费课或开放观看 → canLearn=true
+    if (isFree || accessOpen) {
+      return ok(res, { courseId, isFree: true, purchased: true, canLearn: true })
+    }
+
+    const [ucRows] = await pool.query(
+      'SELECT id FROM user_courses WHERE user_id = ? AND course_id = ?',
+      [authReq.userId, courseId]
+    )
+    const purchased = (ucRows as any[]).length > 0
+    return ok(res, {
+      courseId,
+      isFree: false,
+      purchased,
+      canLearn: purchased,
+    })
+  } catch (err) {
+    console.error('[course] access error:', err)
     return fail(res, 500, '服务器错误')
   }
 })

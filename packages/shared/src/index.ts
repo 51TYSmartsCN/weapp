@@ -14,6 +14,8 @@ export interface Course {
   instructorId?: number
   isHot?: boolean
   status?: number
+  /** 是否需要购课权限才能观看视频（true=需要购买/登录，false=开放观看，用于测试） */
+  requiresAccess?: boolean
 }
 
 export interface Instructor {
@@ -44,6 +46,8 @@ export interface Lesson {
   courseId?: number
   durationSeconds?: number
   sort?: number
+  /** 图文教程内容（当模块展示模式为 text-image 时使用） */
+  content?: string
 }
 
 export interface Review {
@@ -138,6 +142,12 @@ export enum OrderStatus {
   Cancelled = 3,  // 已取消
 }
 
+/** 订单来源枚举 */
+export enum OrderSource {
+  MiniApp = 0,  // 小程序内购
+  WxShop = 1,   // 微信小店
+}
+
 /** 订单 */
 export interface Order {
   id: number
@@ -148,9 +158,31 @@ export interface Order {
   originalAmount?: number
   couponId?: number
   status: OrderStatus
+  /** 订单来源:0=小程序内购 1=微信小店。老数据未设置时默认 0 */
+  source?: OrderSource
   payMethod?: string
   paidAt?: string
   createdAt: string
+}
+
+/** 课程访问权限结果(GET /api/courses/:id/access) */
+export interface CourseAccess {
+  /** 课程 ID */
+  courseId: number
+  /** 是否免费(price = 0) */
+  isFree: boolean
+  /** 当前用户是否已购(或免费课程自动为 true) */
+  purchased: boolean
+  /** 是否可以学习视频(isFree || purchased) */
+  canLearn: boolean
+}
+
+/** 课时播放地址(GET /api/lessons/:id/play) */
+export interface LessonPlayUrl {
+  lessonId: number
+  courseId: number
+  /** 视频播放地址(仅当用户有权限时返回,否则接口返回 403) */
+  videoUrl: string
 }
 
 /** 优惠券类型枚举 */
@@ -318,4 +350,45 @@ export interface ReportProgressPayload {
 export interface CreateOrderPayload {
   courseId: number
   couponId?: number
+}
+
+/** 主题配置 */
+export interface ThemeConfig {
+  primary: string
+  primaryLight: string
+  primaryLighter: string
+  primaryLightest: string
+  primaryDark: string
+  primaryDarker: string
+  /** TabBar 选中文字色（默认跟随 primary） */
+  tabBarSelectedColor?: string
+  /** TabBar 未选中文字色 */
+  tabBarColor?: string
+  /** TabBar 背景色 */
+  tabBarBgColor?: string
+  /** TabBar 图标配置（4 个 tab） */
+  tabItems?: TabItem[]
+}
+
+/** TabBar 单项配置 */
+export interface TabItem {
+  text: string
+  iconUrl: string
+  activeIconUrl: string
+}
+
+/** 模块展示模式配置（app_configs.module_modes） */
+export interface ModuleDisplayModes {
+  /** 课时播放页：内容展示模式 */
+  lessonPlayer: {
+    /** 'video' = 视频播放; 'text-image' = 图文教程 */
+    contentMode: 'video' | 'text-image'
+  }
+  /** 课程详情页封面：展示模式 */
+  courseDetailCover: {
+    /** 'image' = 静态封面图; 'video' = 视频预览 */
+    mode: 'image' | 'video'
+    /** 当 mode=video 时使用的视频 URL（为空则回退到 image） */
+    videoUrl?: string
+  }
 }

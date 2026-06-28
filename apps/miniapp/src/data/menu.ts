@@ -19,6 +19,7 @@ export const menuGroups: MenuGroup[] = [
   {
     items: [
       { icon: 'help-circle', label: '帮助中心' },
+      { icon: 'qr-code', label: '加企业微信' },
       { icon: 'message-square', label: '意见反馈' },
       { icon: 'settings', label: '设置' }
     ]

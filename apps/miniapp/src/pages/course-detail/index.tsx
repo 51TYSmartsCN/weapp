@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, Image, ScrollView } from '@tarojs/components'
+import { View, Text, Image, Video, ScrollView } from '@tarojs/components'
 import { useRouter } from '@tarojs/taro'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
@@ -9,8 +9,8 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, showApiError } from '../../services'
-import type { Course, Lesson, Review } from '../../types'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError } from '../../services'
+import type { Course, Lesson, Review, CourseAccess } from '../../types'
 import coverImg from '../../assets/image_1_yi19x4.jpg'
 import './index.scss'
 
@@ -18,32 +18,69 @@ export default function CourseDetail() {
   const router = useRouter()
   const courseId = Number(router.params.id) || 1
 
+  // 课程详情页封面展示模式：'image' = 静态封面图; 'video' = 视频预览
+  const [coverMode, setCoverMode] = useState<'image' | 'video'>(
+    () => getModuleModesSync().courseDetailCover.mode
+  )
+  const [coverVideoUrl, setCoverVideoUrl] = useState<string>(
+    () => getModuleModesSync().courseDetailCover.videoUrl || ''
+  )
+
   const [course, setCourse] = useState<Course | null>(null)
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
+  const [access, setAccess] = useState<CourseAccess | null>(null)
   const [loading, setLoading] = useState(true)
   const [followed, setFollowed] = useState(false)
   const [favorited, setFavorited] = useState(false)
+
+  // 进入页面时同步一次封面模式（后台改动后切前台再进入即生效）
+  useEffect(() => {
+    const modes = getModuleModesSync()
+    setCoverMode(modes.courseDetailCover.mode)
+    setCoverVideoUrl(modes.courseDetailCover.videoUrl || '')
+  }, [])
 
   useEffect(() => {
     setLoading(true)
     Promise.all([
       getCourseById(courseId),
-      getLessons(),
+      getLessons(courseId),
       getReviews(),
+      getCourseAccess(courseId),
     ])
-      .then(([courseData, lessonsData, reviewsData]) => {
+      .then(([courseData, lessonsData, reviewsData, accessData]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
         setReviews(reviewsData)
+        setAccess(accessData)
       })
       .catch((err) => showApiError(err, '课程详情加载失败'))
       .finally(() => setLoading(false))
   }, [courseId])
 
-  const handleEnroll = () => {
-    Taro.showToast({ title: '报名成功', icon: 'success' })
+  /** 主按钮点击:已购/免费 → 立即学习;未购 → 跳微信小店购买 */
+  const handlePrimaryAction = () => {
+    if (access?.canLearn) {
+      const firstLesson = lessons[0]
+      if (firstLesson) {
+        Taro.navigateTo({
+          url: `/pages/lesson-player/index?courseId=${courseId}&lessonId=${firstLesson.id}`,
+        })
+      }
+      return
+    }
+    // 未购:提示去微信小店(实际生产可调用 navigateToMiniProgram 跳微信小店小程序)
+    Taro.showToast({ title: '请前往微信小店购买', icon: 'none' })
   }
+
+  /** 主按钮文案 */
+  const primaryBtnText = (() => {
+    if (!access) return '立即报名'
+    if (access.isFree) return '免费观看'
+    if (access.purchased) return '立即学习'
+    return '去微信小店购买'
+  })()
 
   const handleFollow = () => {
     setFollowed((prev) => {
@@ -91,8 +128,21 @@ export default function CourseDetail() {
           </>
         ) : (
           <>
-            {/* Cover */}
-            <Image className='detail-cover' src={coverImg} mode='aspectFill' />
+            {/* Cover — 由后台模块模式控制：image 或 video */}
+            {coverMode === 'video' && coverVideoUrl ? (
+              <Video
+                className='detail-cover'
+                src={coverVideoUrl}
+                controls={true}
+                autoplay={false}
+                muted={true}
+                loop={true}
+                objectFit='cover'
+                showCenterPlayBtn={true}
+              />
+            ) : (
+              <Image className='detail-cover' src={coverImg} mode='aspectFill' />
+            )}
 
             {/* Info Card */}
             <View className='detail-info-card'>
@@ -189,8 +239,8 @@ export default function CourseDetail() {
               <Text>收藏</Text>
             </View>
           </View>
-          <View className='enroll-btn' onClick={handleEnroll}>
-            立即报名
+          <View className='enroll-btn' onClick={handlePrimaryAction}>
+            {primaryBtnText}
           </View>
         </View>
       )}

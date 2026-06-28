@@ -15,6 +15,8 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  BgColorsOutlined,
+  BlockOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { logout } from '../api'
@@ -34,6 +36,8 @@ const menuItems = [
   { key: '/reviews', icon: <MessageOutlined />, label: '评价管理' },
   { key: '/feedbacks', icon: <BulbOutlined />, label: '意见反馈' },
   { key: '/help-articles', icon: <QuestionCircleOutlined />, label: '帮助文章' },
+  { key: '/theme', icon: <BgColorsOutlined />, label: '主题设置' },
+  { key: '/module-modes', icon: <BlockOutlined />, label: '模块展示模式' },
 ]
 
 export default function AdminLayout() {

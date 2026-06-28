@@ -87,7 +87,22 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
   })
 }
 
-/** 退出登录：清除本地 token */
-export function logout(): void {
-  removeToken()
+/**
+ * 退出登录：
+ * 1. 调后端 /api/auth/logout 将当前 token 加入黑名单（让旧 token 立即失效）
+ * 2. 即使后端调用失败（网络/超时）也继续清本地 token，确保用户一定能退出
+ * 3. 清除本地 token
+ */
+export async function logout(): Promise<void> {
+  try {
+    await request<void>({
+      url: '/api/auth/logout',
+      method: 'POST',
+    })
+  } catch (err) {
+    // 后端调用失败（网络/超时/token 已过期）也继续清本地 token
+    console.warn('[logout] 后端登出失败，仍清除本地 token', err)
+  } finally {
+    removeToken()
+  }
 }
