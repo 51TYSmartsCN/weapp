@@ -23,7 +23,11 @@ export default function InstructorCard({ instructor, onClick }: InstructorCardPr
   const bgColor = resolveColor(instructor.color)
 
   return (
-    <View className='instructor-card' onClick={handleClick}>
+    <View
+      className='instructor-card'
+      onClick={handleClick}
+      style={{ '--instructor-color': bgColor } as React.CSSProperties}
+    >
       <Avatar text={instructor.name[0]} size={96} bg={bgColor} />
       <Text className='instructor-name'>{instructor.name}</Text>
       <Text className='instructor-title'>{instructor.title}</Text>

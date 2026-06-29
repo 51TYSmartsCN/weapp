@@ -5,7 +5,7 @@ import NavBar from '../../components/NavBar'
 import Avatar from '../../components/Avatar'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getInstructors, showApiError } from '../../services'
+import { getInstructors, showApiError, resolveColor } from '../../services'
 import type { Instructor } from '../../types'
 import './index.scss'
 
@@ -47,26 +47,30 @@ export default function InstructorList() {
 
             {/* 讲师简略列表 */}
             <View className='instructor-list'>
-              {instructors.map((item) => (
-                <View
-                  key={item.id}
-                  className='instructor-item'
-                  onClick={() => goDetail(item.id)}
-                >
-                  <Avatar text={item.name[0]} size={100} bg={item.color} src={item.avatar} />
-                  <View className='instructor-info'>
-                    <View className='instructor-name-row'>
-                      <Text className='instructor-name'>{item.name}</Text>
-                      <Text className='instructor-title'>{item.title}</Text>
+              {instructors.map((item) => {
+                const itemColor = resolveColor(item.color)
+                return (
+                  <View
+                    key={item.id}
+                    className='instructor-item'
+                    style={{ '--instructor-color': itemColor } as React.CSSProperties}
+                    onClick={() => goDetail(item.id)}
+                  >
+                    <Avatar text={item.name[0]} size={100} bg={itemColor} src={item.avatar} />
+                    <View className='instructor-info'>
+                      <View className='instructor-name-row'>
+                        <Text className='instructor-name'>{item.name}</Text>
+                        <Text className='instructor-title'>{item.title}</Text>
+                      </View>
+                      <Text className='instructor-service'>{item.service}</Text>
+                      {item.bio ? (
+                        <Text className='instructor-bio ellipsis'>{item.bio}</Text>
+                      ) : null}
                     </View>
-                    <Text className='instructor-service'>{item.service}</Text>
-                    {item.bio ? (
-                      <Text className='instructor-bio ellipsis'>{item.bio}</Text>
-                    ) : null}
+                    <Icon name='arrow-right' size={32} color='#94A3B8' />
                   </View>
-                  <Icon name='arrow-right' size={32} color='#94A3B8' />
-                </View>
-              ))}
+                )
+              })}
             </View>
             <View className='safe-bottom' />
           </>

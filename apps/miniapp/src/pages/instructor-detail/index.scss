@@ -48,7 +48,7 @@
 
 .instructor-service {
   font-size: $font-xs;
-  color: $primary;
+  color: var(--instructor-color, $primary);
 }
 
 /* 数据统计 */
@@ -127,9 +127,10 @@
 
 .expertise-tag {
   padding: 8rpx 20rpx;
-  border: 1rpx solid;
+  border: 1rpx solid var(--instructor-color, $primary);
   border-radius: $radius-full;
   font-size: $font-xs;
+  color: var(--instructor-color, $primary);
   background: transparent;
 }
 

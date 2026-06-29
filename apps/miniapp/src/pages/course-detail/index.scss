@@ -266,3 +266,14 @@
   border-radius: $radius-full;
   line-height: 1;
 }
+
+.store-product-btn {
+  flex-shrink: 0;
+  width: auto;
+  display: inline-block;
+
+  .enroll-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

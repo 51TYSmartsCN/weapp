@@ -52,6 +52,22 @@
   padding: $md $base;
 }
 
+.edit-avatar-row-btn {
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  min-height: 120rpx;
+
+  &::after {
+    border: none;
+  }
+}
+
 .edit-avatar-btn {
   width: 120rpx;
   height: 120rpx;

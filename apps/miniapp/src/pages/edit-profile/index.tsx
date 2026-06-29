@@ -117,15 +117,17 @@ export default function EditProfile() {
         <View className='edit-section edit-section--avatar'>
           <Text className='edit-label'>头像</Text>
           <Button
-            className='edit-avatar-btn'
+            className='edit-avatar-row-btn'
             openType='chooseAvatar'
             onChooseAvatar={handleChooseAvatar}
           >
-            {renderAvatarPreview()}
+            <View className='edit-avatar-btn'>
+              {renderAvatarPreview()}
+            </View>
+            <View className='edit-avatar-hint'>
+              <Icon name='chevron-right' size={28} color='#94A3B8' />
+            </View>
           </Button>
-          <View className='edit-avatar-hint'>
-            <Icon name='chevron-right' size={28} color='#94A3B8' />
-          </View>
         </View>
 
         {/* 昵称 */}

@@ -65,14 +65,12 @@ export default function AdminLayout() {
   // 同步路由变化
   useEffect(() => {
     const path = location.pathname
-    const existing = tabs.find((t) => t.key === path)
-    if (existing) {
-      setActiveTab(path)
-    } else if (menuItemsMap[path]) {
-      // 新页面：添加 tab
-      setTabs((prev) => [...prev, { key: path, ...menuItemsMap[path] }])
-      setActiveTab(path)
-    }
+    if (!menuItemsMap[path]) return
+    setActiveTab(path)
+    setTabs((prev) => {
+      if (prev.some((t) => t.key === path)) return prev
+      return [...prev, { key: path, ...menuItemsMap[path] }]
+    })
   }, [location.pathname])
 
   const handleTabChange = useCallback(
@@ -108,14 +106,15 @@ export default function AdminLayout() {
   const handleMenuClick = useCallback(
     ({ key }: { key: string }) => {
       if (key === activeTab) return
-      const existing = tabs.find((t) => t.key === key)
-      if (!existing && menuItemsMap[key]) {
-        setTabs((prev) => [...prev, { key, ...menuItemsMap[key] }])
-      }
+      if (!menuItemsMap[key]) return
+      setTabs((prev) => {
+        if (prev.some((t) => t.key === key)) return prev
+        return [...prev, { key, ...menuItemsMap[key] }]
+      })
       setActiveTab(key)
       navigate(key)
     },
-    [tabs, activeTab, navigate]
+    [activeTab, navigate]
   )
 
   const handleLogout = () => {
@@ -173,13 +172,20 @@ export default function AdminLayout() {
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
           />
-          <Breadcrumb style={{ flex: 1, marginLeft: 16 }}>
-            <Breadcrumb.Item>后台管理</Breadcrumb.Item>
-            <Breadcrumb.Item>
-              {menuItemsMap[location.pathname]?.icon}
-              <span style={{ marginLeft: 4 }}>{menuItemsMap[location.pathname]?.label}</span>
-            </Breadcrumb.Item>
-          </Breadcrumb>
+          <Breadcrumb
+            style={{ flex: 1, marginLeft: 16 }}
+            items={[
+              { title: '后台管理' },
+              {
+                title: (
+                  <span>
+                    {menuItemsMap[location.pathname]?.icon}
+                    <span style={{ marginLeft: 4 }}>{menuItemsMap[location.pathname]?.label}</span>
+                  </span>
+                ),
+              },
+            ]}
+          />
           <Dropdown menu={dropdownItems} placement="bottomRight">
             <div className="admin-header-user">
               <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#0D9488' }} />

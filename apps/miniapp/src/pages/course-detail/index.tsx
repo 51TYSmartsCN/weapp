@@ -9,7 +9,7 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError } from '../../services'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError, getWxshopProduct, fetchWxshopConfig, toggleFavorite, checkFavorite } from '../../services'
 import type { Course, Lesson, Review, CourseAccess } from '../../types'
 import './index.scss'
 
@@ -35,6 +35,8 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true)
   const [followed, setFollowed] = useState(false)
   const [favorited, setFavorited] = useState(false)
+  const [wxshopAppid, setWxshopAppid] = useState('')
+  const [wxshopProductId, setWxshopProductId] = useState('')
 
   // 进入页面时同步一次封面模式（后台改动后切前台再进入即生效）
   useEffect(() => {
@@ -50,18 +52,31 @@ export default function CourseDetail() {
       getLessons(courseId),
       getReviews(),
       getCourseAccess(courseId),
+      getWxshopProduct(courseId),
+      fetchWxshopConfig(),
     ])
-      .then(([courseData, lessonsData, reviewsData, accessData]) => {
+      .then(([courseData, lessonsData, reviewsData, accessData, productData, wxshopConfig]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
         setReviews(reviewsData)
         setAccess(accessData)
+        if (productData) {
+          setWxshopProductId(productData.productId)
+        }
+        setWxshopAppid(wxshopConfig.appid)
       })
       .catch((err) => showApiError(err, '课程详情加载失败'))
       .finally(() => setLoading(false))
   }, [courseId])
 
-  /** 主按钮点击:已购/免费 → 立即学习;未购 → 跳微信小店购买 */
+  // 进入页面时同步收藏状态
+  useEffect(() => {
+    checkFavorite(courseId)
+      .then(setFavorited)
+      .catch(() => setFavorited(false))
+  }, [courseId])
+
+  /** 主按钮点击:已购/免费 → 立即学习 */
   const handlePrimaryAction = () => {
     if (access?.canLearn) {
       const firstLesson = lessons[0]
@@ -70,10 +85,7 @@ export default function CourseDetail() {
           url: `/pages/lesson-player/index?courseId=${courseId}&lessonId=${firstLesson.id}`,
         })
       }
-      return
     }
-    // 未购:提示去微信小店(实际生产可调用 navigateToMiniProgram 跳微信小店小程序)
-    Taro.showToast({ title: '请前往微信小店购买', icon: 'none' })
   }
 
   /** 主按钮文案 */
@@ -93,12 +105,17 @@ export default function CourseDetail() {
     })
   }
 
-  const handleFavorite = () => {
-    setFavorited((prev) => {
-      const next = !prev
-      Taro.showToast({ title: next ? '已收藏' : '已取消收藏', icon: 'none' })
-      return next
-    })
+  const handleFavorite = async () => {
+    const next = !favorited
+    setFavorited(next)
+    Taro.showToast({ title: next ? '已收藏' : '已取消收藏', icon: 'none' })
+    try {
+      await toggleFavorite(courseId)
+    } catch {
+      // 失败时回滚状态
+      setFavorited(!next)
+      showApiError(new Error('收藏操作失败'), '')
+    }
   }
 
   if (!course && !loading) return null
@@ -246,9 +263,28 @@ export default function CourseDetail() {
               <Text>收藏</Text>
             </View>
           </View>
-          <View className='enroll-btn' onClick={handlePrimaryAction}>
-            {primaryBtnText}
-          </View>
+          {access?.canLearn ? (
+            <View className='enroll-btn' onClick={handlePrimaryAction}>
+              {primaryBtnText}
+            </View>
+          ) : wxshopAppid && wxshopProductId ? (
+            <store-product
+              class='store-product-btn'
+              appid={wxshopAppid}
+              product-id={wxshopProductId}
+              custom-content={true}
+              open-page='product-detail'
+              logo-position='bottom-right'
+            >
+              <View className='enroll-btn'>
+                {primaryBtnText}
+              </View>
+            </store-product>
+          ) : (
+            <View className='enroll-btn' onClick={() => Taro.showToast({ title: '该课程暂未上架', icon: 'none' })}>
+              {primaryBtnText}
+            </View>
+          )}
         </View>
       )}
     </View>

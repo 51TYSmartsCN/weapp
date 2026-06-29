@@ -63,3 +63,13 @@ export {
   resolveUrl,
 } from './app-config'
 export type { AppInfo } from './app-config'
+
+export {
+  getWxshopProduct,
+  fetchWxshopConfig,
+  getWxshopConfigSync,
+  initWxshopConfig,
+  refreshWxshopConfig,
+  navigateToWxshopProduct,
+} from './wxshop'
+export type { WxshopProduct, WxshopConfig } from './wxshop'

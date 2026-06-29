@@ -82,7 +82,7 @@
 
 .instructor-service {
   font-size: $font-xs;
-  color: $primary;
+  color: var(--instructor-color, $primary);
 }
 
 .instructor-bio {

@@ -341,6 +341,72 @@ router.post('/order/callback', async (req: Request, res: Response) => {
 })
 
 /**
+ * GET /api/wxshop/product
+ * 根据课程ID获取微信小店商品信息（无需登录）
+ * query: courseId
+ */
+router.get('/product', async (req: Request, res: Response) => {
+  try {
+    const courseId = Number(req.query.courseId)
+    if (!courseId) {
+      return fail(res, 400, '缺少 courseId 参数')
+    }
+
+    const [rows] = await pool.query(
+      'SELECT product_id, product_title, course_id, course_title FROM wxshop_products WHERE course_id = ? AND status = 1 LIMIT 1',
+      [courseId]
+    ) as any
+
+    const row = (rows as any[])[0]
+    if (!row) {
+      return ok(res, null)
+    }
+
+    return ok(res, {
+      productId: row.product_id,
+      productTitle: row.product_title,
+      courseId: row.course_id,
+      courseTitle: row.course_title,
+    })
+  } catch (err) {
+    console.error('[wxshop] get product error:', err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/**
+ * GET /api/wxshop/config
+ * 获取微信小店配置（appid等，无需登录）
+ */
+router.get('/config', async (_req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT value FROM app_configs WHERE `key` = ?',
+      ['wxshop_config']
+    ) as any
+
+    const row = (rows as any[])[0]
+    if (!row) {
+      return ok(res, {
+        appid: '',
+        shopName: '微信小店',
+        productPath: '/pages/product/detail/index',
+      })
+    }
+
+    const config = JSON.parse(row.value)
+    return ok(res, {
+      appid: config.appid || '',
+      shopName: config.shopName || '微信小店',
+      productPath: config.productPath || '/pages/product/detail/index',
+    })
+  } catch (err) {
+    console.error('[wxshop] get config error:', err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/**
  * POST /api/wxshop/order/mock
  * 开发环境模拟下单
  */

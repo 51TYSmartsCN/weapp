@@ -4,7 +4,7 @@
   "description": "GEO 课程多端小程序",
   "appid": "wx0714413431ed0de1",
   "setting": {
-    "urlCheck": true,
+    "urlCheck": false,
     "es6": true,
     "enhance": true,
     "postcss": true,

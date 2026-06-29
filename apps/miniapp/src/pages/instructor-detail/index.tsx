@@ -32,7 +32,11 @@ export default function InstructorDetail() {
   return (
     <View className='instructor-detail-page'>
       <NavBar title='讲师介绍' />
-      <ScrollView className='instructor-detail-body' scrollY>
+      <ScrollView
+        className='instructor-detail-body'
+        scrollY
+        style={{ '--instructor-color': themeColor } as React.CSSProperties}
+      >
         {loading ? (
           <Skeleton rows={6} avatar />
         ) : instructor ? (
@@ -69,7 +73,7 @@ export default function InstructorDetail() {
             {instructor.bio ? (
               <View className='instructor-section'>
                 <View className='section-title-row'>
-                  <Icon name='book-open' size={26} color={instructor.color} />
+                  <Icon name='book-open' size={26} color={themeColor} />
                   <Text className='section-title'>个人简介</Text>
                 </View>
                 <Text className='section-content'>{instructor.bio}</Text>
@@ -80,16 +84,12 @@ export default function InstructorDetail() {
             {instructor.expertise && instructor.expertise.length > 0 ? (
               <View className='instructor-section'>
                 <View className='section-title-row'>
-                  <Icon name='star' size={26} color={instructor.color} />
+                  <Icon name='star' size={26} color={themeColor} />
                   <Text className='section-title'>专长领域</Text>
                 </View>
                 <View className='expertise-tags'>
                   {instructor.expertise.map((tag) => (
-                    <View
-                      key={tag}
-                      className='expertise-tag'
-                      style={{ color: themeColor, borderColor: themeColor }}
-                    >
+                    <View key={tag} className='expertise-tag'>
                       <Text>{tag}</Text>
                     </View>
                   ))}
@@ -101,13 +101,13 @@ export default function InstructorDetail() {
             {instructor.achievements && instructor.achievements.length > 0 ? (
               <View className='instructor-section'>
                 <View className='section-title-row'>
-                  <Icon name='award' size={26} color={instructor.color} />
+                  <Icon name='award' size={26} color={themeColor} />
                   <Text className='section-title'>个人成就</Text>
                 </View>
                 <View className='achievement-list'>
                   {instructor.achievements.map((ach, idx) => (
                     <View key={idx} className='achievement-item'>
-                      <Icon name='check-circle' size={22} color={instructor.color} />
+                      <Icon name='check-circle' size={22} color={themeColor} />
                       <Text className='achievement-text'>{ach}</Text>
                     </View>
                   ))}

@@ -60,17 +60,18 @@ export async function getCoursesByCategory(category: Category, options?: Request
 /**
  * 查询当前用户对该课程的访问权限
  * - 免费课程(price=0):canLearn=true
+ * - VIP 用户:canLearn=true
  * - 付费课程:用户在 user_courses 中存在记录 → canLearn=true
  * - 未登录场景:仅免费课 canLearn=true
  *
- * 本地 mock:price=0 即可学
+ * 本地 mock:price=0 或 isVip=true 即可学
  */
 export async function getCourseAccess(courseId: number, options?: RequestOptions): Promise<CourseAccess> {
   if (shouldUseLocal(options)) {
     const course = allCourses.find((c) => c.id === courseId)
     const isFree = !course || course.price === 0
-    return { courseId, isFree, purchased: isFree, canLearn: isFree }
+    // 本地 mock 假设当前用户不是 VIP（真实 VIP 状态需后端接口返回）
+    return { courseId, isFree, purchased: isFree, canLearn: isFree, isVip: false }
   }
-  // TODO: return Taro.request({ url: `/api/courses/${courseId}/access` })
-  return request<CourseAccess>({ url: `/api/courses/${courseId}/access`, method: 'GET', skipAuth: true })
+  return request<CourseAccess>({ url: `/api/courses/${courseId}/access`, method: 'GET' })
 }

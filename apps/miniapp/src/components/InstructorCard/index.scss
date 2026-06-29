@@ -44,5 +44,5 @@
 .instructor-service {
   margin-top: 8rpx;
   font-size: $font-xs;
-  color: $primary;
+  color: var(--instructor-color, $primary);
 }

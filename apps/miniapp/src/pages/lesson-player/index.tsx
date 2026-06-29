@@ -181,13 +181,17 @@ export default function LessonPlayer() {
         ) : (
           <View className='player-lock'>
             <Icon name='lock' size={80} color='#94A3B8' />
-            <Text className='player-lock-title'>该课程需要购买后观看</Text>
+            <Text className='player-lock-title'>
+              {access?.isVip ? 'VIP 可免费观看' : '该课程需要购买后观看'}
+            </Text>
             <Text className='player-lock-desc'>
               {course?.title}
             </Text>
-            <View className='player-lock-btn' onClick={handleGoToBuy}>
-              去购买课程
-            </View>
+            {!access?.isVip && (
+              <View className='player-lock-btn' onClick={handleGoToBuy}>
+                去购买课程
+              </View>
+            )}
           </View>
         )}
       </View>
