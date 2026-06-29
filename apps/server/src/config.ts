@@ -12,11 +12,14 @@ import path from 'path'
 const NODE_ENV = process.env.NODE_ENV || 'development'
 const envOverrideFile = `.env.${NODE_ENV}`
 
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
-dotenv.config({ path: path.resolve(__dirname, '..', envOverrideFile) })
+if (process.env.GEO_SERVER_SKIP_DOTENV !== '1') {
+  dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
+  dotenv.config({ path: path.resolve(__dirname, '..', envOverrideFile) })
+}
 
 /** 当前运行环境（便于日志/调试） */
 export const env: string = NODE_ENV
+export const isProduction = env === 'production'
 
 /** 服务端口 */
 export const port: number = Number(process.env.PORT) || 4000
@@ -37,20 +40,14 @@ export const dbConfig = {
 
 /** JWT 配置 */
 export const jwtConfig = {
-  secret: process.env.JWT_SECRET!,
-  expiresIn: process.env.JWT_EXPIRES_IN!,
-}
-
-/** Admin 登录配置 */
-export const adminConfig = {
-  username: process.env.ADMIN_USERNAME || 'admin',
-  password: process.env.ADMIN_PASSWORD || 'admin123',
+  secret: process.env.JWT_SECRET || 'geo_course_dev_secret_change_me',
+  expiresIn: process.env.JWT_EXPIRES_IN || '7d',
 }
 
 /** 微信小程序配置 */
 export const wechatConfig = {
-  appid: process.env.WECHAT_APPID!,
-  secret: process.env.WECHAT_SECRET!,
+  appid: process.env.WECHAT_APPID || '',
+  secret: process.env.WECHAT_SECRET || '',
 }
 
 /** 微信小店订单回调配置(小程序消息推送机制)
@@ -58,10 +55,39 @@ export const wechatConfig = {
  * - encodingAESKey:消息加密密钥,43位 base64,对应小程序后台 EncodingAESKey
  * - mockMode:仅 WXSHOP_MOCK=1 时开启,跳过签名校验+允许 mock 接口
  */
+const wxshopCallbackToken = process.env.WXSHOP_CALLBACK_TOKEN || ''
+const wxshopEncodingAESKey = process.env.WXSHOP_ENCODING_AES_KEY || ''
 export const wxshopConfig = {
-  callbackToken: process.env.WXSHOP_CALLBACK_TOKEN!,
-  encodingAESKey: process.env.WXSHOP_ENCODING_AES_KEY!,
-  mockMode: process.env.WXSHOP_MOCK === '1',
+  callbackToken: wxshopCallbackToken,
+  encodingAESKey: wxshopEncodingAESKey,
+  mockMode: isProduction
+    ? false
+    : process.env.WXSHOP_MOCK === '1' || !wxshopCallbackToken,
+}
+
+/** CORS 白名单（生产环境使用） */
+export const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
+function requireEnv(name: string) {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`[config] 缺少生产环境必填变量: ${name}`)
+  }
+  return value
+}
+
+if (isProduction) {
+  requireEnv('JWT_SECRET')
+  requireEnv('WECHAT_APPID')
+  requireEnv('WECHAT_SECRET')
+  requireEnv('WXSHOP_CALLBACK_TOKEN')
+  requireEnv('WXSHOP_ENCODING_AES_KEY')
+  requireEnv('ADMIN_USERNAME')
+  requireEnv('ADMIN_PASSWORD')
+  requireEnv('CORS_ORIGINS')
 }
 
 /** 后台管理员账号配置

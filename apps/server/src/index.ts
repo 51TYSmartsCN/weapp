@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import path from 'path'
-import { port, env } from './config'
+import { corsOrigins, isProduction, port, env } from './config'
 import { pool } from './db'
 import userRoutes from './routes/user'
 import favoriteRoutes from './routes/favorite'
@@ -38,7 +38,24 @@ const app = express()
 
 app.set('trust proxy', true)
 
-app.use(cors())
+// 挂载中间件
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!isProduction || !origin) {
+        callback(null, true)
+        return
+      }
+
+      if (corsOrigins.includes(origin)) {
+        callback(null, true)
+        return
+      }
+
+      callback(new Error(`[cors] 不允许的来源: ${origin}`))
+    },
+  })
+)
 
 // 微信小店回调路由需要原始 body(XML/JSON 混合),先于 express.json 挂载
 // 小程序消息推送:XML 明文/密文 或 JSON 明文/密文
