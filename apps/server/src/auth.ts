@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 import { jwtConfig } from './config'
-import { unauthorized } from './utils'
+import { forbidden, unauthorized } from './utils'
 
 /** 已登出的 token 黑名单（内存实现，进程重启后清空）
  *  JWT 是无状态的，前端清本地 token 后 token 在有效期内仍可被复用；
@@ -23,14 +23,26 @@ export function isBlacklisted(token: string): boolean {
   return tokenBlacklist.has(token)
 }
 
+export type AuthRole = 'user' | 'admin'
+
+interface AuthTokenPayload {
+  userId: number
+  role: AuthRole
+}
+
 /** 签发 JWT */
-export function signToken(userId: number): string {
-  return jwt.sign({ userId }, jwtConfig.secret, { expiresIn: jwtConfig.expiresIn as any })
+export function signToken(userId: number, role: AuthRole = 'user'): string {
+  return jwt.sign({ userId, role }, jwtConfig.secret, { expiresIn: jwtConfig.expiresIn as any })
 }
 
 /** 扩展 Request 类型 */
 export interface AuthRequest extends Request {
   userId?: number
+  role?: AuthRole
+}
+
+function verifyAccessToken(token: string): AuthTokenPayload {
+  return jwt.verify(token, jwtConfig.secret) as AuthTokenPayload
 }
 
 /** 认证中间件：从 Authorization: Bearer <token> 解析 userId */
@@ -45,8 +57,34 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
     return unauthorized(res, 'token 已失效，请重新登录')
   }
   try {
-    const payload = jwt.verify(token, jwtConfig.secret) as { userId: number }
+    const payload = verifyAccessToken(token)
     req.userId = payload.userId
+    req.role = payload.role
+    next()
+  } catch {
+    return unauthorized(res, 'token 无效或已过期')
+  }
+}
+
+/** 管理后台认证：必须是 admin token */
+export function adminAuthMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return unauthorized(res)
+  }
+
+  const token = authHeader.slice(7)
+  if (isBlacklisted(token)) {
+    return unauthorized(res, 'token 已失效，请重新登录')
+  }
+
+  try {
+    const payload = verifyAccessToken(token)
+    if (payload.role !== 'admin') {
+      return forbidden(res, '仅管理员可访问')
+    }
+    req.userId = payload.userId
+    req.role = payload.role
     next()
   } catch {
     return unauthorized(res, 'token 无效或已过期')
@@ -65,6 +103,7 @@ export function optionalAuthMiddleware(req: AuthRequest, _res: Response, next: N
       try {
         const payload = jwt.verify(token, jwtConfig.secret) as { userId: number }
         req.userId = payload.userId
+        req.role = (payload as AuthTokenPayload).role
       } catch {
         // token 无效就当未登录处理,不报错
       }

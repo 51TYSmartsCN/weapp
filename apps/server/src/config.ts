@@ -41,6 +41,12 @@ export const jwtConfig = {
   expiresIn: process.env.JWT_EXPIRES_IN!,
 }
 
+/** Admin 登录配置 */
+export const adminConfig = {
+  username: process.env.ADMIN_USERNAME || 'admin',
+  password: process.env.ADMIN_PASSWORD || 'admin123',
+}
+
 /** 微信小程序配置 */
 export const wechatConfig = {
   appid: process.env.WECHAT_APPID!,

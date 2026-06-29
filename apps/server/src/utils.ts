@@ -18,6 +18,11 @@ export function unauthorized(res: Response, message = '未登录') {
   return res.status(401).json({ code: 401, message })
 }
 
+/** 无权限：HTTP 403 */
+export function forbidden(res: Response, message = '无权限') {
+  return res.status(403).json({ code: 403, message })
+}
+
 // ==================== URL 签名工具（视频防盗链） ====================
 
 const SIGN_SECRET = process.env.URL_SIGN_SECRET || 'geo-course-sign-secret-2026'

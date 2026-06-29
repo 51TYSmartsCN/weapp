@@ -29,6 +29,7 @@ import adminFeedbackRoutes from './routes/admin/feedback'
 import adminHelpArticleRoutes from './routes/admin/help-article'
 import adminAppConfigRoutes from './routes/admin/app-config'
 import adminWxshopProductRoutes from './routes/admin/wxshop-product'
+import { adminAuthMiddleware } from './auth'
 
 // 注意：dotenv 已在 ./config 里按 NODE_ENV 加载 .env + .env.{NODE_ENV}
 // 这里不再重复 dotenv.config()
@@ -83,19 +84,19 @@ app.use('/api/orders', orderRoutes)
 
 // Admin 管理后台路由
 app.use('/api/admin', adminLoginRoutes)       // POST /api/admin/login
-app.use('/api/admin', adminDashboardRoutes)   // GET /api/admin/dashboard
-app.use('/api/admin', adminCourseRoutes)     // /api/admin/courses
-app.use('/api/admin', adminInstructorRoutes) // /api/admin/instructors
-app.use('/api/admin', adminLessonRoutes)      // /api/admin/lessons
-app.use('/api/admin', adminBannerRoutes)      // /api/admin/banners
-app.use('/api/admin', adminCategoryRoutes)    // /api/admin/categories
-app.use('/api/admin', adminUserRoutes)        // /api/admin/users
-app.use('/api/admin', adminOrderRoutes)       // /api/admin/orders
-app.use('/api/admin', adminReviewRoutes)      // /api/admin/reviews
-app.use('/api/admin', adminFeedbackRoutes)   // /api/admin/feedbacks
-app.use('/api/admin', adminHelpArticleRoutes) // /api/admin/help-articles
-app.use('/api/admin', adminAppConfigRoutes)   // /api/admin/app-configs
-app.use('/api/admin', adminWxshopProductRoutes) // /api/admin/wxshop-products
+app.use('/api/admin', adminAuthMiddleware, adminDashboardRoutes)   // GET /api/admin/dashboard
+app.use('/api/admin', adminAuthMiddleware, adminCourseRoutes)     // /api/admin/courses
+app.use('/api/admin', adminAuthMiddleware, adminInstructorRoutes) // /api/admin/instructors
+app.use('/api/admin', adminAuthMiddleware, adminLessonRoutes)      // /api/admin/lessons
+app.use('/api/admin', adminAuthMiddleware, adminBannerRoutes)      // /api/admin/banners
+app.use('/api/admin', adminAuthMiddleware, adminCategoryRoutes)    // /api/admin/categories
+app.use('/api/admin', adminAuthMiddleware, adminUserRoutes)        // /api/admin/users
+app.use('/api/admin', adminAuthMiddleware, adminOrderRoutes)       // /api/admin/orders
+app.use('/api/admin', adminAuthMiddleware, adminReviewRoutes)      // /api/admin/reviews
+app.use('/api/admin', adminAuthMiddleware, adminFeedbackRoutes)   // /api/admin/feedbacks
+app.use('/api/admin', adminAuthMiddleware, adminHelpArticleRoutes) // /api/admin/help-articles
+app.use('/api/admin', adminAuthMiddleware, adminAppConfigRoutes)   // /api/admin/app-configs
+app.use('/api/admin', adminAuthMiddleware, adminWxshopProductRoutes) // /api/admin/wxshop-products
 app.use('/api', adminAppConfigRoutes)          // /api/app-configs/theme（小程序用）
 
 // 健康检查占位

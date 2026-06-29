@@ -1,7 +1,7 @@
 import { Router } from 'express'
+import { adminConfig } from '../../config'
 import { signToken } from '../../auth'
 import { ok, fail } from '../../utils'
-import { adminConfig } from '../../config'
 
 const router = Router()
 
@@ -15,7 +15,7 @@ router.post('/login', async (req, res) => {
     if (username !== adminConfig.username || password !== adminConfig.password) {
       return fail(res, 1001, '用户名或密码错误')
     }
-    const token = signToken(99999) // admin userId
+    const token = signToken(99999, 'admin') // 独立 admin token
     return ok(res, { token })
   } catch (err) {
     console.error(err)
