@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Layout, Menu, Avatar, Dropdown, Button } from 'antd'
+import { useState, useCallback, useEffect } from 'react'
+import { Layout, Menu, Avatar, Dropdown, Button, Tabs, Breadcrumb } from 'antd'
 import {
   DashboardOutlined,
   BookOutlined,
@@ -25,27 +25,98 @@ import './AdminLayout.css'
 
 const { Header, Sider, Content } = Layout
 
-const menuItems = [
-  { key: '/', icon: <DashboardOutlined />, label: '仪表盘' },
-  { key: '/courses', icon: <BookOutlined />, label: '课程管理' },
-  { key: '/instructors', icon: <UserOutlined />, label: '讲师管理' },
-  { key: '/lessons', icon: <OrderedListOutlined />, label: '课时管理' },
-  { key: '/banners', icon: <PictureOutlined />, label: '轮播管理' },
-  { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理' },
-  { key: '/users', icon: <TeamOutlined />, label: '用户管理' },
-  { key: '/orders', icon: <ShoppingOutlined />, label: '订单管理' },
-  { key: '/reviews', icon: <MessageOutlined />, label: '评价管理' },
-  { key: '/feedbacks', icon: <BulbOutlined />, label: '意见反馈' },
-  { key: '/help-articles', icon: <QuestionCircleOutlined />, label: '帮助文章' },
-  { key: '/theme', icon: <BgColorsOutlined />, label: '主题设置' },
-  { key: '/module-modes', icon: <BlockOutlined />, label: '模块展示模式' },
-  { key: '/wxshop-products', icon: <ShopOutlined />, label: '小店商品映射' },
-]
+interface TabItem {
+  key: string
+  label: string
+  icon: React.ReactNode
+}
+
+const menuItemsMap: Record<string, { label: string; icon: React.ReactNode }> = {
+  '/': { label: '仪表盘', icon: <DashboardOutlined /> },
+  '/courses': { label: '课程管理', icon: <BookOutlined /> },
+  '/instructors': { label: '讲师管理', icon: <UserOutlined /> },
+  '/lessons': { label: '课时管理', icon: <OrderedListOutlined /> },
+  '/banners': { label: '轮播管理', icon: <PictureOutlined /> },
+  '/categories': { label: '分类管理', icon: <AppstoreOutlined /> },
+  '/users': { label: '用户管理', icon: <TeamOutlined /> },
+  '/orders': { label: '订单管理', icon: <ShoppingOutlined /> },
+  '/reviews': { label: '评价管理', icon: <MessageOutlined /> },
+  '/feedbacks': { label: '意见反馈', icon: <BulbOutlined /> },
+  '/help-articles': { label: '帮助文章', icon: <QuestionCircleOutlined /> },
+  '/theme': { label: '主题设置', icon: <BgColorsOutlined /> },
+  '/module-modes': { label: '模块展示模式', icon: <BlockOutlined /> },
+  '/wxshop-products': { label: '小店商品映射', icon: <ShopOutlined /> },
+}
+
+const tabBarStyle: React.CSSProperties = {
+  background: '#fff',
+  margin: '0 -24px',
+  padding: '0 16px',
+  borderBottom: '1px solid #f0f0f0',
+}
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const [tabs, setTabs] = useState<TabItem[]>([{ key: '/', ...menuItemsMap['/'] }])
+  const [activeTab, setActiveTab] = useState('/')
   const navigate = useNavigate()
   const location = useLocation()
+
+  // 同步路由变化
+  useEffect(() => {
+    const path = location.pathname
+    const existing = tabs.find((t) => t.key === path)
+    if (existing) {
+      setActiveTab(path)
+    } else if (menuItemsMap[path]) {
+      // 新页面：添加 tab
+      setTabs((prev) => [...prev, { key: path, ...menuItemsMap[path] }])
+      setActiveTab(path)
+    }
+  }, [location.pathname])
+
+  const handleTabChange = useCallback(
+    (key: string) => {
+      setActiveTab(key)
+      navigate(key)
+    },
+    [navigate]
+  )
+
+  const handleTabEdit = useCallback(
+    (targetKey: string, action: 'add' | 'remove') => {
+      if (action === 'remove') {
+        // 至少保留一个 tab
+        if (tabs.length <= 1) return
+
+        const targetIndex = tabs.findIndex((t) => t.key === targetKey)
+        const newTabs = tabs.filter((t) => t.key !== targetKey)
+        setTabs(newTabs)
+
+        // 如果关闭的是当前激活的 tab，切换到相邻的
+        if (activeTab === targetKey) {
+          const nextTab = newTabs[Math.min(targetIndex, newTabs.length - 1)]
+          const nextKey = nextTab?.key || '/'
+          setActiveTab(nextKey)
+          navigate(nextKey)
+        }
+      }
+    },
+    [tabs, activeTab, navigate]
+  )
+
+  const handleMenuClick = useCallback(
+    ({ key }: { key: string }) => {
+      if (key === activeTab) return
+      const existing = tabs.find((t) => t.key === key)
+      if (!existing && menuItemsMap[key]) {
+        setTabs((prev) => [...prev, { key, ...menuItemsMap[key] }])
+      }
+      setActiveTab(key)
+      navigate(key)
+    },
+    [tabs, activeTab, navigate]
+  )
 
   const handleLogout = () => {
     logout()
@@ -58,6 +129,16 @@ export default function AdminLayout() {
       if (key === 'logout') handleLogout()
     },
   }
+
+  const tabItems = tabs.map((tab) => ({
+    key: tab.key,
+    label: (
+      <span>
+        {tab.icon}
+        <span style={{ marginLeft: 6 }}>{tab.label}</span>
+      </span>
+    ),
+  }))
 
   return (
     <Layout className="admin-layout">
@@ -77,8 +158,12 @@ export default function AdminLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
+          items={Object.entries(menuItemsMap).map(([key, { label, icon }]) => ({
+            key,
+            icon,
+            label,
+          }))}
+          onClick={handleMenuClick}
         />
       </Sider>
       <Layout style={{ marginLeft: collapsed ? 80 : 220, transition: 'margin-left 0.2s' }}>
@@ -88,6 +173,13 @@ export default function AdminLayout() {
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
           />
+          <Breadcrumb style={{ flex: 1, marginLeft: 16 }}>
+            <Breadcrumb.Item>后台管理</Breadcrumb.Item>
+            <Breadcrumb.Item>
+              {menuItemsMap[location.pathname]?.icon}
+              <span style={{ marginLeft: 4 }}>{menuItemsMap[location.pathname]?.label}</span>
+            </Breadcrumb.Item>
+          </Breadcrumb>
           <Dropdown menu={dropdownItems} placement="bottomRight">
             <div className="admin-header-user">
               <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#0D9488' }} />
@@ -96,7 +188,18 @@ export default function AdminLayout() {
           </Dropdown>
         </Header>
         <Content className="admin-content">
-          <Outlet />
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            onEdit={handleTabEdit as any}
+            type="editable-card"
+            hideAdd
+            style={tabBarStyle}
+            items={tabItems}
+          />
+          <div style={{ padding: '16px 0' }}>
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>

@@ -19,6 +19,43 @@ router.get('/dashboard', authMiddleware, async (_req, res) => {
       "SELECT COUNT(*) AS todayOrders FROM orders WHERE DATE(created_at) = CURDATE()"
     ) as any
 
+    // 近 7 天收入趋势
+    const [revenueTrend] = await pool.query(`
+      SELECT DATE(created_at) AS date, COALESCE(SUM(amount), 0) AS revenue
+      FROM orders
+      WHERE status = 1 AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `) as any
+
+    // 近 7 天订单趋势
+    const [orderTrend] = await pool.query(`
+      SELECT DATE(created_at) AS date, COUNT(*) AS orders
+      FROM orders
+      WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `) as any
+
+    // 课程销量排行 TOP 5
+    const [topCourses] = await pool.query(`
+      SELECT c.id, c.title, COUNT(o.id) AS orderCount
+      FROM courses c
+      LEFT JOIN orders o ON o.course_id = c.id AND o.status = 1
+      GROUP BY c.id, c.title
+      ORDER BY orderCount DESC
+      LIMIT 5
+    `) as any
+
+    // 近 7 天每日新增用户
+    const [userTrend] = await pool.query(`
+      SELECT DATE(created_at) AS date, COUNT(*) AS users
+      FROM users
+      WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `) as any
+
     return ok(res, {
       totalCourses: Number(totalCourses),
       totalUsers: Number(totalUsers),
@@ -26,6 +63,10 @@ router.get('/dashboard', authMiddleware, async (_req, res) => {
       totalInstructors: Number(totalInstructors),
       totalRevenue: Number(totalRevenue),
       todayOrders: Number(todayOrders),
+      revenueTrend,
+      orderTrend,
+      topCourses,
+      userTrend,
     })
   } catch (err) {
     console.error(err)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Table,
   Tag,
@@ -7,7 +7,6 @@ import {
   Modal,
   Descriptions,
   Space,
-  message,
 } from 'antd'
 import dayjs from 'dayjs'
 import { orderApi } from '../../api'
@@ -37,10 +36,10 @@ const STATUS_MAP: Record<number, { label: string; color: string }> = {
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },
-  { label: '待支付', value: 0 },
-  { label: '已支付', value: 1 },
-  { label: '已退款', value: 2 },
-  { label: '已取消', value: 3 },
+  { label: '待支付', value: '0' },
+  { label: '已支付', value: '1' },
+  { label: '已退款', value: '2' },
+  { label: '已取消', value: '3' },
 ]
 
 const PAGE_SIZE = 20
@@ -50,12 +49,11 @@ export default function Orders() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined)
+  const [statusFilter, setStatusFilter] = useState<string>('')
 
   // Detail modal
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailData, setDetailData] = useState<OrderItem | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
 
   const fetchData = useCallback(async (p: number, status?: number) => {
     setLoading(true)
@@ -73,25 +71,21 @@ export default function Orders() {
   }, [])
 
   useEffect(() => {
-    fetchData(page, statusFilter)
+    fetchData(page, statusFilter ? Number(statusFilter) : undefined)
   }, [page, statusFilter, fetchData])
 
   const handleStatusChange = (val: string) => {
-    const status = val === '' ? undefined : Number(val)
-    setStatusFilter(status)
+    setStatusFilter(val)
     setPage(1)
   }
 
   const openDetail = async (record: OrderItem) => {
     setDetailOpen(true)
-    setDetailLoading(true)
     try {
       const res = await orderApi.getById(record.id)
       setDetailData(res)
     } catch {
       setDetailData(record)
-    } finally {
-      setDetailLoading(false)
     }
   }
 
@@ -179,7 +173,7 @@ export default function Orders() {
         <Space>
           <span>订单状态：</span>
           <Select
-            value={statusFilter === undefined ? '' : statusFilter}
+            value={statusFilter}
             options={STATUS_OPTIONS}
             onChange={handleStatusChange}
             style={{ width: 140 }}
@@ -214,7 +208,7 @@ export default function Orders() {
         width={600}
       >
         {detailData && (
-          <Descriptions column={2} bordered size="small" loading={detailLoading}>
+          <Descriptions column={2} bordered size="small">
             <Descriptions.Item label="订单ID">{detailData.id}</Descriptions.Item>
             <Descriptions.Item label="订单号">{detailData.orderNo}</Descriptions.Item>
             <Descriptions.Item label="用户ID">{detailData.userId}</Descriptions.Item>

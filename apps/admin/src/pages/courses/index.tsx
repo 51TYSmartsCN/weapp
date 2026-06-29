@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Table,
   Button,
@@ -140,7 +140,7 @@ export default function Courses() {
   const openCreate = () => {
     setEditingRecord(null)
     form.resetFields()
-    form.setFieldsValue({ status: true, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true })
+    form.setFieldsValue({ status: 1, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true })
     setModalOpen(true)
   }
 
@@ -154,8 +154,8 @@ export default function Courses() {
       originalPrice: record.originalPrice ?? 0,
       cover: record.cover,
       isHot: record.isHot,
-      status: record.status === 1,
-      requiresAccess: record.requiresAccess !== false,
+      status: record.status,
+      requiresAccess: record.requiresAccess,
     })
     setModalOpen(true)
   }
@@ -379,7 +379,7 @@ export default function Courses() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             新增课程
           </Button>
-          <Input
+          <Input.Search
             placeholder="搜索课程标题"
             prefix={<SearchOutlined />}
             allowClear

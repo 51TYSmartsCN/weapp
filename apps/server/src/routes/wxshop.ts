@@ -28,23 +28,21 @@ function calcSignature(token: string, timestamp: string, nonce: string, encrypt:
  * 明文结构: 16字节随机串 + 4字节msg_len(大端) + msg + appid
  */
 function decryptMsg(encodingAESKey: string, encryptBase64: string): { text: string; appid: string } {
-  const key = Buffer.from(encodingAESKey + '=', 'base64') as Buffer
-  const iv = key.subarray(0, 16) as Buffer
+  const key = Buffer.from(encodingAESKey + '=', 'base64')
+  const iv = key.slice(0, 16)
   const encrypted = Buffer.from(encryptBase64, 'base64')
-  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv)
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key as any, iv as any)
   decipher.setAutoPadding(false)
-  let decrypted = Buffer.concat([decipher.update(encrypted) as Buffer, decipher.final() as Buffer])
+  let decrypted = Buffer.concat([decipher.update(encrypted as any) as any, decipher.final() as any])
 
-  // 去掉 PKCS#7 padding
   const padLen = decrypted[decrypted.length - 1]
   if (padLen >= 1 && padLen <= 32) {
-    decrypted = decrypted.subarray(0, decrypted.length - padLen)
+    decrypted = decrypted.slice(0, decrypted.length - padLen)
   }
 
-  // 跳过 16 字节随机串 + 4 字节消息长度
   const msgLen = decrypted.readUInt32BE(16)
-  const msg = decrypted.subarray(20, 20 + msgLen).toString('utf8')
-  const appid = decrypted.subarray(20 + msgLen).toString('utf8')
+  const msg = decrypted.slice(20, 20 + msgLen).toString('utf8')
+  const appid = decrypted.slice(20 + msgLen).toString('utf8')
   return { text: msg, appid }
 }
 
