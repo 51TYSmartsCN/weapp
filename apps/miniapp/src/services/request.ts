@@ -1,8 +1,10 @@
 import Taro from '@tarojs/taro'
 
-/** 后端服务地址
- * - 生产环境:线上部署域名
- * - 开发/真机调试:改为 Mac 的局域网 IP,否则 localhost 指向手机自身无法连通
+/**
+ * 后端服务地址
+ * - 生产/开发均使用线上域名，通过本地 hosts 映射到本地开发服务器
+ *   macOS: sudo vim /etc/hosts
+ *   添加: 127.0.0.1 ty-server-api.tysmarts.cn
  */
 export const BASE_URL = 'https://ty-server-api.tysmarts.cn'
 
