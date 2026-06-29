@@ -1,9 +1,10 @@
 import 'dotenv/config'
 import { pool } from './db'
+import { seedImageBase } from './seed-assets'
 
 // ==================== 静态数据（同构自 src/data/） ====================
 
-const IMG_BASE = `http://localhost:${Number(process.env.PORT) || 4000}/images/`
+const IMG_BASE = seedImageBase
 
 // 源自 src/data/user.ts
 const mockUser = {
@@ -70,7 +71,7 @@ const categoriesData = [
 ]
 
 // 源自 src/data/courses.ts 的 allCourses（6 条）；instructor_id 统一为 1（mock 简化）
-// cover 使用后端静态文件服务提供的真实图片（http://localhost:4000/images/xxx.jpg）
+// cover 使用后端静态文件服务提供的真实图片
 const coursesData = [
   { id: 1, title: 'GEO 实战入门：从零掌握 AI 搜索优化', desc: '从零理解生成式引擎优化', rating: 4.9, students: 2368, price: 199, originalPrice: 399, cover: IMG_BASE + 'course-1.jpg', tags: ['GEO入门', '内容优化', '实战'] },
   { id: 2, title: 'AI 时代的品牌内容策略', desc: '打造高可见度品牌内容', rating: 4.8, students: 1856, price: 299, originalPrice: null as number | null, cover: IMG_BASE + 'course-2.jpg', tags: ['内容优化'] },
