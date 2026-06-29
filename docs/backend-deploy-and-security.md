@@ -38,15 +38,21 @@
 - Node.js 18 或更高
 - pnpm 11
 - Nginx
-- MySQL 8
+- 可访问的 MySQL 8（可部署在其他内网机器）
 
 建议目录：
 
 - 代码目录：`/opt/geo-course/weapp`
-- 日志目录：`/var/log/geo-course`
+- 日志目录：`/opt/geo-course/logs`
 - 环境变量文件：`/opt/geo-course/env/server.production.env`
 
 不要把 MySQL 暴露到公网。只允许本机或内网访问。
+
+当前项目已确认的生产形态：
+
+- `t0ops` 只运行 `Nginx + 单实例 Node API`
+- MySQL 使用独立主机 `192.168.123.101`
+- 不在 `t0ops` 上部署本地 MySQL 或 Docker 化数据库
 
 ## 4. 生产环境变量
 
@@ -54,14 +60,14 @@
 
 ```env
 NODE_ENV=production
-PORT=4000
+PORT=4010
 BASE_URL=https://ty-server-api.tysmarts.cn
 
-DB_HOST=127.0.0.1
+DB_HOST=192.168.123.101
 DB_PORT=3306
-DB_USER=geo_course_app
+DB_USER=replace_with_real_user
 DB_PASS=replace_with_real_password
-DB_NAME=geo_course
+DB_NAME=replace_with_real_database
 
 JWT_SECRET=replace_with_long_random_secret
 JWT_EXPIRES_IN=7d
@@ -98,8 +104,8 @@ mysql -uroot -p geo_course < /opt/geo-course/weapp/db/schema.sql
 建议单独创建业务账号：
 
 ```sql
-CREATE USER 'geo_course_app'@'127.0.0.1' IDENTIFIED BY 'replace_with_real_password';
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON geo_course.* TO 'geo_course_app'@'127.0.0.1';
+CREATE USER 'geo_course_app'@'<t0ops出口IP或内网网段>' IDENTIFIED BY 'replace_with_real_password';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON geo_course.* TO 'geo_course_app'@'<t0ops出口IP或内网网段>';
 FLUSH PRIVILEGES;
 ```
 
@@ -135,7 +141,7 @@ node apps/server/dist/index.js
 健康检查：
 
 ```bash
-curl -i http://127.0.0.1:4000/api/health
+curl -i http://127.0.0.1:4010/api/health
 ```
 
 预期返回：
@@ -144,36 +150,39 @@ curl -i http://127.0.0.1:4000/api/health
 {"code":0,"data":{"status":"ok"}}
 ```
 
-## 7. systemd 示例
+## 7. PM2 示例
 
-文件：`/etc/systemd/system/geo-course-server.service`
+文件：
 
-```ini
-[Unit]
-Description=GEO Course Server
-After=network.target mysql.service
+- `/opt/geo-course/weapp/deploy/t0ops/geo-course-server.ecosystem.config.cjs`
+- `/opt/geo-course/weapp/deploy/t0ops/start-geo-course-server.sh`
 
-[Service]
-Type=simple
-WorkingDirectory=/opt/geo-course/weapp
-EnvironmentFile=/opt/geo-course/env/server.production.env
-ExecStart=/usr/bin/node /opt/geo-course/weapp/apps/server/dist/index.js
-Restart=always
-RestartSec=5
-User=www-data
-Group=www-data
-
-[Install]
-WantedBy=multi-user.target
+```js
+module.exports = {
+  apps: [
+    {
+      name: 'geo-course-server',
+      cwd: '/opt/geo-course/weapp',
+      script: '/opt/geo-course/weapp/deploy/t0ops/start-geo-course-server.sh',
+      interpreter: 'bash',
+      instances: 1,
+      exec_mode: 'fork',
+      out_file: '/opt/geo-course/logs/server.stdout.log',
+      error_file: '/opt/geo-course/logs/server.stderr.log',
+      max_memory_restart: '256M',
+    },
+  ],
+}
 ```
 
 启动：
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable geo-course-server
-sudo systemctl start geo-course-server
-sudo systemctl status geo-course-server
+cd /opt/geo-course/weapp
+chmod +x deploy/t0ops/start-geo-course-server.sh
+pm2 start deploy/t0ops/geo-course-server.ecosystem.config.cjs
+pm2 save
+pm2 status geo-course-server
 ```
 
 ## 8. Nginx 示例
@@ -197,7 +206,7 @@ server {
     client_max_body_size 6m;
 
     location / {
-        proxy_pass http://127.0.0.1:4000;
+        proxy_pass http://127.0.0.1:4010;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -239,7 +248,7 @@ sudo systemctl reload nginx
 6. 从非白名单浏览器域名访问 admin API，应被 CORS 拦截
 7. 微信登录真实可用，不再走 mock openid
 8. 微信小店回调验签通过
-9. 数据库仅监听内网或本机，不对公网暴露
+9. 数据库仅允许 `t0ops` 对应出口 IP 或可信内网网段访问，不对公网暴露
 10. 服务重启后健康检查恢复正常
 
 ## 11. 当前仍然存在但未在本轮代码中解决的风险
