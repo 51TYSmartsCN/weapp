@@ -27,7 +27,7 @@ export {
 export { getBanners } from './banner'
 
 export { getInstructors, getInstructorById } from './instructor'
-export { getLessons, getLessonById, getLessonPlayUrl, reportLessonProgress } from './lesson'
+export { getLessons, getLessonById, getLessonPlayUrl, getLessonContent, reportLessonProgress } from './lesson'
 export { getReviews } from './review'
 export { getUser, menuGroups } from './user'
 

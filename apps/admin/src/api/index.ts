@@ -170,6 +170,9 @@ export const userApi = {
   updateVip(id: number, data: Record<string, any>) {
     return request({ method: 'PUT', url: `/admin/users/${id}/vip`, data })
   },
+  remove(id: number) {
+    return request({ method: 'DELETE', url: `/admin/users/${id}` })
+  },
 }
 
 // ===================== Orders =====================

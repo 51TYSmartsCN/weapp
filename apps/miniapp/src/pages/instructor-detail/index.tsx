@@ -5,7 +5,7 @@ import NavBar from '../../components/NavBar'
 import Avatar from '../../components/Avatar'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getInstructorById, showApiError } from '../../services'
+import { getInstructorById, showApiError, resolveColor } from '../../services'
 import type { Instructor } from '../../types'
 import './index.scss'
 
@@ -13,6 +13,8 @@ export default function InstructorDetail() {
   const router = useRouter()
   const [instructor, setInstructor] = useState<Instructor | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const themeColor = instructor ? resolveColor(instructor.color) : '#6366F1'
 
   useEffect(() => {
     const id = Number(router.params.id)
@@ -37,7 +39,7 @@ export default function InstructorDetail() {
           <>
             {/* 头部：头像 + 姓名 + 头衔 */}
             <View className='instructor-header'>
-              <Avatar text={instructor.name[0]} size={140} bg={instructor.color} src={instructor.avatar} />
+              <Avatar text={instructor.name[0]} size={140} bg={themeColor} src={instructor.avatar} />
               <View className='instructor-head-info'>
                 <Text className='instructor-name'>{instructor.name}</Text>
                 <Text className='instructor-title'>{instructor.title}</Text>
@@ -86,7 +88,7 @@ export default function InstructorDetail() {
                     <View
                       key={tag}
                       className='expertise-tag'
-                      style={{ color: instructor.color, borderColor: instructor.color }}
+                      style={{ color: themeColor, borderColor: themeColor }}
                     >
                       <Text>{tag}</Text>
                     </View>

@@ -113,7 +113,9 @@ router.get('/categories', async (req, res) => {
 })
 
 /** GET /api/courses/:courseId/lessons 课程大纲
- * 注意:此接口不再返回 videoUrl,改由 GET /api/lessons/:id/play 鉴权后下发
+ * 注意:此接口不返回 videoUrl,也不返回 content
+ * videoUrl 改由 GET /api/lessons/:id/play 鉴权后下发
+ * content 改由 GET /api/lessons/:id/content 鉴权后获取
  */
 router.get('/courses/:courseId/lessons', async (req, res) => {
   try {
@@ -128,7 +130,6 @@ router.get('/courses/:courseId/lessons', async (req, res) => {
       title: r.title,
       duration: r.duration,
       durationSeconds: r.duration_seconds,
-      content: r.content ?? '',
       sort: r.sort,
     }))
     return ok(res, data)
@@ -143,10 +144,11 @@ router.get('/courses/:courseId/lessons', async (req, res) => {
  * 查询当前用户对该课程的访问权限
  * - 课程 requires_access=0（开放观看）：canLearn=true
  * - 免费课程(price=0):canLearn=true
+ * - VIP 用户:canLearn=true
  * - 付费课程:用户在 user_courses 中存在记录 → canLearn=true
  * - 未登录用户:仅免费课或开放观看课 canLearn=true
  *
- * 返回 CourseAccess: { courseId, isFree, purchased, canLearn }
+ * 返回 CourseAccess: { courseId, isFree, purchased, canLearn, isVip }
  */
 router.get('/courses/:id/access', optionalAuthMiddleware, async (req, res) => {
   try {
@@ -174,12 +176,33 @@ router.get('/courses/:id/access', optionalAuthMiddleware, async (req, res) => {
         isFree,
         purchased: canLearn,
         canLearn,
+        isVip: false,
       })
     }
 
     // 已登录:免费课或开放观看 → canLearn=true
     if (isFree || accessOpen) {
-      return ok(res, { courseId, isFree: true, purchased: true, canLearn: true })
+      return ok(res, { courseId, isFree: true, purchased: true, canLearn: true, isVip: false })
+    }
+
+    // 查询用户是否为 VIP
+    const [userRows] = await pool.query(
+      'SELECT vip, vip_expire_at FROM users WHERE id = ?',
+      [authReq.userId]
+    )
+    const userRow = (userRows as any[])[0]
+    const isVip = userRow && Number(userRow.vip) === 1 &&
+      (!userRow.vip_expire_at || new Date(userRow.vip_expire_at) > new Date())
+
+    // VIP 用户直接可以观看
+    if (isVip) {
+      return ok(res, {
+        courseId,
+        isFree: false,
+        purchased: true,
+        canLearn: true,
+        isVip: true,
+      })
     }
 
     const [ucRows] = await pool.query(
@@ -192,6 +215,7 @@ router.get('/courses/:id/access', optionalAuthMiddleware, async (req, res) => {
       isFree: false,
       purchased,
       canLearn: purchased,
+      isVip: false,
     })
   } catch (err) {
     console.error('[course] access error:', err)

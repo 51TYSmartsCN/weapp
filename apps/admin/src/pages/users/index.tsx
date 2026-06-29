@@ -146,12 +146,39 @@ export default function Users() {
     {
       title: '操作',
       key: 'action',
-      width: 100,
+      width: 160,
       fixed: 'right' as const,
       render: (_: unknown, record: UserItem) => (
-        <Button type="link" size="small" onClick={() => openVipModal(record)}>
-          管理VIP
-        </Button>
+        <Space size="small">
+          <Button type="link" size="small" onClick={() => openVipModal(record)}>
+            管理VIP
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            danger
+            onClick={() => {
+              Modal.confirm({
+                title: '确认删除',
+                content: `确定要删除用户「${record.name}」吗？此操作不可恢复。`,
+                okText: '删除',
+                okButtonProps: { danger: true },
+                cancelText: '取消',
+                onOk: async () => {
+                  try {
+                    await userApi.remove(record.id)
+                    message.success('用户已删除')
+                    fetchData(page)
+                  } catch {
+                    // error already shown by interceptor
+                  }
+                },
+              })
+            }}
+          >
+            删除
+          </Button>
+        </Space>
       ),
     },
   ]

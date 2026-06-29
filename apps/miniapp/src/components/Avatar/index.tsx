@@ -5,9 +5,7 @@ import { BASE_URL } from '../../services/request'
 import './index.scss'
 
 interface AvatarProps {
-  /** 单字头像文本（当未提供 src 或图片加载失败时使用） */
   text?: string
-  /** 头像图片 URL；提供时优先渲染图片，加载失败自动回退到默认头像，再失败才显示文字 */
   src?: string
   size?: number
   color?: string
@@ -15,14 +13,18 @@ interface AvatarProps {
   className?: string
 }
 
-/** 默认头像路径（相对于后端静态资源根目录） */
 const DEFAULT_AVATAR_PATH = '/images/avatars/default.png'
-const DEFAULT_AVATAR = BASE_URL + DEFAULT_AVATAR_PATH
 
-/** 判断字符串是否为图片 URL（http/https 或后端静态路径） */
-function isImageUrl(s?: string): boolean {
-  if (!s) return false
-  return /^https?:\/\//.test(s) || s.startsWith('/images/')
+function resolveAvatarUrl(src?: string): string {
+  if (!src) return ''
+  if (/^https?:\/\//.test(src)) return src
+  if (src.startsWith('/')) return BASE_URL + src
+  return ''
+}
+
+function hasImageUrl(src?: string): boolean {
+  if (!src) return false
+  return /^https?:\/\//.test(src) || src.startsWith('/images/') || src.startsWith('/')
 }
 
 export default function Avatar({
@@ -35,23 +37,20 @@ export default function Avatar({
 }: AvatarProps) {
   const sizePx = Taro.pxTransform(size)
   const fontSizePx = Taro.pxTransform(Math.round(size * 0.45))
-  // 失败阶段：0=未失败 1=主图失败，正在尝试默认图 2=全部失败，回退文字
-  const [failStage, setFailStage] = useState<0 | 1 | 2>(0)
+  const [primaryFailed, setPrimaryFailed] = useState(false)
 
-  const hasPrimarySrc = isImageUrl(src) && failStage < 1
-  const hasDefaultSrc = failStage === 1 && isImageUrl(DEFAULT_AVATAR)
+  const primaryUrl = resolveAvatarUrl(src)
+  const defaultUrl = resolveAvatarUrl(DEFAULT_AVATAR_PATH)
 
-  const currentSrc = hasPrimarySrc ? src : (hasDefaultSrc ? DEFAULT_AVATAR : '')
-  const useImage = !!currentSrc
+  const hasSrc = hasImageUrl(src)
+  const usePrimary = hasSrc && !primaryFailed
+  const useDefault = hasSrc && primaryFailed
+  const useImage = usePrimary || useDefault
+
+  const currentSrc = usePrimary ? primaryUrl : defaultUrl
 
   const handleError = () => {
-    if (failStage === 0 && isImageUrl(src)) {
-      // 主图失败 → 切到默认头像
-      setFailStage(1)
-    } else if (failStage <= 1) {
-      // 默认头像也失败 → 最终回退文字
-      setFailStage(2)
-    }
+    if (!primaryFailed) setPrimaryFailed(true)
   }
 
   return (
@@ -68,7 +67,7 @@ export default function Avatar({
       {useImage ? (
         <Image
           className='avatar-image'
-          src={currentSrc as string}
+          src={currentSrc}
           mode='aspectFill'
           style={{ width: sizePx, height: sizePx }}
           onError={handleError}

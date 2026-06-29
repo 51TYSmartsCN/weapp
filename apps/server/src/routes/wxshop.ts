@@ -2,11 +2,9 @@ import { Router, Request, Response } from 'express'
 import crypto from 'crypto'
 import { pool } from '../db'
 import { ok, fail } from '../utils'
-import { wxshopConfig, wechatConfig, baseUrl } from '../config'
+import { wxshopConfig, wechatConfig } from '../config'
 
 const router = Router()
-
-const DEFAULT_AVATAR_URL = `${baseUrl}/images/avatars/default.png`
 
 // ============================================================
 // 加解密工具(小程序消息推送 WXBizMsgCrypt 标准实现
@@ -75,7 +73,7 @@ async function findOrCreateUserByOpenid(openid: string): Promise<number | null> 
 
   await pool.query(
     'INSERT INTO users (openid, name, avatar, vip) VALUES (?, ?, ?, 0)',
-    [openid, '微信用户', DEFAULT_AVATAR_URL]
+    [openid, '微信用户', null]
   )
   const [r2] = await pool.query('SELECT id FROM users WHERE openid = ?', [openid])
   return (r2 as any[])[0]?.id ?? null
@@ -149,53 +147,22 @@ function extractProductId(data: any): string | null {
 
 /**
  * 通过商品 ID 查映射表获取课程 ID
- * 查不到则回退到从 out_product_id 解析数字
  */
 async function resolveCourseId(data: any): Promise<number | null> {
   const productId = extractProductId(data)
-  if (productId) {
-    try {
-      const [rows] = await pool.query(
-        'SELECT course_id FROM wxshop_products WHERE product_id = ? AND status = 1 LIMIT 1',
-        [productId]
-      ) as any
-      const row = (rows as any[])[0]
-      if (row?.course_id) {
-        return Number(row.course_id)
-      }
-    } catch (err) {
-      console.warn('[wxshop] 查 wxshop_products 映射表失败:', err)
-    }
-  }
-  return extractCourseId(data)
-}
+  if (!productId) return null
 
-/**
- * 从订单事件数据中提取课程 ID（回退方案）
- * 支持多种格式:
- * - out_product_id: "course_1"
- * - product_info / sku 等
- */
-function extractCourseId(data: any): number | null {
-  if (!data) return null
-  const candidates = [
-    data.out_product_id,
-    data.outProductId,
-    data.product_id,
-    data.productId,
-    data.sku_id,
-    data.skuId,
-    data.course_id,
-    data.courseId,
-  ]
-  for (const c of candidates) {
-    if (c == null) continue
-    const s = String(c)
-    const m = s.match(/(\d+)$/)
-    if (m) {
-      const n = Number(m[1])
-      if (Number.isFinite(n) && n > 0) return n
+  try {
+    const [rows] = await pool.query(
+      'SELECT course_id FROM wxshop_products WHERE product_id = ? AND status = 1 LIMIT 1',
+      [productId]
+    ) as any
+    const row = (rows as any[])[0]
+    if (row?.course_id) {
+      return Number(row.course_id)
     }
+  } catch (err) {
+    console.warn('[wxshop] 查 wxshop_products 映射表失败:', err)
   }
   return null
 }

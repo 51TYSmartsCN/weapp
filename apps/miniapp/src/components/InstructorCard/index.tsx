@@ -1,6 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import Avatar from '../Avatar'
+import { resolveColor } from '../../services'
 import type { Instructor } from '../../types'
 import './index.scss'
 
@@ -19,9 +20,11 @@ export default function InstructorCard({ instructor, onClick }: InstructorCardPr
     }
   }
 
+  const bgColor = resolveColor(instructor.color)
+
   return (
     <View className='instructor-card' onClick={handleClick}>
-      <Avatar text={instructor.name[0]} size={96} bg={instructor.color} />
+      <Avatar text={instructor.name[0]} size={96} bg={bgColor} />
       <Text className='instructor-name'>{instructor.name}</Text>
       <Text className='instructor-title'>{instructor.title}</Text>
       <Text className='instructor-service'>{instructor.service}</Text>

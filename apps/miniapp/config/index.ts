@@ -1,8 +1,29 @@
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import webpack from 'webpack'
+import dotenv from 'dotenv'
+import path from 'path'
 import devConfig from './dev'
 import prodConfig from './prod'
+
+const NODE_ENV = process.env.NODE_ENV || 'development'
+const envOverrideFile = `.env.${NODE_ENV}`
+
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
+dotenv.config({ path: path.resolve(__dirname, '..', envOverrideFile) })
+
+const TARO_APP_PREFIX = 'TARO_APP_'
+function getTaroAppEnv(): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const key of Object.keys(process.env)) {
+    if (key.startsWith(TARO_APP_PREFIX)) {
+      result[key] = process.env[key]!
+    }
+  }
+  return result
+}
+
+const taroAppEnv = getTaroAppEnv()
 
 /**
  * 修复 webpackbar 5.x 与 webpack 5.108+ 的 schema 冲突。
@@ -41,7 +62,12 @@ export default defineConfig<'webpack5'>(async (merge) => {
     sourceRoot: 'src',
     outputRoot: 'dist',
     plugins: [],
-    defineConstants: {},
+    defineConstants: Object.fromEntries(
+      Object.entries(taroAppEnv).map(([key, value]) => [
+        `process.env.${key}`,
+        JSON.stringify(value),
+      ])
+    ),
     copy: {
       patterns: [],
       options: {}

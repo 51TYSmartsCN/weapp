@@ -37,23 +37,32 @@ export const dbConfig = {
 
 /** JWT 配置 */
 export const jwtConfig = {
-  secret: process.env.JWT_SECRET || 'geo_course_dev_secret_change_me',
-  expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  secret: process.env.JWT_SECRET!,
+  expiresIn: process.env.JWT_EXPIRES_IN!,
 }
 
 /** 微信小程序配置 */
 export const wechatConfig = {
-  appid: process.env.WECHAT_APPID || '',
-  secret: process.env.WECHAT_SECRET || '',
+  appid: process.env.WECHAT_APPID!,
+  secret: process.env.WECHAT_SECRET!,
 }
 
 /** 微信小店订单回调配置(小程序消息推送机制)
  * - callbackToken:在 mp.weixin.qq.com → 开发管理 → 消息推送配置 中设置的 Token
  * - encodingAESKey:消息加密密钥,43位 base64,对应小程序后台 EncodingAESKey
- * - mockMode:WXSHOP_MOCK=1 或未配置 callbackToken 时开启,跳过签名校验+允许 mock 接口
+ * - mockMode:仅 WXSHOP_MOCK=1 时开启,跳过签名校验+允许 mock 接口
  */
 export const wxshopConfig = {
-  callbackToken: process.env.WXSHOP_CALLBACK_TOKEN || '',
-  encodingAESKey: process.env.WXSHOP_ENCODING_AES_KEY || '',
-  mockMode: process.env.WXSHOP_MOCK === '1' || !process.env.WXSHOP_CALLBACK_TOKEN,
+  callbackToken: process.env.WXSHOP_CALLBACK_TOKEN!,
+  encodingAESKey: process.env.WXSHOP_ENCODING_AES_KEY!,
+  mockMode: process.env.WXSHOP_MOCK === '1',
+}
+
+/** 后台管理员账号配置
+ * - 开发环境:使用默认写死的 admin / admin123
+ * - 其他环境:必须通过环境变量 ADMIN_USERNAME / ADMIN_PASSWORD 配置
+ */
+export const adminConfig = {
+  username: process.env.ADMIN_USERNAME || (NODE_ENV === 'development' ? 'admin' : ''),
+  password: process.env.ADMIN_PASSWORD || (NODE_ENV === 'development' ? 'admin123' : ''),
 }

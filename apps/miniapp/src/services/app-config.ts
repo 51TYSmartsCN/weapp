@@ -34,7 +34,26 @@ export interface ThemeConfig {
 }
 
 const THEME_STORAGE_KEY = 'app_theme_config'
-const TAB_ICON_CACHE_KEY = 'app_tab_icon_cache' // 缓存图标本地路径映射 { url: localPath }
+const TAB_ICON_CACHE_KEY = 'app_tab_icon_cache'
+
+// 默认蓝紫色主题（接口失败或无缓存时兜底）
+const DEFAULT_THEME: ThemeConfig = {
+  primary: '#6366F1',
+  primaryLight: '#818CF8',
+  primaryLighter: '#C7D2FE',
+  primaryLightest: '#EEF2FF',
+  primaryDark: '#4F46E5',
+  primaryDarker: '#4338CA',
+  tabBarSelectedColor: '#6366F1',
+  tabBarColor: '#94A3B8',
+  tabBarBgColor: '#FFFFFF',
+  tabItems: [
+    { text: '首页', iconUrl: '', activeIconUrl: '' },
+    { text: '课程', iconUrl: '', activeIconUrl: '' },
+    { text: '学习', iconUrl: '', activeIconUrl: '' },
+    { text: '我的', iconUrl: '', activeIconUrl: '' },
+  ],
+}
 
 // 内存中的主题色值缓存（同步可读，用于 Icon 等无法使用 CSS 变量的场景）
 // CSS 变量（var(--theme-xxx)）在 SVG data URL / base64 图像内不生效，
@@ -90,25 +109,6 @@ try {
   if (cached) syncThemeCache(cached)
 } catch {
   // ignore
-}
-
-// 默认蓝紫色主题（接口失败或无缓存时兜底）
-const DEFAULT_THEME: ThemeConfig = {
-  primary: '#6366F1',
-  primaryLight: '#818CF8',
-  primaryLighter: '#C7D2FE',
-  primaryLightest: '#EEF2FF',
-  primaryDark: '#4F46E5',
-  primaryDarker: '#4338CA',
-  tabBarSelectedColor: '#6366F1',
-  tabBarColor: '#94A3B8',
-  tabBarBgColor: '#FFFFFF',
-  tabItems: [
-    { text: '首页', iconUrl: '', activeIconUrl: '' },
-    { text: '课程', iconUrl: '', activeIconUrl: '' },
-    { text: '学习', iconUrl: '', activeIconUrl: '' },
-    { text: '我的', iconUrl: '', activeIconUrl: '' },
-  ],
 }
 
 /**

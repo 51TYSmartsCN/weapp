@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import fs from 'fs'
 import path from 'path'
 import { pool } from '../db'
-import { ok, fail } from '../utils'
+import { ok, fail, validateAvatarBuffer, safeDeleteAvatar } from '../utils'
 import { signToken, authMiddleware, AuthRequest, blacklistToken } from '../auth'
 import { wechatConfig } from '../config'
 
@@ -34,8 +34,8 @@ function mapUser(row: any) {
     studyHours: row.study_hours,
     // user_courses 关系在 user 路由才接入，此处暂返回 null
     continueCourse: null,
-    // 已完善资料：name 不是默认占位
-    hasProfile: !!row.name && row.name !== '微信用户',
+    // 已完善资料：name 不是默认占位，且 avatar 不是默认占位
+    hasProfile: !!row.name && row.name !== '微信用户' && !!row.avatar && row.avatar !== 'U',
   }
 }
 
@@ -63,8 +63,7 @@ async function jscode2session(code: string): Promise<{ openid: string; unionid?:
 
 /** POST /api/auth/login
  * body: { code: string }
- * - 配置了 WECHAT_APPID + WECHAT_SECRET 时走真实 jscode2session
- * - 未配置时降级为 mock openid（开发联调）
+ * 通过 jscode2session 接口换取 openid + session_key
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
@@ -73,17 +72,9 @@ router.post('/login', async (req: Request, res: Response) => {
       return fail(res, 400, '缺少 code 参数')
     }
 
-    let openid: string
-    let unionid: string | undefined
-
-    if (wechatConfig.appid && wechatConfig.secret) {
-      const session = await jscode2session(code)
-      openid = session.openid
-      unionid = session.unionid
-    } else {
-      // 开发降级：用 code 直接拼 mock openid
-      openid = 'mock_openid_' + code
-    }
+    const session = await jscode2session(code)
+    const openid = session.openid
+    const unionid = session.unionid
 
     // 先查存量用户
     const [rows] = await pool.query('SELECT * FROM users WHERE openid = ?', [openid])
@@ -124,6 +115,11 @@ router.post('/logout', authMiddleware, (req: Request, res: Response) => {
 /** POST /api/auth/profile
  * body: { nickname: string, avatarBase64?: string, mime?: string }
  * 已登录用户更新昵称 + 头像。avatarBase64 不传则只更新昵称。
+ * 安全校验：
+ * - 昵称长度限制
+ * - 头像文件大小限制（2MB）
+ * - 头像文件类型校验（magic number，仅 JPG/PNG）
+ * - 上传新头像后清理旧头像文件
  */
 router.post('/profile', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -137,17 +133,52 @@ router.post('/profile', authMiddleware, async (req: Request, res: Response) => {
 
     // 处理头像图片（base64 → 文件）
     let avatarUrl: string | undefined
+    let oldAvatarUrl: string | undefined
     if (avatarBase64 && typeof avatarBase64 === 'string') {
-      // 确保目录存在
+      // 1. 解码 base64
+      let buffer: Buffer
+      try {
+        // 兼容带 data:image/xxx;base64, 前缀的情况
+        const base64Data = avatarBase64.replace(/^data:image\/\w+;base64,/, '')
+        buffer = Buffer.from(base64Data, 'base64')
+      } catch {
+        return fail(res, 400, '头像图片格式错误')
+      }
+
+      // 2. 安全校验（大小 + magic number）
+      const validateResult = validateAvatarBuffer(buffer)
+      if (!validateResult.valid) {
+        return fail(res, 400, validateResult.error || '头像图片不合法')
+      }
+
+      // 3. 查旧头像（用于后续清理）
+      const [oldUserRows] = await pool.query('SELECT avatar FROM users WHERE id = ?', [userId])
+      const oldUserRow = (oldUserRows as any[])[0]
+      if (oldUserRow?.avatar) {
+        oldAvatarUrl = oldUserRow.avatar
+      }
+
+      // 4. 确保目录存在
       fs.mkdirSync(AVATAR_DIR, { recursive: true })
 
-      const ext = mime === 'image/png' ? 'png' : 'jpg'
-      const filename = `avatar-${userId}-${Date.now()}.${ext}`
+      // 5. 生成安全的文件名（带随机后缀，防止路径遍历）
+      const detectedMime = validateResult.mime || mime
+      const ext = detectedMime === 'image/png' ? 'png' : 'jpg'
+      const randomSuffix = Math.random().toString(36).slice(2, 10)
+      const filename = `avatar-${userId}-${Date.now()}-${randomSuffix}.${ext}`
       const filepath = path.join(AVATAR_DIR, filename)
-      const buffer = Buffer.from(avatarBase64, 'base64')
-      fs.writeFileSync(filepath, buffer)
 
-      // 拼接完整 URL（与 seed.ts 中课程封面的 URL 风格保持一致）
+      // 6. 安全检查：解析后的绝对路径必须在 AVATAR_DIR 内
+      const resolvedPath = path.resolve(filepath)
+      const resolvedDir = path.resolve(AVATAR_DIR)
+      if (!resolvedPath.startsWith(resolvedDir)) {
+        return fail(res, 400, '文件名不合法')
+      }
+
+      // 7. 写入文件
+      fs.writeFileSync(resolvedPath, buffer)
+
+      // 8. 拼接完整 URL
       const host = req.get('host') || `localhost:${process.env.PORT || 4000}`
       const protocol = req.protocol || 'http'
       avatarUrl = `${protocol}://${host}/images/avatars/${filename}`
@@ -160,6 +191,10 @@ router.post('/profile', authMiddleware, async (req: Request, res: Response) => {
         avatarUrl,
         userId,
       ])
+      // 上传成功后清理旧头像（异步，不阻塞响应）
+      if (oldAvatarUrl) {
+        setImmediate(() => safeDeleteAvatar(AVATAR_DIR, oldAvatarUrl))
+      }
     } else {
       await pool.query('UPDATE users SET name = ? WHERE id = ?', [trimmedName, userId])
     }

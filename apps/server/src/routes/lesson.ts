@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express'
 import { pool } from '../db'
-import { ok, fail } from '../utils'
-import { authMiddleware, AuthRequest } from '../auth'
+import { ok, fail, signUrlPayload, verifyUrlToken } from '../utils'
+import { authMiddleware, AuthRequest, optionalAuthMiddleware } from '../auth'
 
 const router = Router()
 
-/** 将 lessons 行转换为 camelCase(列表/详情不返回 videoUrl) */
+/** 将 lessons 行转换为 camelCase(列表/详情不返回 videoUrl,不返回 content) */
 function mapLesson(row: any) {
   return {
     id: row.id,
@@ -13,12 +13,11 @@ function mapLesson(row: any) {
     title: row.title,
     duration: row.duration,
     durationSeconds: row.duration_seconds,
-    content: row.content ?? '',
     sort: row.sort,
   }
 }
 
-/** GET /api/lessons - 全部课时(不返回 videoUrl) */
+/** GET /api/lessons - 全部课时(不返回 videoUrl,不返回 content) */
 router.get('/', async (req: Request, res: Response) => {
   try {
     const [rows] = await pool.query(
@@ -31,7 +30,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 })
 
-/** GET /api/lessons/:id - 单个课时(不返回 videoUrl) */
+/** GET /api/lessons/:id - 单个课时(不返回 videoUrl,不返回 content) */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id)
@@ -47,14 +46,63 @@ router.get('/:id', async (req: Request, res: Response) => {
 })
 
 /**
+ * 校验课程访问权限的通用函数
+ * 权限优先级：开放观看 > 免费课程 > VIP 用户 > 已购买用户
+ */
+async function checkCourseAccess(
+  userId: number | undefined,
+  courseId: number
+): Promise<{ canAccess: boolean; reason?: string; isFree: boolean; accessOpen: boolean; isVip: boolean }> {
+  const [courseRows] = await pool.query(
+    'SELECT price, requires_access FROM courses WHERE id = ?',
+    [courseId]
+  )
+  const courseRow = (courseRows as any[])[0]
+  if (!courseRow) return { canAccess: false, reason: '课程不存在', isFree: false, accessOpen: false, isVip: false }
+
+  const isFree = Number(courseRow.price) === 0
+  const accessOpen = !courseRow.requires_access || Number(courseRow.requires_access) === 0
+
+  if (isFree || accessOpen) {
+    return { canAccess: true, isFree, accessOpen, isVip: false }
+  }
+
+  if (!userId) {
+    return { canAccess: false, reason: '请先登录', isFree, accessOpen, isVip: false }
+  }
+
+  const [userRows] = await pool.query(
+    'SELECT vip, vip_expire_at FROM users WHERE id = ?',
+    [userId]
+  )
+  const userRow = (userRows as any[])[0]
+  const isVip = userRow && Number(userRow.vip) === 1 &&
+    (!userRow.vip_expire_at || new Date(userRow.vip_expire_at) > new Date())
+
+  if (isVip) {
+    return { canAccess: true, isFree, accessOpen, isVip: true }
+  }
+
+  const [ucRows] = await pool.query(
+    'SELECT id FROM user_courses WHERE user_id = ? AND course_id = ?',
+    [userId, courseId]
+  )
+  if ((ucRows as any[]).length === 0) {
+    return { canAccess: false, reason: '请先购买课程', isFree, accessOpen, isVip: false }
+  }
+  return { canAccess: true, isFree, accessOpen, isVip: false }
+}
+
+/**
  * GET /api/lessons/:id/play
- * 鉴权后下发视频地址
+ * 鉴权后下发带签名的临时视频地址
  * - 必须登录
- * - 课程 requires_access=0（开放观看）→ 返回 videoUrl
- * - 课程免费(price=0)→ 返回 videoUrl
- * - 课程付费 → 用户在 user_courses 中存在记录才返回 videoUrl,否则 403
+ * - 课程 requires_access=0（开放观看）→ 返回
+ * - 课程免费(price=0)→ 返回
+ * - 课程付费 → 用户在 user_courses 中存在记录才返回,否则 403
  *
- * 返回 LessonPlayUrl: { lessonId, courseId, videoUrl }
+ * 返回 LessonPlayUrl: { lessonId, courseId, videoUrl, expiresAt }
+ * videoUrl 为带签名的代理URL，有效期 2 小时
  */
 router.get('/:id/play', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -68,38 +116,106 @@ router.get('/:id/play', authMiddleware, async (req: Request, res: Response) => {
     if (!lessonRow) return fail(res, 404, '课时不存在')
     const courseId = lessonRow.course_id
 
-    // 2. 查课程价格与权限开关
-    const [courseRows] = await pool.query(
-      'SELECT price, requires_access FROM courses WHERE id = ?',
-      [courseId]
-    )
-    const courseRow = (courseRows as any[])[0]
-    if (!courseRow) return fail(res, 404, '课程不存在')
-
-    const isFree = Number(courseRow.price) === 0
-    // requires_access=0 表示后台已关闭权限校验（测试用），任何人可观看
-    const accessOpen = !courseRow.requires_access || Number(courseRow.requires_access) === 0
-
-    // 3. 非免费且未开放 → 必须已购
-    if (!isFree && !accessOpen) {
-      const [ucRows] = await pool.query(
-        'SELECT id FROM user_courses WHERE user_id = ? AND course_id = ?',
-        [userId, courseId]
-      )
-      if ((ucRows as any[]).length === 0) {
-        return fail(res, 403, '请先购买课程')
-      }
+    // 2. 校验访问权限
+    const access = await checkCourseAccess(userId, courseId)
+    if (!access.canAccess) {
+      return fail(res, 403, access.reason || '无访问权限')
     }
 
-    // 4. 返回视频地址
+    // 3. 生成带签名的临时播放 token（2小时有效）
+    const token = signUrlPayload(
+      { uid: userId, lid: lessonId, cid: courseId, t: 'video' },
+      2 * 60 * 60 * 1000
+    )
+
+    // 4. 拼接代理 URL（由 /api/lessons/:id/stream 校验签名后重定向到真实视频）
+    const host = req.get('host') || `localhost:${process.env.PORT || 4000}`
+    const protocol = req.protocol || 'http'
+    const proxyUrl = `${protocol}://${host}/api/lessons/${lessonId}/stream?token=${token}`
+
     return ok(res, {
       lessonId,
       courseId,
-      videoUrl: lessonRow.video_url || '',
+      videoUrl: proxyUrl,
+      expiresAt: Date.now() + 2 * 60 * 60 * 1000,
     })
   } catch (err) {
     console.error('[lesson] play error:', err)
     return fail(res, 500, '获取视频地址失败')
+  }
+})
+
+/**
+ * GET /api/lessons/:id/stream
+ * 视频播放代理：校验签名 token 合法后，302 重定向到真实视频地址
+ * 这样真实视频地址不会暴露给用户，且签名过期后链接失效
+ */
+router.get('/:id/stream', async (req: Request, res: Response) => {
+  try {
+    const lessonId = Number(req.params.id)
+    const token = String(req.query.token || '')
+    if (!Number.isFinite(lessonId) || !token) {
+      return fail(res, 400, '参数错误')
+    }
+
+    // 1. 校验签名
+    const payload = verifyUrlToken(token)
+    if (!payload) {
+      return fail(res, 403, '链接已失效，请重新获取')
+    }
+    if (Number(payload.lid) !== lessonId || payload.t !== 'video') {
+      return fail(res, 403, '签名不匹配')
+    }
+
+    // 2. 查课时的真实视频地址
+    const [lessonRows] = await pool.query('SELECT video_url FROM lessons WHERE id = ?', [lessonId])
+    const lessonRow = (lessonRows as any[])[0]
+    if (!lessonRow || !lessonRow.video_url) {
+      return fail(res, 404, '视频不存在')
+    }
+
+    // 3. 302 重定向到真实视频地址（浏览器/Video 标签会自动跟随）
+    // 注意：如果视频在本地，应该用流式返回而不是重定向，这里兼容外部 URL 的情况
+    return res.redirect(302, lessonRow.video_url)
+  } catch (err) {
+    console.error('[lesson] stream error:', err)
+    return fail(res, 500, '视频加载失败')
+  }
+})
+
+/**
+ * GET /api/lessons/:id/content
+ * 获取课时图文内容（鉴权）
+ * - 未登录：免费课或开放课可看
+ * - 已登录：免费课、开放课、已购课可看
+ */
+router.get('/:id/content', optionalAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthRequest).userId
+    const lessonId = Number(req.params.id)
+    if (!Number.isFinite(lessonId)) return fail(res, 400, '参数错误')
+
+    // 1. 查课时
+    const [lessonRows] = await pool.query('SELECT * FROM lessons WHERE id = ?', [lessonId])
+    const lessonRow = (lessonRows as any[])[0]
+    if (!lessonRow) return fail(res, 404, '课时不存在')
+    const courseId = lessonRow.course_id
+
+    // 2. 校验访问权限
+    const access = await checkCourseAccess(userId, courseId)
+    if (!access.canAccess) {
+      return fail(res, 403, access.reason || '无访问权限')
+    }
+
+    // 3. 返回图文内容
+    return ok(res, {
+      lessonId,
+      courseId,
+      content: lessonRow.content ?? '',
+    })
+  } catch (err) {
+    console.error('[lesson] content error:', err)
+    return fail(res, 500, '获取课程内容失败')
   }
 })
 

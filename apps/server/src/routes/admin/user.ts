@@ -72,4 +72,23 @@ router.put('/users/:id/vip', authMiddleware, async (req, res) => {
   }
 })
 
+/** DELETE /api/admin/users/:id */
+router.delete('/users/:id', authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!id) return fail(res, 400, '无效的用户 ID')
+
+    // 先查询是否存在
+    const [rows] = await pool.query('SELECT id FROM users WHERE id = ?', [id]) as any[]
+    if (rows.length === 0) return fail(res, 404, '用户不存在')
+
+    // 删除用户（关联表 ON DELETE CASCADE 自动清理）
+    await pool.query('DELETE FROM users WHERE id = ?', [id])
+    return ok(res, null)
+  } catch (err) {
+    console.error(err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
 export default router

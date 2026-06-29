@@ -35,7 +35,8 @@ import adminWxshopProductRoutes from './routes/admin/wxshop-product'
 
 const app = express()
 
-// 挂载中间件
+app.set('trust proxy', true)
+
 app.use(cors())
 
 // 微信小店回调路由需要原始 body(XML/JSON 混合),先于 express.json 挂载

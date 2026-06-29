@@ -80,6 +80,7 @@ export default function CourseDetail() {
   const primaryBtnText = (() => {
     if (!access) return '立即报名'
     if (access.isFree) return '免费观看'
+    if (access.isVip) return 'VIP 免费学'
     if (access.purchased) return '立即学习'
     return '去微信小店购买'
   })()
@@ -236,7 +237,7 @@ export default function CourseDetail() {
       {!loading && (
         <View className='detail-bottom-bar safe-bottom'>
           <View className='detail-actions'>
-            <View className='icon-action' onClick={() => Taro.showToast({ title: '客服', icon: 'none' })}>
+            <View className='icon-action' onClick={() => Taro.navigateTo({ url: '/pages/contact-wx/index' })}>
               <Icon name='message-circle' size={44} color='#475569' />
               <Text>客服</Text>
             </View>

@@ -2,11 +2,11 @@ import Taro from '@tarojs/taro'
 
 /**
  * 后端服务地址
- * - 生产/开发均使用线上域名，通过本地 hosts 映射到本地开发服务器
- *   macOS: sudo vim /etc/hosts
- *   添加: 127.0.0.1 ty-server-api.tysmarts.cn
+ * - 开发环境: http://localhost:4000（.env.development）
+ * - 生产环境: https://ty-server-api.tysmarts.cn（.env.production）
+ * 通过 dotenv + Taro defineConstants 在编译时注入
  */
-export const BASE_URL = 'https://ty-server-api.tysmarts.cn'
+export const BASE_URL: string = process.env.TARO_APP_BASE_URL
 
 /** 本地存储中保存 token 的 key（与 auth.ts 保持一致） */
 const TOKEN_KEY = 'geo_token'

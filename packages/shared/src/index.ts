@@ -173,16 +173,28 @@ export interface CourseAccess {
   isFree: boolean
   /** 当前用户是否已购(或免费课程自动为 true) */
   purchased: boolean
-  /** 是否可以学习视频(isFree || purchased) */
+  /** 是否可以学习视频(isFree || purchased || isVip) */
   canLearn: boolean
+  /** 当前用户是否为 VIP */
+  isVip: boolean
 }
 
 /** 课时播放地址(GET /api/lessons/:id/play) */
 export interface LessonPlayUrl {
   lessonId: number
   courseId: number
-  /** 视频播放地址(仅当用户有权限时返回,否则接口返回 403) */
+  /** 视频播放地址(带签名的临时URL，仅当用户有权限时返回,否则接口返回 403) */
   videoUrl: string
+  /** 链接过期时间戳(毫秒) */
+  expiresAt: number
+}
+
+/** 课时图文内容(GET /api/lessons/:id/content，需鉴权) */
+export interface LessonContent {
+  lessonId: number
+  courseId: number
+  /** 图文教程内容 */
+  content: string
 }
 
 /** 优惠券类型枚举 */

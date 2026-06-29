@@ -10,6 +10,7 @@ import {
   getLessonById,
   getCourseAccess,
   getLessonPlayUrl,
+  getLessonContent,
   getModuleModesSync,
   showApiError,
 } from '../../services'
@@ -31,6 +32,7 @@ export default function LessonPlayer() {
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null)
   const [access, setAccess] = useState<CourseAccess | null>(null)
   const [videoUrl, setVideoUrl] = useState<string>('')
+  const [lessonContent, setLessonContent] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showList, setShowList] = useState(true)
@@ -59,25 +61,44 @@ export default function LessonPlayer() {
       .finally(() => setLoading(false))
   }, [courseId, lessonId])
 
-  // 切换课时或权限变化时,获取视频地址
+  // 切换课时或权限变化时,获取视频地址或图文内容
   useEffect(() => {
     if (!currentLesson || !access?.canLearn) {
       setVideoUrl('')
+      setLessonContent('')
       return
     }
-    getLessonPlayUrl(currentLesson.id)
-      .then((res) => setVideoUrl(res.videoUrl))
-      .catch((err) => {
-        // 403 → 用户无权限(可能是数据不一致,access 说有权限但 play 接口拒绝)
-        if (err?.code === 403) {
-          setAccess((prev) => prev ? { ...prev, canLearn: false, purchased: false } : prev)
-          Taro.showToast({ title: '请先购买课程', icon: 'none' })
-        } else {
-          showApiError(err, '视频地址获取失败')
-        }
-        setVideoUrl('')
-      })
-  }, [currentLesson, access?.canLearn])
+
+    if (contentMode === 'video') {
+      // 视频模式:获取视频播放地址
+      getLessonPlayUrl(currentLesson.id)
+        .then((res) => setVideoUrl(res.videoUrl))
+        .catch((err) => {
+          // 403 → 用户无权限
+          if (err?.code === 403) {
+            setAccess((prev) => prev ? { ...prev, canLearn: false, purchased: false } : prev)
+            Taro.showToast({ title: '请先购买课程', icon: 'none' })
+          } else {
+            showApiError(err, '视频地址获取失败')
+          }
+          setVideoUrl('')
+        })
+    } else {
+      // 图文模式:获取图文内容
+      setVideoUrl('')
+      getLessonContent(currentLesson.id)
+        .then((res) => setLessonContent(res.content))
+        .catch((err) => {
+          if (err?.code === 403) {
+            setAccess((prev) => prev ? { ...prev, canLearn: false, purchased: false } : prev)
+            Taro.showToast({ title: '请先购买课程', icon: 'none' })
+          } else {
+            showApiError(err, '内容加载失败')
+          }
+          setLessonContent('')
+        })
+    }
+  }, [currentLesson, access?.canLearn, contentMode])
 
   const handlePlay = useCallback(() => setIsPlaying(true), [])
   const handlePause = useCallback(() => setIsPlaying(false), [])
@@ -131,7 +152,7 @@ export default function LessonPlayer() {
             <View className='player-article'>
               <Text className='player-article-title'>{currentLesson?.title}</Text>
               <Text className='player-article-content'>
-                {currentLesson?.content || '讲师尚未上传图文内容，请稍后再来'}
+                {lessonContent || '讲师尚未上传图文内容，请稍后再来'}
               </Text>
             </View>
           ) : (
