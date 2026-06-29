@@ -28,6 +28,7 @@ import adminReviewRoutes from './routes/admin/review'
 import adminFeedbackRoutes from './routes/admin/feedback'
 import adminHelpArticleRoutes from './routes/admin/help-article'
 import adminAppConfigRoutes from './routes/admin/app-config'
+import adminWxshopProductRoutes from './routes/admin/wxshop-product'
 
 // 注意：dotenv 已在 ./config 里按 NODE_ENV 加载 .env + .env.{NODE_ENV}
 // 这里不再重复 dotenv.config()
@@ -36,6 +37,15 @@ const app = express()
 
 // 挂载中间件
 app.use(cors())
+
+// 微信小店回调路由需要原始 body(XML/JSON 混合),先于 express.json 挂载
+// 小程序消息推送:XML 明文/密文 或 JSON 明文/密文
+app.use(
+  '/api/wxshop',
+  express.text({ type: ['text/xml', 'application/xml', 'application/json', 'text/plain'], limit: '1mb' })
+)
+app.use('/api/wxshop', wxshopRoutes)
+
 // 提高 JSON body 限制以支持头像 base64 上传（默认 100kb 过小）
 app.use(express.json({ limit: '5mb' }))
 
@@ -69,8 +79,6 @@ app.use('/api/user', userRoutes) // /api/user, /api/user/learning/summary, /api/
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/follows', followRoutes)
 app.use('/api/orders', orderRoutes)
-// 微信小店订单回调(无需登录,签名校验)
-app.use('/api/wxshop', wxshopRoutes)
 
 // Admin 管理后台路由
 app.use('/api/admin', adminLoginRoutes)       // POST /api/admin/login
@@ -86,6 +94,7 @@ app.use('/api/admin', adminReviewRoutes)      // /api/admin/reviews
 app.use('/api/admin', adminFeedbackRoutes)   // /api/admin/feedbacks
 app.use('/api/admin', adminHelpArticleRoutes) // /api/admin/help-articles
 app.use('/api/admin', adminAppConfigRoutes)   // /api/admin/app-configs
+app.use('/api/admin', adminWxshopProductRoutes) // /api/admin/wxshop-products
 app.use('/api', adminAppConfigRoutes)          // /api/app-configs/theme（小程序用）
 
 // 健康检查占位

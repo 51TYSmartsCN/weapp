@@ -67,6 +67,16 @@ export default function Profile() {
     Taro.switchTab({ url: '/pages/course-list/index' })
   }
 
+  const handleEditProfile = () => {
+    Taro.navigateTo({
+      url: '/pages/edit-profile/index',
+      fail: (err) => {
+        console.error('[profile] navigateTo edit-profile failed:', err)
+        Taro.showToast({ title: '打开修改资料页失败', icon: 'none' })
+      },
+    })
+  }
+
   const handleLogout = () => {
     Taro.showModal({
       title: '退出登录',
@@ -120,6 +130,7 @@ export default function Profile() {
           <View className='profile-header'>
             <View className='profile-header-card'>
               <View className='profile-user'>
+                <View className='profile-user-info' onClick={handleEditProfile}>
                 <Avatar
                   src={user?.avatar}
                   text={user?.name?.charAt(0) ?? ''}
@@ -128,7 +139,12 @@ export default function Profile() {
                 <View className='profile-name-wrap'>
                   <View className='profile-name'>{user?.name}</View>
                   {user?.vip && <Text className='profile-vip'>VIP 会员</Text>}
+                  <View className='profile-edit-hint'>
+                    <Text className='profile-edit-text'>点击修改头像和昵称</Text>
+                    <Icon name='chevron-right' size={24} color='#94A3B8' />
+                  </View>
                 </View>
+              </View>
                 <View className='settings-btn' onClick={() => handleMenuClick('设置')}>
                   <Icon name='settings' size={32} color='#475569' />
                 </View>

@@ -185,7 +185,7 @@ export default function LessonPlayer() {
           className={`player-switch-btn ${!hasPrev ? 'disabled' : ''}`}
           onClick={() => hasPrev && handlePrevNext('prev')}
         >
-          <Icon name='skip-back' size={32} color={hasPrev ? '#0D9488' : '#CBD5E1'} />
+          <Icon name='skip-back' size={32} color={hasPrev ? 'var(--theme-primary, #0D9488)' : '#CBD5E1'} />
           <Text className={`switch-label ${!hasPrev ? 'disabled' : ''}`}>上一课</Text>
         </View>
         <View
@@ -193,18 +193,18 @@ export default function LessonPlayer() {
           onClick={() => hasNext && handlePrevNext('next')}
         >
           <Text className={`switch-label ${!hasNext ? 'disabled' : ''}`}>下一课</Text>
-          <Icon name='skip-forward' size={32} color={hasNext ? '#0D9488' : '#CBD5E1'} />
+          <Icon name='skip-forward' size={32} color={hasNext ? 'var(--theme-primary, #0D9488)' : '#CBD5E1'} />
         </View>
       </View>
 
       {/* 课时列表切换 */}
       <View className='player-list-toggle' onClick={() => setShowList((prev) => !prev)}>
-        <Icon name='list-video' size={32} color='#0D9488' />
+        <Icon name='list-video' size={32} color='var(--theme-primary, #0D9488)' />
         <Text className='list-toggle-text'>{showList ? '收起目录' : '展开目录'}</Text>
         <Icon
           name='chevron-right'
           size={24}
-          color='#0D9488'
+          color='var(--theme-primary, #0D9488)'
           className={showList ? 'list-toggle-icon expanded' : 'list-toggle-icon'}
         />
       </View>
@@ -233,7 +233,7 @@ export default function LessonPlayer() {
                           <View className='playing-bar' />
                         </>
                       ) : (
-                        <Icon name='play' size={28} color='#0D9488' />
+                        <Icon name='play' size={28} color='var(--theme-primary, #0D9488)' />
                       )}
                     </View>
                   ) : (
@@ -244,7 +244,7 @@ export default function LessonPlayer() {
                   <Text className={`lesson-item-name ${isActive ? 'active' : ''}`}>{lesson.title}</Text>
                   <Text className='lesson-item-duration'>{lesson.duration}</Text>
                 </View>
-                {isActive && isPlaying && <Icon name='volume-2' size={28} color='#0D9488' />}
+                {isActive && isPlaying && <Icon name='volume-2' size={28} color='var(--theme-primary, #0D9488)' />}
               </View>
             )
           })}

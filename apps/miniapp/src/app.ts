@@ -8,6 +8,8 @@ import {
   getThemeConfigSync,
   initModuleModes,
   refreshModuleModes,
+  initAppInfo,
+  refreshAppInfo,
   type ThemeConfig,
 } from './services'
 import './app.scss'
@@ -23,10 +25,14 @@ function App({ children }: PropsWithChildren<any>) {
     // 初始化模块展示模式（控制视频/图文切换，后台改动后下次冷启动或切前台生效）
     initModuleModes().catch(() => {})
 
-    // 监听切回前台：每次回到小程序都刷新主题与模块模式，确保后台改动及时生效
+    // 初始化应用信息（名称、描述、Logo，后台改动后下次冷启动或切前台生效）
+    initAppInfo().catch(() => {})
+
+    // 监听切回前台：每次回到小程序都刷新主题、模块模式与应用信息，确保后台改动及时生效
     Taro.onAppShow(() => {
       refreshTheme().then((config) => setTheme(config))
       refreshModuleModes().catch(() => {})
+      refreshAppInfo().catch(() => {})
     })
 
     // 启动时校验登录态：本地无 token 则跳转登录页

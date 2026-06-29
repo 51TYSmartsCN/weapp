@@ -209,7 +209,15 @@ export default function Learning() {
                   >
                     <View
                       className='course-cover-small'
-                      style={{ background: course?.cover }}
+                      style={(() => {
+                        const cover = course?.cover
+                        if (!cover) return undefined
+                        // http 开头视为图片 URL，否则视为 CSS 渐变背景
+                        if (/^https?:\/\//i.test(cover)) {
+                          return { backgroundImage: `url(${cover})` }
+                        }
+                        return { background: cover }
+                      })()}
                     />
                     <View className='course-item-info'>
                       <View className='course-item-title'>{course?.title ?? '加载中...'}</View>
@@ -253,7 +261,7 @@ export default function Learning() {
             ) : (
               <View className='certificate-card' onClick={handleViewCertificates}>
                 <View className='certificate-icon'>
-                  <Icon name='award' size={44} color='#0D9488' />
+                  <Icon name='award' size={44} color='var(--theme-primary, #0D9488)' />
                 </View>
                 <View className='certificate-info'>
                   <View className='certificate-title'>我的证书</View>

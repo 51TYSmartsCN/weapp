@@ -2,7 +2,7 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import MenuItem from '../../components/MenuItem'
-import { logout } from '../../services'
+import { logout, getAppInfoSync } from '../../services'
 import './index.scss'
 
 const SETTINGS = [
@@ -20,9 +20,11 @@ export default function Settings() {
       case '清除缓存':
         Taro.showToast({ title: '清理完成', icon: 'success' })
         break
-      case '关于我们':
-        Taro.showToast({ title: 'GEO 课程 v1.0.0', icon: 'none' })
+      case '关于我们': {
+        const appInfo = getAppInfoSync()
+        Taro.showToast({ title: `${appInfo.appName} v1.0.0`, icon: 'none' })
         break
+      }
       default:
         break
     }

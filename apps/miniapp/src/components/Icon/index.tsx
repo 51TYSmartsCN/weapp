@@ -1,5 +1,6 @@
 import { View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import { resolveColor } from '../../services'
 import './index.scss'
 
 export type IconName =
@@ -94,7 +95,8 @@ function toBase64(str: string) {
 }
 
 function getDataUrl(name: IconName, color: string) {
-  const svg = svgMap[name].replace(/currentColor/g, color)
+  const actualColor = resolveColor(color)
+  const svg = svgMap[name].replace(/currentColor/g, actualColor)
   return `data:image/svg+xml;base64,${toBase64(svg)}`
 }
 

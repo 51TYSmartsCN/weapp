@@ -381,4 +381,27 @@ INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
 INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
 ('module_modes', '{"lessonPlayer":{"contentMode":"video"},"courseDetailCover":{"mode":"image"}}', '模块展示模式配置（lessonPlayer.contentMode / courseDetailCover.mode）');
 
+-- 应用基础信息配置（名称、描述、Logo）
+INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
+('app-info', '{"appName":"GEO 课程","appDescription":"专注 GEO 领域的实战学习平台"}', '应用基础信息（名称、描述、Logo）');
+
+-- ------------------------------------------------------------
+-- 表名：wxshop_products（微信小店商品-课程映射表）
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `wxshop_products`;
+CREATE TABLE `wxshop_products` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `product_id` VARCHAR(64) NOT NULL COMMENT '微信小店商品ID(product_id/out_product_id)',
+  `product_title` VARCHAR(256) NULL COMMENT '商品标题(便于识别)',
+  `course_id` BIGINT NOT NULL COMMENT '关联的课程ID',
+  `course_title` VARCHAR(256) NULL COMMENT '课程标题(冗余)',
+  `status` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '状态 0=禁用 1=启用',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_product_id` (`product_id`),
+  KEY `idx_course_id` (`course_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信小店商品-课程映射表';
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Table,
   Button,
@@ -11,8 +11,10 @@ import {
   Spin,
   message,
   ColorPicker,
+  Upload,
+  Avatar as AntAvatar,
 } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { instructorApi } from '../../api'
@@ -38,6 +40,7 @@ export default function Instructors() {
   const [data, setData] = useState<InstructorItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState<InstructorItem | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string>('')
   const [form] = Form.useForm()
 
   const fetchData = async () => {
@@ -60,6 +63,7 @@ export default function Instructors() {
     setEditingRecord(null)
     form.resetFields()
     form.setFieldsValue({ color: '#0D9488' })
+    setAvatarUrl('')
     setModalOpen(true)
   }
 
@@ -69,6 +73,7 @@ export default function Instructors() {
       ...record,
       color: record.color || '#0D9488',
     })
+    setAvatarUrl(record.avatar || '')
     setModalOpen(true)
   }
 
@@ -114,6 +119,19 @@ export default function Instructors() {
       title: 'ID',
       dataIndex: 'id',
       width: 70,
+    },
+    {
+      title: '头像',
+      dataIndex: 'avatar',
+      width: 80,
+      render: (avatar: string | undefined, record: InstructorItem) =>
+        avatar ? (
+          <AntAvatar src={avatar} size={40} />
+        ) : (
+          <AntAvatar size={40} style={{ backgroundColor: record.color || '#0D9488' }}>
+            {record.name?.[0] || '?'}
+          </AntAvatar>
+        ),
     },
     {
       title: '姓名',
@@ -223,7 +241,7 @@ export default function Instructors() {
           columns={columns}
           dataSource={data}
           pagination={false}
-          scroll={{ x: 1300 }}
+          scroll={{ x: 1400 }}
           size="middle"
         />
       </Spin>
@@ -267,8 +285,34 @@ export default function Instructors() {
             <ColorPicker showText format="hex" />
           </Form.Item>
 
-          <Form.Item label="头像 URL" name="avatar">
-            <Input placeholder="请输入头像图片地址" />
+          <Form.Item label="头像图片" name="avatar">
+            <Upload
+              listType="picture-circle"
+              showUploadList={false}
+              accept="image/png,image/jpeg,image/webp"
+              customRequest={async (options) => {
+                const { file, onSuccess, onError } = options
+                try {
+                  const { url } = await instructorApi.uploadAvatar(file as File)
+                  form.setFieldValue('avatar', url)
+                  setAvatarUrl(url)
+                  message.success('头像上传成功')
+                  onSuccess?.(null)
+                } catch (err) {
+                  message.error('头像上传失败')
+                  onError?.(err as Error)
+                }
+              }}
+            >
+              {avatarUrl ? (
+                <AntAvatar src={avatarUrl} size={80} shape="square" />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#999' }}>
+                  <UploadOutlined style={{ fontSize: 20 }} />
+                  <span style={{ fontSize: 12, marginTop: 4 }}>上传头像</span>
+                </div>
+              )}
+            </Upload>
           </Form.Item>
 
           <Form.Item label="专长" name="expertise">

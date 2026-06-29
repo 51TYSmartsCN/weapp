@@ -15,6 +15,12 @@ if (!fs.existsSync(tabIconDir)) {
   fs.mkdirSync(tabIconDir, { recursive: true })
 }
 
+// Logo 上传目录
+const logoDir = path.join(__dirname, '../../../public/images/logo')
+if (!fs.existsSync(logoDir)) {
+  fs.mkdirSync(logoDir, { recursive: true })
+}
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, tabIconDir),
   filename: (req, file, cb) => {
@@ -28,6 +34,26 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 }, // 100kb（微信限制 40kb，留余量）
+  fileFilter: (_req, file, cb) => {
+    if (!['image/png', 'image/jpeg'].includes(file.mimetype)) {
+      return cb(new Error('仅支持 PNG/JPG 格式'))
+    }
+    cb(null, true)
+  },
+})
+
+// Logo 上传 multer 配置（独立 storage，文件名带时间戳避免缓存）
+const logoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, logoDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png'
+    cb(null, `logo-${Date.now()}${ext}`)
+  },
+})
+
+const uploadLogo = multer({
+  storage: logoStorage,
+  limits: { fileSize: 500 * 1024 }, // 500kb
   fileFilter: (_req, file, cb) => {
     if (!['image/png', 'image/jpeg'].includes(file.mimetype)) {
       return cb(new Error('仅支持 PNG/JPG 格式'))
@@ -103,6 +129,28 @@ router.get('/app-configs/module-modes', async (_req, res) => {
 })
 
 /**
+ * GET /api/app-configs/app-info - 小程序获取应用基础信息（无需登录，需放在 :key 之前）
+ * 包含应用名称、应用描述、应用 Logo 等
+ */
+router.get('/app-configs/app-info', async (_req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT value FROM app_configs WHERE `key` = ?', ['app-info']) as [any[], any]
+    const row = rows[0]
+    if (!row) {
+      // 返回默认应用信息
+      return ok(res, {
+        appName: 'GEO 课程',
+        appDescription: '专注 GEO 领域的实战学习平台',
+      })
+    }
+    return ok(res, JSON.parse(row.value))
+  } catch (err) {
+    console.error(err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/**
  * POST /api/admin/app-configs/tabbar/icon/:index/:state
  * 上传 TabBar 图标
  * - index: tab 序号 0-3
@@ -120,6 +168,22 @@ router.post('/app-configs/tabbar/icon/:index/:state', authMiddleware, upload.sin
 
     // 返回可访问 URL（静态资源已挂载 /images）
     const url = `/images/tab/${req.file.filename}`
+    return ok(res, { url })
+  } catch (err) {
+    console.error(err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/**
+ * POST /api/admin/app-configs/logo
+ * 上传应用 Logo 图片
+ * 返回图标的可访问 URL
+ */
+router.post('/app-configs/logo', authMiddleware, uploadLogo.single('file'), (req, res) => {
+  try {
+    if (!req.file) return fail(res, 400, '未收到文件')
+    const url = `/images/logo/${req.file.filename}`
     return ok(res, { url })
   } catch (err) {
     console.error(err)

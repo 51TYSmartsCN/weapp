@@ -16,6 +16,7 @@ import Feedbacks from './pages/feedbacks'
 import HelpArticles from './pages/help-articles'
 import Theme from './pages/theme'
 import ModuleModes from './pages/module-modes'
+import WxshopProducts from './pages/wxshop-products'
 
 /** 路由守卫：未登录则跳转登录页 */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="help-articles" element={<HelpArticles />} />
             <Route path="theme" element={<Theme />} />
             <Route path="module-modes" element={<ModuleModes />} />
+            <Route path="wxshop-products" element={<WxshopProducts />} />
           </Route>
         </Routes>
       </AntApp>

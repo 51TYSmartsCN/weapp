@@ -25,6 +25,12 @@ interface ThemeColors {
   tabItems: TabItem[]
 }
 
+interface AppInfo {
+  appName: string
+  appLogo?: string
+  appDescription?: string
+}
+
 const colorLabels: Record<string, string> = {
   primary: '主色',
   primaryLight: '浅主色',
@@ -55,6 +61,11 @@ const defaultColors: ThemeColors = {
   ],
 }
 
+const defaultAppInfo: AppInfo = {
+  appName: 'GEO 课程',
+  appDescription: '专注 GEO 领域的实战学习平台',
+}
+
 // 主题色字段
 const themeColorKeys = ['primary', 'primaryLight', 'primaryLighter', 'primaryLightest', 'primaryDark', 'primaryDarker']
 // TabBar 颜色字段
@@ -67,6 +78,11 @@ export default function ThemeConfig() {
   const [colors, setColors] = useState<ThemeColors>(defaultColors)
   const [tabItems, setTabItems] = useState<TabItem[]>(defaultColors.tabItems)
   const [uploadingIndex, setUploadingIndex] = useState<string>('')
+
+  // 应用信息（名称、描述、Logo）
+  const [appInfo, setAppInfo] = useState<AppInfo>(defaultAppInfo)
+  const [savingAppInfo, setSavingAppInfo] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   // 加载主题配置
   const loadTheme = async () => {
@@ -87,8 +103,52 @@ export default function ThemeConfig() {
     }
   }
 
+  // 加载应用信息
+  const loadAppInfo = async () => {
+    try {
+      const data = await appConfigApi.getAppInfo()
+      const info: AppInfo = { ...defaultAppInfo, ...((data && (data as any).value) || data || {}) }
+      setAppInfo(info)
+    } catch {
+      // 忽略，使用默认值
+    }
+  }
+
+  // 保存应用信息
+  const handleSaveAppInfo = async () => {
+    if (!appInfo.appName.trim()) {
+      message.error('应用名称不能为空')
+      return
+    }
+    setSavingAppInfo(true)
+    try {
+      await appConfigApi.updateAppInfo(appInfo)
+      message.success('应用信息已保存')
+    } catch {
+      message.error('保存失败')
+    } finally {
+      setSavingAppInfo(false)
+    }
+  }
+
+  // 上传 Logo
+  const handleUploadLogo = async (file: File) => {
+    setUploadingLogo(true)
+    try {
+      const { url } = await appConfigApi.uploadLogo(file)
+      setAppInfo((prev) => ({ ...prev, appLogo: url }))
+      message.success('Logo 上传成功，请点击保存应用信息生效')
+    } catch {
+      message.error('Logo 上传失败')
+    } finally {
+      setUploadingLogo(false)
+    }
+    return false
+  }
+
   useEffect(() => {
     loadTheme()
+    loadAppInfo()
   }, [])
 
   // 保存主题配置
@@ -179,6 +239,63 @@ export default function ThemeConfig() {
       </Text>
 
       <Divider />
+
+      {/* 应用信息配置 */}
+      <Card title="应用信息" size="small" style={{ marginBottom: 24, background: '#fafafa' }}>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          配置小程序的应用名称、描述与 Logo，修改保存后将同步到登录页等位置生效。
+        </Text>
+        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 24, alignItems: 'start' }}>
+          {/* Logo 上传 */}
+          <div>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>应用 Logo</Text>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              {appInfo.appLogo ? (
+                <img src={appInfo.appLogo} alt="logo" style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+              ) : (
+                <div style={{ width: 100, height: 100, borderRadius: '50%', border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)' }}>
+                  <Text style={{ color: '#fff', fontSize: 32 }}>GEO</Text>
+                </div>
+              )}
+              <Upload
+                accept="image/png,image/jpeg"
+                showUploadList={false}
+                beforeUpload={(file) => handleUploadLogo(file)}
+              >
+                <Button size="small" icon={<UploadOutlined />} loading={uploadingLogo}>
+                  上传 Logo
+                </Button>
+              </Upload>
+            </div>
+          </div>
+          {/* 名称与描述 */}
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>应用名称</Text>
+              <Input
+                value={appInfo.appName}
+                onChange={(e) => setAppInfo((prev) => ({ ...prev, appName: e.target.value }))}
+                placeholder="如：GEO 课程"
+                maxLength={20}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>应用描述</Text>
+              <Input.TextArea
+                value={appInfo.appDescription || ''}
+                onChange={(e) => setAppInfo((prev) => ({ ...prev, appDescription: e.target.value }))}
+                placeholder="如：专注 GEO 领域的实战学习平台"
+                rows={3}
+                maxLength={100}
+                showCount
+              />
+            </div>
+            <Button type="primary" onClick={handleSaveAppInfo} loading={savingAppInfo}>
+              保存应用信息
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* 主题色预览区 */}
       <Card title="主题色预览" size="small" style={{ marginBottom: 24, background: '#fafafa' }}>

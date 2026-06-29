@@ -11,6 +11,16 @@ const router = Router()
 /** 头像图片保存目录（public/images/avatars） */
 const AVATAR_DIR = path.join(__dirname, '../../public/images/avatars')
 
+/** 默认头像路径（相对于静态资源根，即 public/images/...） */
+const DEFAULT_AVATAR = '/images/avatars/default.png'
+
+/** 构建默认头像的完整 URL */
+function getDefaultAvatarUrl(req: Request): string {
+  const host = req.get('host') || `localhost:${process.env.PORT || 4000}`
+  const protocol = req.protocol || 'http'
+  return `${protocol}://${host}${DEFAULT_AVATAR}`
+}
+
 /** 将 users 表行映射为前端 User 对象（camelCase） */
 function mapUser(row: any) {
   return {
@@ -24,8 +34,8 @@ function mapUser(row: any) {
     studyHours: row.study_hours,
     // user_courses 关系在 user 路由才接入，此处暂返回 null
     continueCourse: null,
-    // 已完善资料：name 不是默认占位且 avatar 不是单字占位
-    hasProfile: !!row.name && row.name !== '微信用户' && !!row.avatar && row.avatar !== 'U',
+    // 已完善资料：name 不是默认占位
+    hasProfile: !!row.name && row.name !== '微信用户',
   }
 }
 
@@ -79,11 +89,12 @@ router.post('/login', async (req: Request, res: Response) => {
     const [rows] = await pool.query('SELECT * FROM users WHERE openid = ?', [openid])
     let userRow = (rows as any[])[0]
 
-    // 不存在则创建（占位昵称 + 头像，待用户在登录后完善资料）
+    // 不存在则创建（占位昵称 + 默认头像，待用户在登录后完善资料）
     if (!userRow) {
+      const defaultAvatar = getDefaultAvatarUrl(req)
       await pool.query(
         'INSERT INTO users (openid, unionid, name, avatar, vip) VALUES (?, ?, ?, ?, 0)',
-        [openid, unionid ?? null, '微信用户', 'U']
+        [openid, unionid ?? null, '微信用户', defaultAvatar]
       )
       const [r2] = await pool.query('SELECT * FROM users WHERE openid = ?', [openid])
       userRow = (r2 as any[])[0]

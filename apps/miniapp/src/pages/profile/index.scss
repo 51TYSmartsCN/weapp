@@ -39,10 +39,20 @@
   gap: $md;
 }
 
+.profile-user-info {
+  display: flex;
+  align-items: center;
+  gap: $md;
+  flex: 1;
+  min-width: 0;
+}
+
 .profile-name-wrap {
   display: flex;
   flex-direction: column;
   gap: 10rpx;
+  flex: 1;
+  min-width: 0;
 }
 
 .profile-name {
@@ -63,6 +73,20 @@
   color: #78350F;
   font-size: 22rpx;
   font-weight: 500;
+}
+
+/* 「点击修改头像和昵称」提示行：让头像/昵称区域的可点击入口可视化 */
+.profile-edit-hint {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-top: 4rpx;
+}
+
+.profile-edit-text {
+  font-size: $font-xs;
+  color: $text-tertiary;
+  line-height: 1;
 }
 
 .skeleton-profile-header {

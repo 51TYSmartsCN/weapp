@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, Button, Input, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import SafeTop from '../../components/SafeTop'
 import Icon from '../../components/Icon'
-import { login, updateProfile, showApiError } from '../../services'
+import { login, updateProfile, showApiError, getAppInfoSync, fetchAppInfo, resolveUrl, type AppInfo } from '../../services'
 import type { User } from '../../types'
 import './index.scss'
 
@@ -13,6 +13,12 @@ export default function Login() {
   const [step, setStep] = useState<Step>('login')
   const [loading, setLoading] = useState(false)
   const [agreed, setAgreed] = useState(false)
+
+  // 应用信息（名称、描述、Logo）—— 首屏用缓存秒开，再异步拉取最新值
+  const [appInfo, setAppInfo] = useState<AppInfo>(getAppInfoSync())
+  useEffect(() => {
+    fetchAppInfo().then(setAppInfo).catch(() => {})
+  }, [])
 
   // 完善资料表单
   const [avatarTempPath, setAvatarTempPath] = useState<string>('')
@@ -88,12 +94,21 @@ export default function Login() {
 
       {/* 品牌 */}
       <View className='login-brand'>
-        <View className='login-logo'>
-          <Icon name='book-open' size={72} color='#FFFFFF' />
-        </View>
-        <Text className='login-title'>GEO 课程</Text>
+        {appInfo.appLogo ? (
+          <Image
+            className='login-logo-img'
+            src={resolveUrl(appInfo.appLogo)}
+            mode='aspectFill'
+            style={{ width: '160rpx', height: '160rpx', borderRadius: '9999rpx' }}
+          />
+        ) : (
+          <View className='login-logo'>
+            <Icon name='book-open' size={72} color='#FFFFFF' />
+          </View>
+        )}
+        <Text className='login-title'>{appInfo.appName}</Text>
         <Text className='login-subtitle'>
-          {step === 'login' ? '专注 GEO 领域的实战学习平台' : '完善个人信息'}
+          {step === 'login' ? (appInfo.appDescription || '专注 GEO 领域的实战学习平台') : '完善个人信息'}
         </Text>
       </View>
 
@@ -103,7 +118,7 @@ export default function Login() {
           <View className='login-features'>
             <View className='login-feature'>
               <View className='login-feature-icon'>
-                <Icon name='play-circle' size={36} color='#0D9488' />
+                <Icon name='play-circle' size={36} color='var(--theme-primary, #0D9488)' />
               </View>
               <View className='login-feature-text'>
                 <Text className='login-feature-title'>体系化课程</Text>
@@ -112,7 +127,7 @@ export default function Login() {
             </View>
             <View className='login-feature'>
               <View className='login-feature-icon'>
-                <Icon name='users' size={36} color='#0D9488' />
+                <Icon name='users' size={36} color='var(--theme-primary, #0D9488)' />
               </View>
               <View className='login-feature-text'>
                 <Text className='login-feature-title'>资深讲师</Text>
@@ -121,7 +136,7 @@ export default function Login() {
             </View>
             <View className='login-feature'>
               <View className='login-feature-icon'>
-                <Icon name='award' size={36} color='#0D9488' />
+                <Icon name='award' size={36} color='var(--theme-primary, #0D9488)' />
               </View>
               <View className='login-feature-text'>
                 <Text className='login-feature-title'>学习证书</Text>

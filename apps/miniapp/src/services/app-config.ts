@@ -36,6 +36,62 @@ export interface ThemeConfig {
 const THEME_STORAGE_KEY = 'app_theme_config'
 const TAB_ICON_CACHE_KEY = 'app_tab_icon_cache' // 缓存图标本地路径映射 { url: localPath }
 
+// 内存中的主题色值缓存（同步可读，用于 Icon 等无法使用 CSS 变量的场景）
+// CSS 变量（var(--theme-xxx)）在 SVG data URL / base64 图像内不生效，
+// 需要把实际 hex 色值写进 SVG 才能正确渲染。
+let cachedThemeColors: ThemeConfig = DEFAULT_THEME
+
+function syncThemeCache(config: ThemeConfig) {
+  cachedThemeColors = { ...DEFAULT_THEME, ...config }
+}
+
+const THEME_VAR_MAP: Record<string, keyof ThemeConfig> = {
+  '--theme-primary': 'primary',
+  '--theme-primary-light': 'primaryLight',
+  '--theme-primary-lighter': 'primaryLighter',
+  '--theme-primary-lightest': 'primaryLightest',
+  '--theme-primary-dark': 'primaryDark',
+  '--theme-primary-darker': 'primaryDarker',
+}
+
+/**
+ * 把 CSS 变量颜色字符串解析为实际 hex 色值
+ * - 普通 hex / rgb 色值直接返回
+ * - var(--theme-xxx, #fallback) 形式：从内存缓存取实际值，取不到用 fallback
+ *
+ * 用途：Icon 组件（SVG base64）、Avatar 背景色等无法通过 CSS 继承变量的场景
+ */
+export function resolveColor(color: string): string {
+  if (!color) return color
+  if (!color.startsWith('var(')) return color
+
+  const match = color.match(/var\(\s*([^,\s]+)\s*(?:,\s*(.+))?\s*\)/)
+  if (!match) return color
+
+  const varName = match[1]
+  const fallback = match[2]?.trim() || '#0D9488'
+  const key = THEME_VAR_MAP[varName]
+  if (!key) return fallback
+
+  return (cachedThemeColors[key] as string) || fallback
+}
+
+/**
+ * 同步更新内存中的主题色缓存（给 Icon 等组件用）
+ * 在 initTheme / refreshTheme 成功后调用
+ */
+export function syncThemeColors(config: ThemeConfig): void {
+  syncThemeCache(config)
+}
+
+// 首次加载时同步本地缓存到内存
+try {
+  const cached = Taro.getStorageSync(THEME_STORAGE_KEY)
+  if (cached) syncThemeCache(cached)
+} catch {
+  // ignore
+}
+
 // 默认蓝紫色主题（接口失败或无缓存时兜底）
 const DEFAULT_THEME: ThemeConfig = {
   primary: '#6366F1',
@@ -102,6 +158,7 @@ export function getThemeConfigSync(): ThemeConfig {
 export async function cacheThemeConfig(config: ThemeConfig): Promise<void> {
   try {
     await Taro.setStorage({ key: THEME_STORAGE_KEY, data: config })
+    syncThemeCache(config)
   } catch {
     // ignore
   }
@@ -294,4 +351,95 @@ export async function refreshModuleModes(): Promise<ModuleDisplayModes> {
  */
 export async function initModuleModes(): Promise<ModuleDisplayModes> {
   return refreshModuleModes()
+}
+
+// ==================== 应用信息配置 ====================
+
+export interface AppInfo {
+  /** 应用名称 */
+  appName: string
+  /** 应用 Logo 图片 URL（相对路径，如 /images/logo/xxx.png） */
+  appLogo?: string
+  /** 应用描述/副标题 */
+  appDescription?: string
+}
+
+const APP_INFO_STORAGE_KEY = 'app_info_config'
+
+// 默认应用信息（接口失败或无缓存时兜底）
+const DEFAULT_APP_INFO: AppInfo = {
+  appName: 'GEO 课程',
+  appDescription: '专注 GEO 领域的实战学习平台',
+}
+
+/**
+ * 把后端返回的相对 URL（/images/xxx）转为完整 URL
+ * 公共导出，供消费方拼接 logo 等图片地址
+ */
+export function resolveUrl(url: string): string {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url)) return url
+  return `${BASE_URL}${url}`
+}
+
+/**
+ * 从服务端获取最新应用信息
+ * 走 /api/app-configs/app-info（无需登录）
+ */
+export async function fetchAppInfo(): Promise<AppInfo> {
+  try {
+    const data = await request<AppInfo>({
+      url: '/api/app-configs/app-info',
+      method: 'GET',
+      skipAuth: true,
+    })
+    return { ...DEFAULT_APP_INFO, ...(data || {}) }
+  } catch {
+    const cached = await Taro.getStorage({ key: APP_INFO_STORAGE_KEY }).catch(() => null)
+    return (cached?.data as AppInfo) || DEFAULT_APP_INFO
+  }
+}
+
+/**
+ * 读取本地缓存的应用信息（同步，用于首屏秒开）
+ */
+export function getAppInfoSync(): AppInfo {
+  try {
+    const cached = Taro.getStorageSync(APP_INFO_STORAGE_KEY)
+    if (cached) return { ...DEFAULT_APP_INFO, ...cached }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_APP_INFO
+}
+
+/**
+ * 缓存应用信息到本地
+ */
+export async function cacheAppInfo(info: AppInfo): Promise<void> {
+  try {
+    await Taro.setStorage({ key: APP_INFO_STORAGE_KEY, data: info })
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * 刷新应用信息：从服务端拉取最新值并缓存
+ * - 冷启动时调用
+ * - 切前台时调用
+ * 返回最新配置
+ */
+export async function refreshAppInfo(): Promise<AppInfo> {
+  const info = await fetchAppInfo()
+  await cacheAppInfo(info)
+  return info
+}
+
+/**
+ * 初始化应用信息（拉取最新配置并缓存）
+ * 在 app.ts 的 useLaunch 中调用
+ */
+export async function initAppInfo(): Promise<AppInfo> {
+  return refreshAppInfo()
 }

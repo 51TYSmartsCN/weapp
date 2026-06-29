@@ -37,7 +37,7 @@ export default function InstructorDetail() {
           <>
             {/* 头部：头像 + 姓名 + 头衔 */}
             <View className='instructor-header'>
-              <Avatar text={instructor.name[0]} size={140} bg={instructor.color} />
+              <Avatar text={instructor.name[0]} size={140} bg={instructor.color} src={instructor.avatar} />
               <View className='instructor-head-info'>
                 <Text className='instructor-name'>{instructor.name}</Text>
                 <Text className='instructor-title'>{instructor.title}</Text>

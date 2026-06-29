@@ -1,0 +1,166 @@
+@use '../../styles/variables.scss' as *;
+@use '../../styles/mixins.scss' as *;
+
+.edit-profile-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-profile-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+/* 加载占位 */
+.edit-profile-loading {
+  flex: 1;
+  @include flex-center;
+  padding: $xxxl 0;
+}
+
+.edit-profile-loading-text {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
+/* 表单分组卡片 */
+.edit-section {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $base;
+  margin-bottom: $md;
+  display: flex;
+  align-items: center;
+  gap: $md;
+}
+
+.edit-label {
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+  width: 96rpx;
+  flex-shrink: 0;
+}
+
+/* 头像选择行 */
+.edit-section--avatar {
+  padding: $md $base;
+}
+
+.edit-avatar-btn {
+  width: 120rpx;
+  height: 120rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: $radius-full;
+  background: $bg-tertiary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  line-height: 1;
+  flex-shrink: 0;
+
+  &::after {
+    border: none;
+  }
+}
+
+.edit-avatar-img {
+  width: 120rpx;
+  height: 120rpx;
+  display: block;
+}
+
+.edit-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-lightest;
+}
+
+.edit-avatar-text {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: $primary;
+}
+
+.edit-avatar-hint {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* 昵称显示层：模拟输入框外观，点击触发隐藏的 type='nickname' Input */
+.edit-nickname-display {
+  flex: 1;
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+}
+
+.edit-nickname-value {
+  font-size: $font-base;
+  color: $text-primary;
+  font-weight: 500;
+}
+
+.edit-nickname-placeholder {
+  font-size: $font-base;
+  color: $text-tertiary;
+}
+
+/* 隐藏的昵称 Input：脱离可视区域，仅承载原生 type='nickname' 面板能力 */
+.edit-nickname-hidden-input {
+  position: fixed;
+  left: -9999rpx;
+  top: -9999rpx;
+  width: 1rpx;
+  height: 1rpx;
+  opacity: 0;
+}
+
+/* 提示行 */
+.edit-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: $sm;
+  padding: 0 $sm;
+  margin-bottom: $lg;
+}
+
+.edit-tip-text {
+  flex: 1;
+  font-size: $font-xs;
+  color: $text-tertiary;
+  line-height: 1.6;
+}
+
+/* 提交按钮 */
+.edit-submit {
+  margin-top: $lg;
+  height: 96rpx;
+  border-radius: $radius-lg;
+  background: $primary;
+  @include flex-center;
+  box-shadow: 0 8rpx 24rpx 0 rgba(13, 148, 136, 0.24);
+}
+
+.edit-submit--disabled {
+  opacity: 0.6;
+}
+
+.edit-submit-text {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-inverse;
+  letter-spacing: 2rpx;
+}

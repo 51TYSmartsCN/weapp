@@ -74,5 +74,5 @@ export async function getHelpArticles(
     return category ? helpArticles.filter((a) => a.category === category) : helpArticles
   }
   // TODO: return Taro.request({ url: '/api/help-articles', data: { category } })
-  return request<HelpArticle[]>({ url: '/api/help-articles', method: 'GET', data: { category } })
+  return request<HelpArticle[]>({ url: '/api/help-articles', method: 'GET', data: { category }, skipAuth: true })
 }

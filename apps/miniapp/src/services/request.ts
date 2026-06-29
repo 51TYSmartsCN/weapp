@@ -1,10 +1,10 @@
 import Taro from '@tarojs/taro'
 
 /** 后端服务地址
- * - 微信开发者工具内调试可用 localhost
- * - 真机调试 / 预览必须改为 Mac 的局域网 IP，否则 localhost 指向手机自身无法连通
+ * - 生产环境:线上部署域名
+ * - 开发/真机调试:改为 Mac 的局域网 IP,否则 localhost 指向手机自身无法连通
  */
-export const BASE_URL = 'http://192.168.3.4:4000'
+export const BASE_URL = 'https://ty-server-api.tysmarts.cn'
 
 /** 本地存储中保存 token 的 key（与 auth.ts 保持一致） */
 const TOKEN_KEY = 'geo_token'
@@ -53,11 +53,14 @@ export async function request<T>(options: {
     const header: Record<string, string> = {}
 
     // 自动注入 Bearer token（登录接口除外）
+    // 所有需要鉴权的接口，若本地无 token，直接跳转登录页，不再发送请求等待 401
     if (!options.skipAuth) {
       const token = Taro.getStorageSync(TOKEN_KEY)
-      if (token) {
-        header['Authorization'] = `Bearer ${token}`
+      if (!token) {
+        redirectToLogin()
+        throw new ApiException(401, '请先登录')
       }
+      header['Authorization'] = `Bearer ${token}`
     }
 
     const res = await Taro.request({

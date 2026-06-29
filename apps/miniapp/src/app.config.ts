@@ -9,6 +9,7 @@ export default defineAppConfig({
     'pages/instructor-list/index',
     'pages/instructor-detail/index',
     'pages/profile/index',
+    'pages/edit-profile/index',
     'pages/favorites/index',
     'pages/study-records/index',
     'pages/certificates/index',

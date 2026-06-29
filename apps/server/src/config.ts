@@ -21,6 +21,9 @@ export const env: string = NODE_ENV
 /** 服务端口 */
 export const port: number = Number(process.env.PORT) || 4000
 
+/** 服务对外访问地址(用于拼接图片 URL 等完整链接) */
+export const baseUrl: string = process.env.BASE_URL || `http://localhost:${port}`
+
 /** MySQL 数据库连接配置 */
 export const dbConfig = {
   host: process.env.DB_HOST || '127.0.0.1',
@@ -44,13 +47,13 @@ export const wechatConfig = {
   secret: process.env.WECHAT_SECRET || '',
 }
 
-/** 微信小店订单回调配置
- * - callbackToken:在小店后台「开发配置 → 订单更新回调」设置的 Token,用于校验签名
- * - callbackSalt:落库订单号时拼接的盐值(可选,增强订单号不可预测性)
- * - mockMode:未配置 callbackToken 或显式设置 WXSHOP_MOCK=1 时,回调接口降级为不校验签名(仅供本地联调)
+/** 微信小店订单回调配置(小程序消息推送机制)
+ * - callbackToken:在 mp.weixin.qq.com → 开发管理 → 消息推送配置 中设置的 Token
+ * - encodingAESKey:消息加密密钥,43位 base64,对应小程序后台 EncodingAESKey
+ * - mockMode:WXSHOP_MOCK=1 或未配置 callbackToken 时开启,跳过签名校验+允许 mock 接口
  */
 export const wxshopConfig = {
   callbackToken: process.env.WXSHOP_CALLBACK_TOKEN || '',
-  callbackSalt: process.env.WXSHOP_CALLBACK_SALT || 'geo_wxshop_salt',
+  encodingAESKey: process.env.WXSHOP_ENCODING_AES_KEY || '',
   mockMode: process.env.WXSHOP_MOCK === '1' || !process.env.WXSHOP_CALLBACK_TOKEN,
 }

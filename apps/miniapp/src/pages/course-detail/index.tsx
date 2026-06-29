@@ -11,8 +11,10 @@ import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
 import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError } from '../../services'
 import type { Course, Lesson, Review, CourseAccess } from '../../types'
-import coverImg from '../../assets/image_1_yi19x4.jpg'
 import './index.scss'
+
+// 默认在线课程封面（当 course.cover 缺失时兜底）
+const DEFAULT_COURSE_COVER = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Online%20course%20cover%20with%20abstract%20learning%20concept%2C%20teal%20emerald%20gradient%20background%2C%20modern%20minimal%20education%20illustration&image_size=landscape_4_3'
 
 export default function CourseDetail() {
   const router = useRouter()
@@ -141,7 +143,11 @@ export default function CourseDetail() {
                 showCenterPlayBtn={true}
               />
             ) : (
-              <Image className='detail-cover' src={coverImg} mode='aspectFill' />
+              <Image
+                className='detail-cover'
+                src={course?.cover || DEFAULT_COURSE_COVER}
+                mode='aspectFill'
+              />
             )}
 
             {/* Info Card */}

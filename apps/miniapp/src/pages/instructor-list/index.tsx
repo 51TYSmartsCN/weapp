@@ -53,7 +53,7 @@ export default function InstructorList() {
                   className='instructor-item'
                   onClick={() => goDetail(item.id)}
                 >
-                  <Avatar text={item.name[0]} size={100} bg={item.color} />
+                  <Avatar text={item.name[0]} size={100} bg={item.color} src={item.avatar} />
                   <View className='instructor-info'>
                     <View className='instructor-name-row'>
                       <Text className='instructor-name'>{item.name}</Text>

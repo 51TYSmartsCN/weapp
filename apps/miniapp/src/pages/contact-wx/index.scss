@@ -63,32 +63,10 @@
   box-sizing: border-box;
 }
 
-/* 替换为真实 Image 时使用 */
+/* 企业微信二维码图片 */
 .contact-wx-qrcode {
   width: 100%;
   height: 100%;
-}
-
-/* 占位 View（未配置二维码时显示） */
-.contact-wx-qrcode-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.contact-wx-placeholder-title {
-  font-size: $font-sm;
-  color: $text-tertiary;
-  margin-top: $sm;
-}
-
-.contact-wx-placeholder-hint {
-  font-size: $font-xs;
-  color: $text-tertiary;
-  text-align: center;
-  line-height: 1.5;
-  margin-top: $xs;
 }
 
 /* 长按提示 */

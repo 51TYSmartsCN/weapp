@@ -1,6 +1,10 @@
 import type { Course } from '../types'
 import { Category } from '../types'
 
+// 默认在线课程封面图（通过后端 /api/courses 可覆盖）
+const IMG = (prompt: string) =>
+  `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(prompt)}&image_size=landscape_4_3`
+
 export const hotCourses: Course[] = [
   {
     id: 1,
@@ -10,7 +14,7 @@ export const hotCourses: Course[] = [
     rating: 4.9,
     students: 2368,
     price: 199,
-    cover: 'linear-gradient(135deg, #99F6E4 0%, #14B8A6 100%)'
+    cover: IMG('AI search engine optimization concept with glowing search bar and neural network, teal gradient background, modern tech illustration')
   },
   {
     id: 2,
@@ -20,7 +24,7 @@ export const hotCourses: Course[] = [
     rating: 4.8,
     students: 1856,
     price: 299,
-    cover: 'linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)'
+    cover: IMG('Digital brand content marketing strategy with media elements, content creation visualization, amber orange gradient background')
   }
 ]
 
@@ -34,7 +38,7 @@ export const allCourses: Course[] = [
     students: 2368,
     price: 199,
     originalPrice: 399,
-    cover: 'linear-gradient(135deg, #0D9488, #14B8A6)',
+    cover: IMG('AI search engine optimization concept with glowing search bar and neural network, teal gradient background, modern tech illustration'),
     tags: ['GEO入门', '内容优化', '实战']
   },
   {
@@ -45,7 +49,7 @@ export const allCourses: Course[] = [
     rating: 4.8,
     students: 1856,
     price: 299,
-    cover: 'linear-gradient(135deg, #0F766E, #0D9488)',
+    cover: IMG('Digital brand content marketing strategy with media elements, content creation visualization, amber orange gradient background'),
     tags: ['内容优化']
   },
   {
@@ -56,7 +60,7 @@ export const allCourses: Course[] = [
     rating: 4.9,
     students: 1205,
     price: 599,
-    cover: 'linear-gradient(135deg, #0D9488, #99F6E4)',
+    cover: IMG('Enterprise team collaboration meeting with AI technology dashboard, corporate business training, professional teal theme'),
     tags: ['企业培训', '实战']
   },
   {
@@ -67,7 +71,7 @@ export const allCourses: Course[] = [
     rating: 4.7,
     students: 3120,
     price: 249,
-    cover: 'linear-gradient(135deg, #115E59, #0F766E)',
+    cover: IMG('AI prompt engineering with code interface and neural network, content generation visualization, dark green tech theme'),
     tags: ['技术实战']
   },
   {
@@ -78,7 +82,7 @@ export const allCourses: Course[] = [
     rating: 4.8,
     students: 980,
     price: 349,
-    cover: 'linear-gradient(135deg, #99F6E4, #14B8A6)',
+    cover: IMG('Search intent data analytics dashboard with magnifying glass and user behavior charts, insights visualization, teal theme'),
     tags: ['技术实战']
   },
   {
@@ -89,7 +93,7 @@ export const allCourses: Course[] = [
     rating: 4.6,
     students: 756,
     price: 399,
-    cover: 'linear-gradient(135deg, #115E59, #0D9488)',
+    cover: IMG('Global multilingual content strategy with world map and language symbols, international marketing, teal emerald theme'),
     tags: ['内容优化']
   }
 ]

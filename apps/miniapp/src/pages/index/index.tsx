@@ -230,9 +230,9 @@ export default function Index() {
                 { value: '200+', label: '企业客户' },
                 { value: '98%', label: '好评率' }
               ]}
-              bg='#F0FDFA'
-              dividerColor='#99F6E4'
-              valueColor='#0F766E'
+              bg='var(--theme-primary-lightest, #F0FDFA)'
+              dividerColor='var(--theme-primary-lighter, #99F6E4)'
+              valueColor='var(--theme-primary-dark, #0F766E)'
             />
           </View>
 

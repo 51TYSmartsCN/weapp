@@ -86,6 +86,17 @@ export const instructorApi = {
   remove(id: number) {
     return request({ method: 'DELETE', url: `/admin/instructors/${id}` })
   },
+  /** 上传讲师头像图片，返回可访问 URL */
+  uploadAvatar(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request<{ url: string }>({
+      method: 'POST',
+      url: '/admin/instructors/avatar',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
 }
 
 // ===================== Lessons =====================
@@ -237,6 +248,15 @@ interface ThemeConfig {
   tabItems?: TabItem[]
 }
 
+interface AppInfo {
+  /** 应用名称 */
+  appName: string
+  /** 应用 Logo 图片 URL（相对路径） */
+  appLogo?: string
+  /** 应用描述/副标题 */
+  appDescription?: string
+}
+
 export const appConfigApi = {
   getTheme() {
     return request<any>({ url: '/admin/app-configs/theme' })
@@ -255,6 +275,29 @@ export const appConfigApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
+  /** 获取应用基础信息 */
+  getAppInfo() {
+    return request<any>({ url: '/admin/app-configs/app-info' })
+  },
+  /** 更新应用基础信息 */
+  updateAppInfo(data: AppInfo) {
+    return request({
+      method: 'PUT',
+      url: '/admin/app-configs/app-info',
+      data: { value: data, description: '应用基础信息（名称、描述、Logo）' },
+    })
+  },
+  /** 上传应用 Logo */
+  uploadLogo(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request<{ url: string }>({
+      method: 'POST',
+      url: '/admin/app-configs/logo',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
   /** 获取模块展示模式配置 */
   getModuleModes() {
     return request<any>({ url: '/admin/app-configs/module-modes' })
@@ -266,6 +309,28 @@ export const appConfigApi = {
       url: '/admin/app-configs/module-modes',
       data: { value: data, description: '模块展示模式配置（lessonPlayer.contentMode / courseDetailCover.mode）' },
     })
+  },
+}
+
+// ===================== Wxshop Products（微信小店商品-课程映射） =====================
+
+export const wxshopProductApi = {
+  getList(params?: PaginationParams) {
+    return request<PageResult<any>>({
+      url: `/admin/wxshop-products?${listParams(params || {})}`,
+    })
+  },
+  create(data: Record<string, any>) {
+    return request({ method: 'POST', url: '/admin/wxshop-products', data })
+  },
+  update(id: number, data: Record<string, any>) {
+    return request({ method: 'PUT', url: `/admin/wxshop-products/${id}`, data })
+  },
+  remove(id: number) {
+    return request({ method: 'DELETE', url: `/admin/wxshop-products/${id}` })
+  },
+  toggleStatus(id: number, status: boolean) {
+    return request({ method: 'PUT', url: `/admin/wxshop-products/${id}/status`, data: { status } })
   },
 }
 

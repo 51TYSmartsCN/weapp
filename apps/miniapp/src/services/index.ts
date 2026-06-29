@@ -44,7 +44,7 @@ export {
   getHelpArticles,
 } from './profile'
 
-export { getThemeConfigSync, fetchThemeConfig, initTheme, refreshTheme, cacheThemeConfig, applyTabBarTheme, applyTabBarIcons } from './app-config'
+export { getThemeConfigSync, fetchThemeConfig, initTheme, refreshTheme, cacheThemeConfig, applyTabBarTheme, applyTabBarIcons, resolveColor, syncThemeColors } from './app-config'
 export type { ThemeConfig, TabItem } from './app-config'
 export {
   getModuleModesSync,
@@ -54,3 +54,12 @@ export {
   initModuleModes,
 } from './app-config'
 export type { ModuleDisplayModes } from './app-config'
+export {
+  getAppInfoSync,
+  fetchAppInfo,
+  cacheAppInfo,
+  refreshAppInfo,
+  initAppInfo,
+  resolveUrl,
+} from './app-config'
+export type { AppInfo } from './app-config'

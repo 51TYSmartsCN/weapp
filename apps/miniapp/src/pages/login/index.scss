@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, #F0FDFA 0%, #FFFFFF 40%);
+  background: linear-gradient(180deg, var(--theme-primary-lightest, #F0FDFA) 0%, #FFFFFF 40%);
   padding: 0 $lg calc(180rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }

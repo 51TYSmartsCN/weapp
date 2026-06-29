@@ -17,6 +17,7 @@ import {
   MenuUnfoldOutlined,
   BgColorsOutlined,
   BlockOutlined,
+  ShopOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { logout } from '../api'
@@ -38,6 +39,7 @@ const menuItems = [
   { key: '/help-articles', icon: <QuestionCircleOutlined />, label: '帮助文章' },
   { key: '/theme', icon: <BgColorsOutlined />, label: '主题设置' },
   { key: '/module-modes', icon: <BlockOutlined />, label: '模块展示模式' },
+  { key: '/wxshop-products', icon: <ShopOutlined />, label: '小店商品映射' },
 ]
 
 export default function AdminLayout() {

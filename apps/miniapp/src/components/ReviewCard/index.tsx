@@ -24,7 +24,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   return (
     <View className='review-card'>
       <View className='review-header'>
-        <Avatar text={review.name[0]} size={64} bg='#99F6E4' color='#0F766E' />
+        <Avatar text={review.name[0]} size={64} bg='var(--theme-primary-lighter, #99F6E4)' color='var(--theme-primary-dark, #0F766E)' />
         <View className='review-name'>{review.name}</View>
         <View className='review-stars'>
           {Array.from({ length: review.rating }).map((_, i) => (

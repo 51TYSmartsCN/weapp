@@ -2,7 +2,7 @@ import type { User } from '../types'
 
 export const user: User = {
   name: '李晓明',
-  avatar: '李',
+  avatar: 'http://localhost:4000/images/avatars/default.png',
   vip: true,
   boughtCourses: 3,
   finishedLessons: 12,

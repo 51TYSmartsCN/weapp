@@ -11,17 +11,17 @@ export async function getLessons(courseId?: number, options?: RequestOptions): P
   if (shouldUseLocal(options)) return lessons
   if (courseId != null) {
     // TODO: return Taro.request({ url: `/api/courses/${courseId}/lessons` })
-    return request<Lesson[]>({ url: `/api/courses/${courseId}/lessons`, method: 'GET' })
+    return request<Lesson[]>({ url: `/api/courses/${courseId}/lessons`, method: 'GET', skipAuth: true })
   }
   // TODO: return Taro.request({ url: '/api/lessons' })
-  return request<Lesson[]>({ url: '/api/lessons', method: 'GET' })
+  return request<Lesson[]>({ url: '/api/lessons', method: 'GET', skipAuth: true })
 }
 
 /** 获取单个课时(不含 videoUrl) */
 export async function getLessonById(id: number, options?: RequestOptions): Promise<Lesson | undefined> {
   if (shouldUseLocal(options)) return lessons.find((l) => l.id === id)
   // TODO: return Taro.request({ url: `/api/lessons/${id}` })
-  return request<Lesson | undefined>({ url: `/api/lessons/${id}`, method: 'GET' })
+  return request<Lesson | undefined>({ url: `/api/lessons/${id}`, method: 'GET', skipAuth: true })
 }
 
 /**

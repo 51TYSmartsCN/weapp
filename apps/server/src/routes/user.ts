@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { pool } from '../db'
-import { ok, fail } from '../utils'
+import { ok, fail, unauthorized } from '../utils'
 import { authMiddleware, AuthRequest } from '../auth'
 
 const router = Router()
@@ -42,7 +42,9 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
       userId,
     ])
     const userList = userRows as any[]
-    if (userList.length === 0) return fail(res, 404, '用户不存在')
+    // token 指向的用户不存在（多见于数据库重建后本地 token 仍为旧 userId）
+    // 视为登录态失效：返回 401 触发前端清 token + 跳登录页，重新登录即重建用户记录
+    if (userList.length === 0) return unauthorized(res, '登录信息已失效，请重新登录')
     const u = userList[0]
 
     // continueCourse: 最近学习的课程

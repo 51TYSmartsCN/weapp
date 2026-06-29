@@ -54,7 +54,7 @@ export default function Invitations() {
                 {summary.invitations.map((item) => (
                   <View key={item.id} className='invite-item'>
                     <View className='invite-item-icon'>
-                      <Icon name='gift' size={40} color='#0D9488' />
+                      <Icon name='gift' size={40} color='var(--theme-primary, #0D9488)' />
                     </View>
                     <View className='invite-item-info'>
                       <Text className='invite-item-name'>好友 {item.inviteeId}</Text>

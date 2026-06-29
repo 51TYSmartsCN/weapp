@@ -59,7 +59,7 @@ export default function StudyRecords() {
               return (
                 <View key={r.id} className='record-item'>
                   <View className='record-icon'>
-                    <Icon name='play-circle' size={40} color={course ? '#0D9488' : '#94A3B8'} />
+                    <Icon name='play-circle' size={40} color={course ? 'var(--theme-primary, #0D9488)' : '#94A3B8'} />
                   </View>
                   <View className='record-info'>
                     <Text className='record-course ellipsis'>

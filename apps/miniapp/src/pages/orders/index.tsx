@@ -10,7 +10,7 @@ import './index.scss'
 
 const ORDER_STATUS_META: Record<OrderStatus, { label: string; color: string }> = {
   [OrderStatus.Pending]: { label: '待支付', color: '#F59E0B' },
-  [OrderStatus.Paid]: { label: '已支付', color: '#0D9488' },
+  [OrderStatus.Paid]: { label: '已支付', color: 'var(--theme-primary, #0D9488)' },
   [OrderStatus.Refunded]: { label: '已退款', color: '#64748B' },
   [OrderStatus.Cancelled]: { label: '已取消', color: '#94A3B8' },
 }

@@ -9,7 +9,7 @@ import { request } from './request'
 export async function getHotCourses(options?: RequestOptions): Promise<Course[]> {
   if (shouldUseLocal(options)) return hotCourses
   // TODO: return Taro.request({ url: '/api/courses?hot=1' })
-  return request<Course[]>({ url: '/api/courses', method: 'GET', data: { hot: 1 } })
+  return request<Course[]>({ url: '/api/courses', method: 'GET', data: { hot: 1 }, skipAuth: true })
 }
 
 /** 获取全部课程列表（支持可选分页参数） */
@@ -22,21 +22,21 @@ export async function getAllCourses(
   if (page != null) data.page = page
   if (size != null) data.size = size
   // TODO: return Taro.request({ url: '/api/courses' })
-  return request<Course[]>({ url: '/api/courses', method: 'GET', data })
+  return request<Course[]>({ url: '/api/courses', method: 'GET', data, skipAuth: true })
 }
 
 /** 根据 ID 获取课程详情 */
 export async function getCourseById(id: number, options?: RequestOptions): Promise<Course | undefined> {
   if (shouldUseLocal(options)) return allCourses.find((c) => c.id === id)
   // TODO: return Taro.request({ url: `/api/courses/${id}` })
-  return request<Course | undefined>({ url: `/api/courses/${id}`, method: 'GET' })
+  return request<Course | undefined>({ url: `/api/courses/${id}`, method: 'GET', skipAuth: true })
 }
 
 /** 获取课程分类列表（枚举值） */
 export async function getCategories(options?: RequestOptions): Promise<Category[]> {
   if (shouldUseLocal(options)) return categories
   // TODO: return Taro.request({ url: '/api/categories' })
-  const rows = await request<{ code: string }[]>({ url: '/api/categories', method: 'GET' })
+  const rows = await request<{ code: string }[]>({ url: '/api/categories', method: 'GET', skipAuth: true })
   // 后端返回 [{id, code, name, sort}]，前端只需 code 字段并映射为 Category 枚举
   return rows.map((r) => r.code as Category)
 }
@@ -44,13 +44,17 @@ export async function getCategories(options?: RequestOptions): Promise<Category[
 /** 按分类筛选课程 */
 export async function getCoursesByCategory(category: Category, options?: RequestOptions): Promise<Course[]> {
   const tagFilter = CATEGORY_TAG[category]
-  // All → 不过滤
-  if (tagFilter === null) return allCourses
   if (shouldUseLocal(options)) {
+    // All → 不过滤
+    if (tagFilter === null) return allCourses
     return allCourses.filter((c) => c.tags?.includes(tagFilter))
   }
+  // All → 不过滤，直接调全部课程接口
+  if (tagFilter === null) {
+    return request<Course[]>({ url: '/api/courses', method: 'GET', skipAuth: true })
+  }
   // TODO: return Taro.request({ url: `/api/courses?category=${category}` })
-  return request<Course[]>({ url: '/api/courses', method: 'GET', data: { category } })
+  return request<Course[]>({ url: '/api/courses', method: 'GET', data: { category }, skipAuth: true })
 }
 
 /**
@@ -68,5 +72,5 @@ export async function getCourseAccess(courseId: number, options?: RequestOptions
     return { courseId, isFree, purchased: isFree, canLearn: isFree }
   }
   // TODO: return Taro.request({ url: `/api/courses/${courseId}/access` })
-  return request<CourseAccess>({ url: `/api/courses/${courseId}/access`, method: 'GET' })
+  return request<CourseAccess>({ url: `/api/courses/${courseId}/access`, method: 'GET', skipAuth: true })
 }

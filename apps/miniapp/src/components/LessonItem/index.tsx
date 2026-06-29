@@ -21,7 +21,7 @@ export default function LessonItem({ lesson, completed = false, courseId }: Less
   return (
     <View className={`lesson-item ${completed ? 'completed' : ''}`} onClick={handleClick}>
       <View className='lesson-main'>
-        <Icon name='play-circle' size={40} color={completed ? '#94A3B8' : '#0D9488'} />
+        <Icon name='play-circle' size={40} color={completed ? '#94A3B8' : 'var(--theme-primary, #0D9488)'} />
         <View className='lesson-title ellipsis'>{lesson.title}</View>
       </View>
       <View className='lesson-duration'>

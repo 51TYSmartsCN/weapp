@@ -8,5 +8,5 @@ import { request } from './request'
 export async function getReviews(options?: RequestOptions): Promise<Review[]> {
   if (shouldUseLocal(options)) return reviews
   // TODO: return Taro.request({ url: '/api/reviews' })
-  return request<Review[]>({ url: '/api/reviews', method: 'GET' })
+  return request<Review[]>({ url: '/api/reviews', method: 'GET', skipAuth: true })
 }
