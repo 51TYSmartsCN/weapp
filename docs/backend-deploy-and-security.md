@@ -61,6 +61,7 @@
 ```env
 NODE_ENV=production
 PORT=4010
+HOST=127.0.0.1
 BASE_URL=https://ty-server-api.tysmarts.cn
 
 DB_HOST=192.168.123.101

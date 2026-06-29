@@ -24,6 +24,9 @@ export const isProduction = env === 'production'
 /** 服务端口 */
 export const port: number = Number(process.env.PORT) || 4000
 
+/** 服务监听地址 */
+export const host: string = process.env.HOST || (isProduction ? '127.0.0.1' : '0.0.0.0')
+
 /** 服务对外访问地址(用于拼接图片 URL 等完整链接) */
 export const baseUrl: string = process.env.BASE_URL || `http://localhost:${port}`
 

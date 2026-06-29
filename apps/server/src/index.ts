@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import path from 'path'
-import { corsOrigins, isProduction, port, env } from './config'
+import { corsOrigins, isProduction, port, host, env } from './config'
 import { pool } from './db'
 import userRoutes from './routes/user'
 import favoriteRoutes from './routes/favorite'
@@ -122,8 +122,8 @@ app.get('/api/health', (req, res) => res.json({ code: 0, data: { status: 'ok' } 
 // 启动服务
 async function bootstrap() {
   await testDbConnection()
-  app.listen(port, () => {
-    console.log(`[Server] GEO 课程后端服务已启动 (env=${env}): http://localhost:${port}`)
+  app.listen(port, host, () => {
+    console.log(`[Server] GEO 课程后端服务已启动 (env=${env}): http://${host}:${port}`)
   })
 }
 
