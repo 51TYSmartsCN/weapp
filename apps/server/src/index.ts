@@ -42,20 +42,52 @@ app.set('trust proxy', true)
 app.use(
   cors({
     origin(origin, callback) {
+      // 非生产环境或无 origin（服务端请求）直接通过
       if (!isProduction || !origin) {
         callback(null, true)
         return
       }
 
+      // 生产环境下，localhost 开发地址也允许（方便本地开发调试）
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        callback(null, true)
+        return
+      }
+
+      // 检查是否在白名单中
       if (corsOrigins.includes(origin)) {
         callback(null, true)
         return
       }
 
-      callback(new Error(`[cors] 不允许的来源: ${origin}`))
+      // 不在白名单，返回 false（不再抛错误，避免 500）
+      callback(null, false)
     },
   })
 )
+
+// CORS 错误处理：origin 被拒绝时返回 403
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  if (origin && isProduction && !corsOrigins.includes(origin)) {
+    // localhost 开发地址已在上面放行，这里只处理其他被拒绝的 origin
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      // 已经放行了，不应该走到这里
+      next()
+      return
+    }
+    // OPTIONS 预检请求返回 403
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', origin)
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+      res.setHeader('Access-Control-Allow-Credentials', 'true')
+      res.status(403).json({ code: 403, message: 'CORS: origin not allowed' })
+      return
+    }
+  }
+  next()
+})
 
 // 微信小店回调路由需要原始 body(XML/JSON 混合),先于 express.json 挂载
 // 小程序消息推送:XML 明文/密文 或 JSON 明文/密文

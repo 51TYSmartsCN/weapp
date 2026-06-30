@@ -38,10 +38,29 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: env.VITE_PROXY_TARGET,
           changeOrigin: true,
+          configure(proxy) {
+            proxy.on('proxyReq', (proxyReq, req) => {
+              console.log(`[Vite Proxy] ${req.method} ${req.url} -> ${proxyReq.getHeader('host')}${proxyReq.path}`)
+            })
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              console.log(`[Vite Proxy] ${req.method} ${req.url} <- ${proxyRes.statusCode}`)
+            })
+            proxy.on('error', (err, req) => {
+              console.error(`[Vite Proxy Error] ${req.method} ${req.url}:`, err.message)
+            })
+          },
         },
         '/images': {
           target: env.VITE_PROXY_TARGET,
           changeOrigin: true,
+          configure(proxy) {
+            proxy.on('proxyReq', (proxyReq, req) => {
+              console.log(`[Vite Proxy] ${req.method} ${req.url} -> ${proxyReq.getHeader('host')}${proxyReq.path}`)
+            })
+            proxy.on('error', (err, req) => {
+              console.error(`[Vite Proxy Error] ${req.method} ${req.url}:`, err.message)
+            })
+          },
         },
       },
     },
