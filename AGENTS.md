@@ -366,3 +366,7 @@ pnpm build          # 构建全部
 7. ✅ 横向 `ScrollView` 必须设置 `enableFlex` + `scrollWithAnimation` + `style={{ width: '100%' }}`
 8. ✅ 组件 SCSS 文件必须与组件文件同一目录，命名 `index.scss`
 9. ✅ 所有数据通过 `apps/miniapp/src/services/` 服务层获取，不在页面/组件中直接 import `apps/miniapp/src/data/`
+
+## 代码提交要求
+分阶段提交代码：提交代码时，必须按功能单元、逻辑步骤或模块边界进行增量提交；严禁一次性提交大批不相干改动，也不得把用户已有未提交改动或无关 untracked 文件混入提交。提交标题必须遵循 Conventional Commits，例如 fix(admin-v2): ...、feat(api): ...、refactor(desktop): ...。
+详尽的 Commit 信息：必须编写详细的 Git Commit Message，清晰说明非显然的设计决策、核心修改内容、背景原因与验证结果。Commit message 的标题、正文与说明性内容优先使用中文；Conventional Commit 类型、scope 与 Git trailer key 保持英文规范。仍需遵循 Lore Commit Protocol，保留有价值的 Constraint:、Rejected:、Confidence:、Scope-risk:、Directive:、Tested:、Not-tested: 等 trailers。
