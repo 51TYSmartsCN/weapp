@@ -9,8 +9,8 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError, getWxshopProduct, fetchWxshopConfig, toggleFavorite, checkFavorite } from '../../services'
-import type { Course, Lesson, Review, CourseAccess } from '../../types'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError, getWxshopProduct, fetchWxshopConfig, toggleFavorite, checkFavorite, getInstructorById } from '../../services'
+import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
 import './index.scss'
 
 // 默认在线课程封面（当 course.cover 缺失时兜底）
@@ -31,6 +31,7 @@ export default function CourseDetail() {
   const [course, setCourse] = useState<Course | null>(null)
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
+  const [instructor, setInstructor] = useState<Instructor | null>(null)
   const [access, setAccess] = useState<CourseAccess | null>(null)
   const [loading, setLoading] = useState(true)
   const [followed, setFollowed] = useState(false)
@@ -50,12 +51,12 @@ export default function CourseDetail() {
     Promise.all([
       getCourseById(courseId),
       getLessons(courseId),
-      getReviews(),
+      getReviews(courseId),
       getCourseAccess(courseId),
       getWxshopProduct(courseId),
       fetchWxshopConfig(),
     ])
-      .then(([courseData, lessonsData, reviewsData, accessData, productData, wxshopConfig]) => {
+      .then(async ([courseData, lessonsData, reviewsData, accessData, productData, wxshopConfig]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
         setReviews(reviewsData)
@@ -64,6 +65,21 @@ export default function CourseDetail() {
           setWxshopProductId(productData.productId)
         }
         setWxshopAppid(wxshopConfig.appid)
+
+        // 加载讲师信息
+        if (courseData?.instructorId) {
+          const ins = await getInstructorById(courseData.instructorId)
+          setInstructor(ins ?? null)
+        } else if (courseData?.instructor) {
+          // 兼容只有 instructor 名字的情况，构造一个最小对象
+          setInstructor({
+            id: 0,
+            name: courseData.instructor,
+            title: '',
+            service: '',
+            color: '#0D9488',
+          })
+        }
       })
       .catch((err) => showApiError(err, '课程详情加载失败'))
       .finally(() => setLoading(false))
@@ -119,6 +135,10 @@ export default function CourseDetail() {
   }
 
   if (!course && !loading) return null
+
+  const totalLessons = lessons.length
+  const totalSeconds = lessons.reduce((sum, l) => sum + (l.durationSeconds || 0), 0)
+  const totalHours = (totalSeconds / 3600).toFixed(1)
 
   return (
     <View className='course-detail-page'>
@@ -195,35 +215,41 @@ export default function CourseDetail() {
             </View>
 
             {/* Instructor */}
-            <View className='detail-section'>
-              <View className='detail-card instructor-detail-card'>
-                <Avatar text='张' size={80} />
-                <View className='instructor-info'>
-                  <View className='instructor-header'>
-                    <View>
-                      <Text className='instructor-name'>张明远</Text>
-                      <Text className='instructor-title'>资深 GEO 顾问</Text>
+            {instructor && (
+              <View className='detail-section'>
+                <View className='detail-card instructor-detail-card'>
+                  {instructor.avatar ? (
+                    <Image className='instructor-avatar' src={instructor.avatar} mode='aspectFill' />
+                  ) : (
+                    <Avatar text={instructor.name?.charAt(0) || '?'} size={80} />
+                  )}
+                  <View className='instructor-info'>
+                    <View className='instructor-header'>
+                      <View>
+                        <Text className='instructor-name'>{instructor.name}</Text>
+                        <Text className='instructor-title'>{instructor.title || course?.instructor}</Text>
+                      </View>
+                      <View
+                        className={`follow-btn ${followed ? 'followed' : ''}`}
+                        onClick={handleFollow}
+                      >
+                        {followed ? '已关注' : '关注'}
+                      </View>
                     </View>
-                    <View
-                      className={`follow-btn ${followed ? 'followed' : ''}`}
-                      onClick={handleFollow}
-                    >
-                      {followed ? '已关注' : '关注'}
-                    </View>
+                    <Text className='instructor-bio'>
+                      {instructor.bio || instructor.service || '暂无简介'}
+                    </Text>
                   </View>
-                  <Text className='instructor-bio'>
-                    10年搜索引擎优化经验，前 Google 内容策略专家，服务超过500家企业的AI搜索优化需求
-                  </Text>
                 </View>
               </View>
-            </View>
+            )}
 
             {/* Curriculum */}
             <View className='detail-section'>
               <View className='detail-card'>
                 <View className='detail-section-title'>
                   <Text className='title-main'>课程大纲</Text>
-                  <Text className='title-sub'>共 12 节课 · 总时长 6.5 小时</Text>
+                  <Text className='title-sub'>共 {totalLessons} 节课 · 总时长 {totalHours} 小时</Text>
                 </View>
                 {lessons.map((lesson, index) => (
                   <LessonItem key={lesson.id} lesson={lesson} completed={index < 2} courseId={courseId} />
@@ -238,7 +264,7 @@ export default function CourseDetail() {
             <View className='detail-section'>
               <View className='detail-section-title'>
                 <Text className='title-main'>学员评价</Text>
-                <Text className='title-sub'>4.9分 · 326条评价</Text>
+                <Text className='title-sub'>{course?.rating || 0}分 · {reviews.length}条评价</Text>
               </View>
               {reviews.map((review) => (
                 <ReviewCard key={review.id} review={review} />

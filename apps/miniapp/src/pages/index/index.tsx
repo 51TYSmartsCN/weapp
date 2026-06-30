@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Image, ScrollView, Swiper, SwiperItem } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 // import SearchBar from '../../components/SearchBar'
@@ -9,16 +9,16 @@ import InstructorCard from '../../components/InstructorCard'
 import StatsCard from '../../components/StatsCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getAllCourses, getCategories, getInstructors, getBanners, showApiError } from '../../services'
+import { getCategories, getCoursesByCategory, getInstructors, getBanners, showApiError } from '../../services'
 import type { Banner, Course, Instructor } from '../../types'
-import { Category, CATEGORY_LABELS, CATEGORY_TAG } from '../../types'
+import { Category, CATEGORY_LABELS } from '../../types'
 // import { useAutoFill } from '../../hooks/useAutoFill'
 import './index.scss'
 
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState(0)
   // const [searchValue, setSearchValue] = useState('')
-  const [allCourses, setAllCourses] = useState<Course[]>([])
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [instructors, setInstructors] = useState<Instructor[]>([])
   const [banners, setBanners] = useState<Banner[]>([])
@@ -33,23 +33,34 @@ export default function Index() {
   //   }
   // })
 
-  useEffect(() => {
+  const loadCourses = (category: Category) => {
     setLoading(true)
+    getCoursesByCategory(category)
+      .then((data) => setFilteredCourses(data.slice(0, 2)))
+      .catch((err) => showApiError(err, '课程加载失败'))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
     Promise.all([
-      getAllCourses(),
       getCategories(),
       getInstructors(),
       getBanners(),
     ])
-      .then(([coursesData, categoriesData, instructorsData, bannersData]) => {
-        setAllCourses(coursesData)
+      .then(([categoriesData, instructorsData, bannersData]) => {
         setCategories(categoriesData)
         setInstructors(instructorsData)
         setBanners(bannersData)
+        loadCourses(categoriesData[0] || Category.All)
       })
       .catch((err) => showApiError(err, '首页数据加载失败'))
-      .finally(() => setLoading(false))
   }, [])
+
+  const handleCategoryChange = (index: number) => {
+    setActiveCategory(index)
+    const cat = categories[index]
+    if (cat != null) loadCourses(cat)
+  }
 
   const goToCourseList = () => {
     Taro.switchTab({ url: '/pages/course-list/index' })
@@ -85,13 +96,6 @@ export default function Index() {
       }
     }
   }
-
-  const filteredCourses = useMemo(() => {
-    const cat = categories[activeCategory]
-    const tagFilter = CATEGORY_TAG[cat]
-    if (tagFilter === null) return allCourses.slice(0, 2)
-    return allCourses.filter((c) => c.tags?.includes(tagFilter)).slice(0, 2)
-  }, [activeCategory, allCourses, categories])
 
   return (
     <ScrollView className='home-page' scrollY>
@@ -180,7 +184,7 @@ export default function Index() {
                 <View
                   key={cat}
                   className={`category-pill ${activeCategory === index ? 'active' : ''}`}
-                  onClick={() => setActiveCategory(index)}
+                  onClick={() => handleCategoryChange(index)}
                 >
                   <Text>{CATEGORY_LABELS[cat]}</Text>
                 </View>

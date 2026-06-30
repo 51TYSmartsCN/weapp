@@ -86,7 +86,7 @@ export default function Learning() {
   }, [])
 
   const handleContinue = (courseId: number) => {
-    Taro.navigateTo({ url: `/pages/lesson-player/index?id=${courseId}` })
+    Taro.navigateTo({ url: `/pages/lesson-player/index?courseId=${courseId}` })
   }
 
   const handleBrowseCourses = () => {
