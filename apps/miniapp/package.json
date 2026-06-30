@@ -11,8 +11,10 @@
   },
   "scripts": {
     "new": "taro new",
+    "build": "pnpm build:weapp",
     "build:weapp": "NODE_ENV=production taro build --type weapp",
     "build:h5": "NODE_ENV=production taro build --type h5",
+    "dev": "pnpm dev:weapp",
     "dev:weapp": "NODE_ENV=development taro build --type weapp --watch",
     "dev:h5": "NODE_ENV=development taro build --type h5 --watch"
   },

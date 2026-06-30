@@ -1,24 +1,49 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // admin 后台服务端口
-    port: 4005,
-    // 允许任意 host 访问（局域网调试方便）
-    host: true,
-    // 将 /api 与 /images 请求代理到后端服务（geo-course-server，默认监听 4000）
-    proxy: {
-      '/api': {
-        target: 'http://localhost:4000',
-        changeOrigin: true,
-      },
-      '/images': {
-        target: 'http://localhost:4000',
-        changeOrigin: true,
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {
+    plugins: [react()],
+    build: {
+      chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor'
+              }
+              if (id.includes('antd') || id.includes('@ant-design')) {
+                return 'antd-vendor'
+              }
+              if (id.includes('recharts')) {
+                return 'chart-vendor'
+              }
+              if (id.includes('axios') || id.includes('dayjs')) {
+                return 'utils-vendor'
+              }
+              return 'vendor'
+            }
+          },
+        },
       },
     },
-  },
+    server: {
+      port: 4005,
+      host: true,
+      proxy: {
+        '/api': {
+          target: env.VITE_PROXY_TARGET,
+          changeOrigin: true,
+        },
+        '/images': {
+          target: env.VITE_PROXY_TARGET,
+          changeOrigin: true,
+        },
+      },
+    },
+  }
 })

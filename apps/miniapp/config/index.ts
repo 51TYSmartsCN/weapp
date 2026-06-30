@@ -78,7 +78,7 @@ export default defineConfig<'webpack5'>(async (merge) => {
       prebundle: { enable: false }
     },
     cache: {
-      enable: false
+      enable: true
     },
     mini: {
       postcss: {
