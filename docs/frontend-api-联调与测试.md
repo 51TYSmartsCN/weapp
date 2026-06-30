@@ -314,8 +314,6 @@ Authorization: Bearer <admin-token>
 - 图片 URL 使用正式域名
 - Admin 登录链路正常
 - Admin 未登录保护正常
-- 后端进程在线，由 `pm2` 托管
-- 服务只监听 `127.0.0.1:4010`，外网通过 Nginx 反代
 
 ## 11. 如果前端遇到问题，先带上这几项信息
 
