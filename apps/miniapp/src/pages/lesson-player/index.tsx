@@ -13,6 +13,8 @@ import {
   getLessonContent,
   getModuleModesSync,
   showApiError,
+  getWxshopProduct,
+  fetchWxshopConfig,
 } from '../../services'
 import type { Course, Lesson, CourseAccess } from '../../types'
 import './index.scss'
@@ -36,6 +38,8 @@ export default function LessonPlayer() {
   const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showList, setShowList] = useState(true)
+  const [wxshopAppid, setWxshopAppid] = useState('')
+  const [wxshopProductId, setWxshopProductId] = useState('')
 
   // 进入页面时同步一次模块模式（后台改动后切前台再进入即生效）
   useEffect(() => {
@@ -50,12 +54,18 @@ export default function LessonPlayer() {
       getLessons(courseId),
       getLessonById(lessonId),
       getCourseAccess(courseId),
+      getWxshopProduct(courseId),
+      fetchWxshopConfig(),
     ])
-      .then(([courseData, lessonsData, lessonData, accessData]) => {
+      .then(([courseData, lessonsData, lessonData, accessData, productData, wxshopConfig]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
         setCurrentLesson(lessonData ?? lessonsData[0] ?? null)
         setAccess(accessData)
+        if (productData) {
+          setWxshopProductId(productData.productId)
+        }
+        setWxshopAppid(wxshopConfig.appid)
       })
       .catch((err) => showApiError(err, '课时加载失败'))
       .finally(() => setLoading(false))
@@ -126,8 +136,11 @@ export default function LessonPlayer() {
 
   /** 跳转课程详情页购买(实际生产可改为直接跳微信小店小程序) */
   const handleGoToBuy = () => {
+    if (wxshopAppid && wxshopProductId) return
     Taro.navigateTo({ url: `/pages/course-detail/index?id=${courseId}` })
   }
+
+  const canOpenWxshop = wxshopAppid && wxshopProductId
 
   if (loading) {
     return (
@@ -188,9 +201,23 @@ export default function LessonPlayer() {
               {course?.title}
             </Text>
             {!access?.isVip && (
-              <View className='player-lock-btn' onClick={handleGoToBuy}>
-                去购买课程
-              </View>
+              canOpenWxshop ? (
+                <store-product
+                  appid={wxshopAppid}
+                  product-id={wxshopProductId}
+                  custom-content
+                  open-page='product-detail'
+                  logo-position='bottom-right'
+                >
+                  <View className='player-lock-btn'>
+                    去购买课程
+                  </View>
+                </store-product>
+              ) : (
+                <View className='player-lock-btn' onClick={handleGoToBuy}>
+                  去购买课程
+                </View>
+              )
             )}
           </View>
         )}
