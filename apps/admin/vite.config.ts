@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log(`[Vite Proxy] ${req.method} ${req.url} -> ${proxyReq.getHeader('host')}${proxyReq.path}`)
             })
-            proxy.on('proxyRes', (proxyRes, req, res) => {
+            proxy.on('proxyRes', (proxyRes, req) => {
               console.log(`[Vite Proxy] ${req.method} ${req.url} <- ${proxyRes.statusCode}`)
             })
             proxy.on('error', (err, req) => {
