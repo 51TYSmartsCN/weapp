@@ -2,6 +2,44 @@
   min-height: 100vh;
 }
 
+/* 侧边栏：固定高度 + flex 布局，让菜单可滚动 */
+.admin-layout .ant-layout-sider {
+  height: 100vh !important;
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-layout .ant-layout-sider-children {
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Menu 占满剩余高度并可滚动 */
+.admin-layout .ant-menu {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* 滚动条样式 */
+.admin-layout .ant-menu::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-layout .ant-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+.admin-layout .ant-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .admin-logo {
   height: 64px;
   display: flex;

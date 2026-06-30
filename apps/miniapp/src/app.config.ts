@@ -43,10 +43,4 @@ export default defineAppConfig({
     navigationBarTextStyle: 'black',
     navigationStyle: 'custom'
   },
-  plugins: {
-    wxshopPlugin: {
-      version: 'latest',
-      provider: 'wx34345ae5855f892d',
-    },
-  },
 })

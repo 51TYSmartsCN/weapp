@@ -14,6 +14,16 @@ export interface WxshopConfig {
   productPath: string
 }
 
+export interface WxshopEntryState {
+  product: WxshopProduct | null
+  config: WxshopConfig
+  appid: string
+  productId: string
+  canOpen: boolean
+  reason: 'ready' | 'missing_product' | 'missing_appid'
+  message: string
+}
+
 const WXSHOP_CONFIG_STORAGE_KEY = 'wxshop_config'
 
 const DEFAULT_WXSHOP_CONFIG: WxshopConfig = {
@@ -78,31 +88,76 @@ export async function refreshWxshopConfig(): Promise<WxshopConfig> {
   return fetchWxshopConfig()
 }
 
-export async function navigateToWxshopProduct(courseId: number): Promise<boolean> {
+export function resolveWxshopEntryState(
+  product: WxshopProduct | null,
+  config: WxshopConfig
+): WxshopEntryState {
+  if (!product?.productId) {
+    return {
+      product,
+      config,
+      appid: config.appid,
+      productId: '',
+      canOpen: false,
+      reason: 'missing_product',
+      message: '该课程暂未绑定微信小店商品',
+    }
+  }
+
+  if (!config.appid) {
+    return {
+      product,
+      config,
+      appid: '',
+      productId: product.productId,
+      canOpen: false,
+      reason: 'missing_appid',
+      message: '微信小店配置未完成，请先在后台配置 appid',
+    }
+  }
+
+  return {
+    product,
+    config,
+    appid: config.appid,
+    productId: product.productId,
+    canOpen: true,
+    reason: 'ready',
+    message: '',
+  }
+}
+
+export async function getWxshopEntryState(courseId: number): Promise<WxshopEntryState> {
   const [product, config] = await Promise.all([
     getWxshopProduct(courseId),
     fetchWxshopConfig(),
   ])
+  return resolveWxshopEntryState(product, config)
+}
 
-  if (!product) {
-    Taro.showToast({ title: '该课程暂未上架小店', icon: 'none' })
+export function showWxshopUnavailable(state: Pick<WxshopEntryState, 'message' | 'reason'>) {
+  if (state.reason === 'ready') return
+  console.warn('[wxshop] unavailable:', state)
+  Taro.showToast({ title: state.message, icon: 'none' })
+}
+
+export async function navigateToWxshopProduct(courseId: number): Promise<boolean> {
+  const state = await getWxshopEntryState(courseId)
+
+  if (!state.canOpen) {
+    showWxshopUnavailable(state)
     return false
   }
 
-  if (!config.appid) {
-    Taro.showToast({ title: '小店配置未完成', icon: 'none' })
-    return false
-  }
-
-  const path = config.productPath + (config.productPath.includes('?') ? '&' : '?') + `productId=${product.productId}`
+  const path = state.config.productPath + (state.config.productPath.includes('?') ? '&' : '?') + `productId=${state.productId}`
 
   try {
     await Taro.navigateToMiniProgram({
-      appId: config.appid,
+      appId: state.appid,
       path,
       extraData: {
         courseId,
-        productId: product.productId,
+        productId: state.productId,
       },
       envVersion: 'release',
     })

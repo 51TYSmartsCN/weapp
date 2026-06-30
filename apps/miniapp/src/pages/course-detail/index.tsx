@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, Video, ScrollView } from '@tarojs/components'
-import { useRouter } from '@tarojs/taro'
+import { useRouter, useDidShow } from '@tarojs/taro'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 
@@ -9,8 +9,9 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, showApiError, getWxshopProduct, fetchWxshopConfig, toggleFavorite, checkFavorite, getInstructorById } from '../../services'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, toggleFavorite, checkFavorite, getInstructorById } from '../../services'
 import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
+import type { WxshopEntryState } from '../../services'
 import './index.scss'
 
 // 默认在线课程封面（当 course.cover 缺失时兜底）
@@ -36,15 +37,22 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true)
   const [followed, setFollowed] = useState(false)
   const [favorited, setFavorited] = useState(false)
-  const [wxshopAppid, setWxshopAppid] = useState('')
-  const [wxshopProductId, setWxshopProductId] = useState('')
+  const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
 
-  // 进入页面时同步一次封面模式（后台改动后切前台再进入即生效）
-  useEffect(() => {
-    const modes = getModuleModesSync()
-    setCoverMode(modes.courseDetailCover.mode)
-    setCoverVideoUrl(modes.courseDetailCover.videoUrl || '')
-  }, [])
+  // 每次页面显示时刷新封面模式（覆盖冷启动 / 切前台 / 返回页面三种场景，确保后台改动及时生效）
+  useDidShow(() => {
+    refreshModuleModes()
+      .then((modes) => {
+        setCoverMode(modes.courseDetailCover.mode)
+        setCoverVideoUrl(modes.courseDetailCover.videoUrl || '')
+      })
+      .catch(() => {
+        // 网络失败时回退到本地缓存
+        const modes = getModuleModesSync()
+        setCoverMode(modes.courseDetailCover.mode)
+        setCoverVideoUrl(modes.courseDetailCover.videoUrl || '')
+      })
+  })
 
   useEffect(() => {
     setLoading(true)
@@ -53,18 +61,14 @@ export default function CourseDetail() {
       getLessons(courseId),
       getReviews(courseId),
       getCourseAccess(courseId),
-      getWxshopProduct(courseId),
-      fetchWxshopConfig(),
+      getWxshopEntryState(courseId),
     ])
-      .then(async ([courseData, lessonsData, reviewsData, accessData, productData, wxshopConfig]) => {
+      .then(async ([courseData, lessonsData, reviewsData, accessData, wxshopState]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
         setReviews(reviewsData)
         setAccess(accessData)
-        if (productData) {
-          setWxshopProductId(productData.productId)
-        }
-        setWxshopAppid(wxshopConfig.appid)
+        setWxshopEntry(wxshopState)
 
         // 加载讲师信息
         if (courseData?.instructorId) {
@@ -104,6 +108,25 @@ export default function CourseDetail() {
     }
   }
 
+  // store-product 自定义样式：让组件 UI 贴合课程详情页的绿色主题
+  const storeProductStyle = {
+    card: { 'background-color': '#FFFFFF' },
+    title: { color: '#0F172A' },
+    price: { color: '#0D9488' },
+    'buy-button': {
+      width: '100%',
+      'border-radius': '9999rpx',
+      'background-color': '#0D9488',
+      color: '#FFFFFF',
+    },
+    'buy-button-disabled': {
+      width: '100%',
+      'border-radius': '9999rpx',
+      'background-color': '#0D9488',
+      color: '#FFFFFF',
+    },
+  }
+
   /** 主按钮文案 */
   const primaryBtnText = (() => {
     if (!access) return '立即报名'
@@ -139,6 +162,24 @@ export default function CourseDetail() {
   const totalLessons = lessons.length
   const totalSeconds = lessons.reduce((sum, l) => sum + (l.durationSeconds || 0), 0)
   const totalHours = (totalSeconds / 3600).toFixed(1)
+  const canOpenWxshop = wxshopEntry?.canOpen === true
+
+  const handleWxshopEnterSuccess = () => {
+    console.log('[wxshop] enter success', {
+      courseId,
+      productId: wxshopEntry?.productId,
+      appid: wxshopEntry?.appid,
+    })
+  }
+
+  const handleWxshopEnterError = (detail?: unknown) => {
+    console.error('[wxshop] enter error', {
+      courseId,
+      detail,
+      state: wxshopEntry,
+    })
+    Taro.showToast({ title: '打开微信小店失败', icon: 'none' })
+  }
 
   return (
     <View className='course-detail-page'>
@@ -251,8 +292,8 @@ export default function CourseDetail() {
                   <Text className='title-main'>课程大纲</Text>
                   <Text className='title-sub'>共 {totalLessons} 节课 · 总时长 {totalHours} 小时</Text>
                 </View>
-                {lessons.map((lesson, index) => (
-                  <LessonItem key={lesson.id} lesson={lesson} completed={index < 2} courseId={courseId} />
+                {lessons.map((lesson) => (
+                  <LessonItem key={lesson.id} lesson={lesson} completed={false} courseId={courseId} />
                 ))}
                 <View className='more-lessons'>
                   <Text>+ 更多课程</Text>
@@ -293,21 +334,25 @@ export default function CourseDetail() {
             <View className='enroll-btn' onClick={handlePrimaryAction}>
               {primaryBtnText}
             </View>
-          ) : wxshopAppid && wxshopProductId ? (
+          ) : canOpenWxshop ? (
             <store-product
               class='store-product-btn'
-              appid={wxshopAppid}
-              product-id={wxshopProductId}
-              custom-content={true}
-              open-page='product-detail'
-              logo-position='bottom-right'
-            >
-              <View className='enroll-btn'>
-                {primaryBtnText}
-              </View>
-            </store-product>
+              appid={wxshopEntry?.appid}
+              product-id={wxshopEntry?.productId}
+              custom-style={storeProductStyle}
+              bindentersuccess={handleWxshopEnterSuccess}
+              bindentererror={(e: any) => {
+                handleWxshopEnterError(e.detail)
+              }}
+            />
           ) : (
-            <View className='enroll-btn' onClick={() => Taro.showToast({ title: '该课程暂未上架', icon: 'none' })}>
+            <View
+              className='enroll-btn'
+              onClick={() => showWxshopUnavailable(wxshopEntry ?? {
+                reason: 'missing_product',
+                message: '该课程暂未绑定微信小店商品',
+              })}
+            >
               {primaryBtnText}
             </View>
           )}

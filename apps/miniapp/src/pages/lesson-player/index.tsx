@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { View, Text, Video, ScrollView } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import { createVideoContext } from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import Icon from '../../components/Icon'
@@ -12,11 +12,13 @@ import {
   getLessonPlayUrl,
   getLessonContent,
   getModuleModesSync,
+  refreshModuleModes,
   showApiError,
-  getWxshopProduct,
-  fetchWxshopConfig,
+  getWxshopEntryState,
+  showWxshopUnavailable,
 } from '../../services'
 import type { Course, Lesson, CourseAccess } from '../../types'
+import type { WxshopEntryState } from '../../services'
 import './index.scss'
 
 export default function LessonPlayer() {
@@ -38,13 +40,17 @@ export default function LessonPlayer() {
   const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showList, setShowList] = useState(true)
-  const [wxshopAppid, setWxshopAppid] = useState('')
-  const [wxshopProductId, setWxshopProductId] = useState('')
+  const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
 
-  // 进入页面时同步一次模块模式（后台改动后切前台再进入即生效）
-  useEffect(() => {
-    setContentMode(getModuleModesSync().lessonPlayer.contentMode)
-  }, [])
+  // 每次页面显示时刷新模块模式（覆盖冷启动 / 切前台 / 返回页面三种场景，确保后台改动及时生效）
+  useDidShow(() => {
+    refreshModuleModes()
+      .then((modes) => setContentMode(modes.lessonPlayer.contentMode))
+      .catch(() => {
+        // 网络失败时回退到本地缓存
+        setContentMode(getModuleModesSync().lessonPlayer.contentMode)
+      })
+  })
 
   // 初次加载:课程信息 + 课时列表 + 权限
   useEffect(() => {
@@ -54,18 +60,14 @@ export default function LessonPlayer() {
       getLessons(courseId),
       getLessonById(lessonId),
       getCourseAccess(courseId),
-      getWxshopProduct(courseId),
-      fetchWxshopConfig(),
+      getWxshopEntryState(courseId),
     ])
-      .then(([courseData, lessonsData, lessonData, accessData, productData, wxshopConfig]) => {
+      .then(([courseData, lessonsData, lessonData, accessData, wxshopState]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
         setCurrentLesson(lessonData ?? lessonsData[0] ?? null)
         setAccess(accessData)
-        if (productData) {
-          setWxshopProductId(productData.productId)
-        }
-        setWxshopAppid(wxshopConfig.appid)
+        setWxshopEntry(wxshopState)
       })
       .catch((err) => showApiError(err, '课时加载失败'))
       .finally(() => setLoading(false))
@@ -134,13 +136,32 @@ export default function LessonPlayer() {
     }
   }
 
-  /** 跳转课程详情页购买(实际生产可改为直接跳微信小店小程序) */
   const handleGoToBuy = () => {
-    if (wxshopAppid && wxshopProductId) return
-    Taro.navigateTo({ url: `/pages/course-detail/index?id=${courseId}` })
+    if (wxshopEntry?.canOpen) return
+    showWxshopUnavailable(wxshopEntry ?? {
+      reason: 'missing_product',
+      message: '该课程暂未绑定微信小店商品',
+    })
   }
 
-  const canOpenWxshop = wxshopAppid && wxshopProductId
+  const canOpenWxshop = wxshopEntry?.canOpen === true
+
+  const handleWxshopEnterSuccess = () => {
+    console.log('[wxshop] enter success', {
+      courseId,
+      productId: wxshopEntry?.productId,
+      appid: wxshopEntry?.appid,
+    })
+  }
+
+  const handleWxshopEnterError = (detail?: unknown) => {
+    console.error('[wxshop] enter error', {
+      courseId,
+      detail,
+      state: wxshopEntry,
+    })
+    Taro.showToast({ title: '打开微信小店失败', icon: 'none' })
+  }
 
   if (loading) {
     return (
@@ -203,11 +224,13 @@ export default function LessonPlayer() {
             {!access?.isVip && (
               canOpenWxshop ? (
                 <store-product
-                  appid={wxshopAppid}
-                  product-id={wxshopProductId}
+                  appid={wxshopEntry?.appid}
+                  product-id={wxshopEntry?.productId}
                   custom-content
                   open-page='product-detail'
                   logo-position='bottom-right'
+                  bindentersuccess={handleWxshopEnterSuccess}
+                  bindentererror={(e: any) => handleWxshopEnterError(e.detail)}
                 >
                   <View className='player-lock-btn'>
                     去购买课程
