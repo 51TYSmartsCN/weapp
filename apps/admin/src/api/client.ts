@@ -2,11 +2,25 @@ import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 
 const adminLoginPath = `${import.meta.env.BASE_URL}login`
+const apiBaseUrl = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
 
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: apiBaseUrl,
   timeout: 15000,
 })
+
+export function resolveApiBaseUrl(rawBaseUrl?: string): string {
+  const normalizedBaseUrl = (rawBaseUrl || '').trim().replace(/\/+$/, '')
+  if (!normalizedBaseUrl) {
+    return '/api'
+  }
+
+  if (normalizedBaseUrl.endsWith('/api')) {
+    return normalizedBaseUrl
+  }
+
+  return `${normalizedBaseUrl}/api`
+}
 
 // 请求拦截器：附加 token
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
