@@ -12,3 +12,6 @@ comp_extract
 # 开发服务 PID 与日志
 .dev-*.pid
 .dev-*.log
+
+# 服务端托管的 admin 静态产物由部署前同步生成，不纳入版本控制
+apps/server/public/admin/
