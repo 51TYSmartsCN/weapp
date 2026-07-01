@@ -12,7 +12,7 @@
     "dev:admin": "pnpm --filter @geo/admin dev",
     "build:miniapp": "pnpm --filter @geo/miniapp build:weapp",
     "build:server": "pnpm --filter @geo/server build",
-    "build:admin": "pnpm --filter @geo/admin build && pnpm sync:admin-static",
+    "build:admin": "pnpm --filter @geo/admin build",
     "build": "pnpm build:shared && pnpm -r --filter \"./apps/*\" build",
     "dev": "pnpm build:shared && pnpm -r --parallel --filter \"./apps/*\" dev",
     "clean": "pnpm -r exec rm -rf dist && rm -rf node_modules",

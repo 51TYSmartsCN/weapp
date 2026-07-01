@@ -2,6 +2,24 @@
 
 本文档只覆盖当前仓库 `@geo/server` 的真实部署面，目标是把后端安全上线到服务器，并与小程序前端联调。
 
+日常发布如无特殊说明，优先使用仓库内脚本：
+
+- `./scripts/deploy-t0ops.sh deploy`
+- 说明文档：`docs/t0ops-server-admin-deploy-script.md`
+
+## 0. Admin 静态产物发布约定
+
+- `apps/admin/dist/` 是后台前端构建产物，属于临时输出，不纳入 Git
+- `apps/server/public/admin/` 是服务端托管目录，也不再纳入 Git
+- 每次执行 `pnpm build:admin` 时，会自动把 `apps/admin/dist/` 镜像同步到 `apps/server/public/admin/`
+- 部署脚本再把 `apps/server/public/admin/` 同步到服务器
+
+这意味着：
+
+- 提交后台改动时只提交源码、脚本、测试、文档
+- 不再单独提交 `apps/server/public/admin/*` 静态文件
+- 只要构建和部署链路正常，线上拿到的仍然是最新后台产物
+
 ## 1. 部署范围
 
 - 小程序 API 服务：`apps/server`
@@ -127,6 +145,7 @@ pnpm --filter @geo/server seed
 cd /opt/geo-course/weapp
 pnpm install --frozen-lockfile
 pnpm build:shared
+pnpm build:admin
 pnpm build:server
 ```
 
