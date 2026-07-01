@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, message } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../../api'
+import { getRequestErrorMessage } from '../../api/request-error'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -14,8 +15,8 @@ export default function LoginPage() {
       await login(values.username, values.password)
       message.success('登录成功')
       navigate('/', { replace: true })
-    } catch {
-      message.error('用户名或密码错误')
+    } catch (error) {
+      message.error(getRequestErrorMessage(error, '登录失败，请稍后重试'))
     } finally {
       setLoading(false)
     }
