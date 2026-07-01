@@ -18,6 +18,7 @@ import {
   BgColorsOutlined,
   BlockOutlined,
   ShopOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { logout } from '../api'
@@ -46,6 +47,7 @@ const menuItemsMap: Record<string, { label: string; icon: React.ReactNode }> = {
   '/theme': { label: '主题设置', icon: <BgColorsOutlined /> },
   '/module-modes': { label: '模块展示模式', icon: <BlockOutlined /> },
   '/wxshop-products': { label: '小店商品映射', icon: <ShopOutlined /> },
+  '/wxshop-config': { label: '小店配置', icon: <SettingOutlined /> },
 }
 
 const tabBarStyle: React.CSSProperties = {
@@ -147,7 +149,6 @@ export default function AdminLayout() {
         onCollapse={setCollapsed}
         theme="dark"
         width={220}
-        style={{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, bottom: 0 }}
       >
         <div className="admin-logo">
           <BookOutlined style={{ fontSize: 24, color: '#0D9488' }} />

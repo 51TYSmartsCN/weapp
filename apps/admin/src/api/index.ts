@@ -303,14 +303,26 @@ export const appConfigApi = {
   },
   /** 获取模块展示模式配置 */
   getModuleModes() {
-    return request<any>({ url: '/admin/app-configs/module-modes' })
+    return request<any>({ url: '/admin/app-configs/module_modes' })
   },
   /** 更新模块展示模式配置 */
   updateModuleModes(data: Record<string, any>) {
     return request({
       method: 'PUT',
-      url: '/admin/app-configs/module-modes',
+      url: '/admin/app-configs/module_modes',
       data: { value: data, description: '模块展示模式配置（lessonPlayer.contentMode / courseDetailCover.mode）' },
+    })
+  },
+  /** 获取微信小店配置 */
+  getWxshopConfig() {
+    return request<any>({ url: '/admin/app-configs/wxshop_config' })
+  },
+  /** 更新微信小店配置 */
+  updateWxshopConfig(data: Record<string, any>) {
+    return request({
+      method: 'PUT',
+      url: '/admin/app-configs/wxshop_config',
+      data: { value: data, description: '微信小店配置（appid、商品路径等）' },
     })
   },
 }

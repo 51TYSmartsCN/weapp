@@ -150,6 +150,14 @@
 .instructor-detail-card {
   display: flex;
   gap: $md;
+  align-items: flex-start;
+}
+
+.instructor-avatar {
+  flex-shrink: 0;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-full;
 }
 
 .instructor-info {
@@ -267,13 +275,10 @@
   line-height: 1;
 }
 
+// store-product 是微信原生组件，内部 UI 由微信渲染。
+// 仅控制外层布局，让组件占据右侧剩余空间，和左侧客服/收藏按钮协调布局。
 .store-product-btn {
-  flex-shrink: 0;
-  width: auto;
-  display: inline-block;
-
-  .enroll-btn {
-    width: 100%;
-    text-align: center;
-  }
+  flex: 1;
+  min-width: 0;
+  margin-left: $sm;
 }

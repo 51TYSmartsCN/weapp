@@ -17,6 +17,7 @@ import HelpArticles from './pages/help-articles'
 import Theme from './pages/theme'
 import ModuleModes from './pages/module-modes'
 import WxshopProducts from './pages/wxshop-products'
+import WxshopConfig from './pages/wxshop-config'
 
 const adminBasePath = import.meta.env.BASE_URL.endsWith('/')
   ? import.meta.env.BASE_URL.slice(0, -1)
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="theme" element={<Theme />} />
             <Route path="module-modes" element={<ModuleModes />} />
             <Route path="wxshop-products" element={<WxshopProducts />} />
+            <Route path="wxshop-config" element={<WxshopConfig />} />
           </Route>
         </Routes>
       </AntApp>

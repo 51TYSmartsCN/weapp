@@ -70,6 +70,9 @@ export {
   getWxshopConfigSync,
   initWxshopConfig,
   refreshWxshopConfig,
+  getWxshopEntryState,
+  resolveWxshopEntryState,
+  showWxshopUnavailable,
   navigateToWxshopProduct,
 } from './wxshop'
-export type { WxshopProduct, WxshopConfig } from './wxshop'
+export type { WxshopProduct, WxshopConfig, WxshopEntryState } from './wxshop'
