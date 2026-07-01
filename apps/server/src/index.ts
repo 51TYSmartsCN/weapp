@@ -104,7 +104,16 @@ app.use(express.json({ limit: '5mb' }))
 app.use('/images', express.static(path.join(__dirname, '../public/images')))
 
 // Admin 后台管理静态页面
-app.use('/admin', express.static(path.join(__dirname, '../public/admin')))
+const adminStaticRoot = path.join(__dirname, '../public/admin')
+app.use('/admin', express.static(adminStaticRoot))
+app.get('/admin/*path', (req, res, next) => {
+  if (path.extname(req.path)) {
+    next()
+    return
+  }
+
+  res.sendFile(path.join(adminStaticRoot, 'index.html'))
+})
 
 // 测试数据库连接
 async function testDbConnection() {

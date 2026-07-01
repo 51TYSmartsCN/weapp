@@ -18,6 +18,10 @@ import Theme from './pages/theme'
 import ModuleModes from './pages/module-modes'
 import WxshopProducts from './pages/wxshop-products'
 
+const adminBasePath = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL.slice(0, -1)
+  : import.meta.env.BASE_URL
+
 /** 路由守卫：未登录则跳转登录页 */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!getToken()) {
@@ -28,7 +32,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={adminBasePath}>
       <AntApp>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

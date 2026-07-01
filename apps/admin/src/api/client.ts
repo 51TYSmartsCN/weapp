@@ -1,6 +1,8 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 
+const adminLoginPath = `${import.meta.env.BASE_URL}login`
+
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 15000,
@@ -21,7 +23,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_token')
-      window.location.href = '/login'
+      window.location.href = adminLoginPath
     }
     return Promise.reject(error)
   },
