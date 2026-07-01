@@ -105,8 +105,16 @@ app.use('/images', express.static(path.join(__dirname, '../public/images')))
 
 // Admin 后台管理静态页面
 const adminStaticRoot = path.join(__dirname, '../public/admin')
-app.use('/admin', express.static(adminStaticRoot))
-app.get(/^\/admin(?:\/.*)?$/, (req, res, next) => {
+const adminStaticRouter = express.Router()
+
+adminStaticRouter.use(
+  express.static(adminStaticRoot, {
+    index: false,
+    redirect: false,
+  })
+)
+
+adminStaticRouter.get('*', (req, res, next) => {
   if (path.extname(req.path)) {
     next()
     return
@@ -114,6 +122,8 @@ app.get(/^\/admin(?:\/.*)?$/, (req, res, next) => {
 
   res.sendFile(path.join(adminStaticRoot, 'index.html'))
 })
+
+app.use('/admin', adminStaticRouter)
 
 // 测试数据库连接
 async function testDbConnection() {
