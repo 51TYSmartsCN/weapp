@@ -6,10 +6,13 @@
 
 - 线上 API Base URL：`https://ty-server-api.tysmarts.cn`
 - 健康检查：`GET /api/health`
-- 当前线上已初始化演示数据：
-  - 课程：`6` 条
-  - Banner：`2` 条
-  - 讲师：`3` 条
+- 当前线上已确认的公开数据基线：
+  - 课程：至少 `6` 条
+  - Banner：至少 `2` 条
+  - 讲师：至少 `3` 条
+- 当前线上帮助文章：
+  - `GET /api/help-articles` 正常返回 `code=0`
+  - 当前数据可能为空数组 `[]`
 
 当前公开接口返回的图片 URL 已统一为正式域名：
 
@@ -50,7 +53,7 @@ curl -s https://ty-server-api.tysmarts.cn/api/courses
 预期：
 
 - `code=0`
-- 当前应返回 `6` 条课程
+- 当前应至少返回 `6` 条课程
 - `cover` 字段应为 `https://ty-server-api.tysmarts.cn/images/...`
 
 ### 2.4 管理后台未登录校验
@@ -65,6 +68,30 @@ curl -i https://ty-server-api.tysmarts.cn/api/admin/dashboard
 - 响应体包含：`{"code":401,"message":"未登录"}`
 
 这一步用于确认 admin 保护已经生效，普通请求不会误进后台接口。
+
+### 2.5 部署后自动化验收
+
+仓库内提供了一条真实线上验收测试：
+
+```bash
+node --test apps/server/test/live-api-contract.test.cjs
+```
+
+用途：
+
+- 部署完成后，按本文档约定逐项校验线上接口
+- 自动验证公开接口、后台未登录保护、后台登录与 dashboard
+- 避免只看 `api/health` 就误判发布成功
+
+依赖：
+
+- 根目录 `.env` 里需要提供以下本地测试配置（只供本机验收使用，不提交仓库）：
+
+```ini
+live_api_base_url=https://ty-server-api.tysmarts.cn
+live_api_admin_username=你的线上管理员账号
+live_api_admin_password=你的线上管理员密码
+```
 
 ## 3. 前端最先可用的公开接口
 
@@ -261,7 +288,7 @@ Authorization: Bearer <admin-token>
   "code": 0,
   "data": {
     "totalCourses": 6,
-    "totalUsers": 1,
+    "totalUsers": 5,
     "totalOrders": 0,
     "totalInstructors": 3,
     "totalRevenue": 0,
@@ -314,8 +341,20 @@ Authorization: Bearer <admin-token>
 - 图片 URL 使用正式域名
 - Admin 登录链路正常
 - Admin 未登录保护正常
+- `GET /api/help-articles` 正常，但当前可能返回空数组
+- `GET /api/lessons/:id/play`、`GET /api/user`、`GET /api/orders` 未登录时返回 `401`
 
-## 11. 如果前端遇到问题，先带上这几项信息
+## 11. 部署后建议验收顺序
+
+建议每次发布后按下面顺序做，不要只看健康检查：
+
+1. `curl https://ty-server-api.tysmarts.cn/api/health`
+2. `curl https://ty-server-api.tysmarts.cn/api/banners`
+3. `curl https://ty-server-api.tysmarts.cn/api/courses`
+4. `curl -i https://ty-server-api.tysmarts.cn/api/admin/dashboard`
+5. `node --test apps/server/test/live-api-contract.test.cjs`
+
+## 12. 如果前端遇到问题，先带上这几项信息
 
 反馈时请尽量一起带：
 
