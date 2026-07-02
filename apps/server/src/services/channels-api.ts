@@ -75,23 +75,61 @@ export function invalidateChannelsAccessToken(): void {
 }
 
 /**
- * 虚拟商品发货（deliver_type=3，无需物流）
+ * 确认发货并写入发货说明。
  *
- * 接口：POST /channels/ec/order/delivery_send
- * 文档：https://developers.weixin.qq.com/doc/channels/API/order/delivery_send.html
+ * 接口：POST /order/confirm_delivery
+ * 字段：delivery_note（买家订单详情页可见）
+ */
+export async function confirmDeliveryWithNote(orderId: string, deliveryNote: string): Promise<boolean> {
+  if (isProduction && !channelsConfig.appId) {
+    console.warn('[channels] 跳过确认发货调用：未配置 CHANNELS_APP_ID')
+    return false
+  }
+  if (!channelsConfig.appId) {
+    console.log('[channels] mock 跳过确认发货调用：', { orderId, deliveryNote })
+    return false
+  }
+
+  return callChannelsApiWithRetry(async (token) => {
+    const url = `${API_BASE}${channelsConfig.confirmDeliveryPath}?access_token=${token}`
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: orderId,
+        delivery_note: deliveryNote,
+      }),
+    })
+    const data = (await resp.json()) as WxApiBaseResp
+    if (data.errcode && data.errcode !== 0) {
+      throw Object.assign(new Error(`确认发货失败: errcode=${data.errcode} errmsg=${data.errmsg}`), {
+        errcode: data.errcode,
+      })
+    }
+    return true
+  })
+}
+
+/**
+ * 虚拟商品发货。
  *
- * 触发时机：订单支付成功后调用，标记订单为已发货，让订单进入「已完成」流程
+ * 有 deliveryNote 时优先调用 /order/confirm_delivery，把入口写入 delivery_note。
+ * 无 deliveryNote 时保留旧 /channels/ec/order/delivery_send 兼容路径。
  *
  * @param orderId 微信小店订单号（order_id）
+ * @param deliveryNote 买家订单详情页可见的发货说明
  * @returns 是否发货成功
  */
-export async function deliverVirtualOrder(orderId: string): Promise<boolean> {
+export async function deliverVirtualOrder(orderId: string, deliveryNote?: string): Promise<boolean> {
+  if (deliveryNote && deliveryNote.trim()) {
+    return confirmDeliveryWithNote(orderId, deliveryNote.trim())
+  }
+
   if (isProduction && !channelsConfig.appId) {
     console.warn('[channels] 跳过发货调用：未配置 CHANNELS_APP_ID')
     return false
   }
   if (!channelsConfig.appId) {
-    // 非生产环境且未配置时不报错，仅记录日志（mock 模式友好）
     console.log('[channels] mock 跳过发货调用：orderId=', orderId)
     return false
   }

@@ -3,6 +3,9 @@ import crypto from 'crypto'
 import { pool } from '../db'
 import { ok, fail } from '../utils'
 import { wxshopConfig, wechatConfig } from '../config'
+import { createPostPurchaseFulfillment } from '../services/wechat-store-fulfillment'
+import { deliverVirtualOrder } from '../services/channels-api'
+import { markStoreDelivery } from '../services/wechat-store-fulfillment'
 
 const router = Router()
 
@@ -165,6 +168,10 @@ export async function resolveCourseId(data: any): Promise<number | null> {
     console.warn('[wxshop] 查 wxshop_products 映射表失败:', err)
   }
   return null
+}
+
+function extractSkuId(data: any): string {
+  return String(data?.sku_id || data?.skuId || data?.out_sku_id || data?.outSkuId || '')
 }
 
 // ============================================================
@@ -331,6 +338,30 @@ router.post('/order/callback', async (req: Request, res: Response) => {
 
     console.log('[wxshop] 订单处理完成: orderId=', orderId, 'userId=', result.userId, 'created=', result.created)
 
+    const fulfillment = await createPostPurchaseFulfillment({
+      storeOrderId: String(orderId),
+      courseId,
+      sourceScene: 'miniapp',
+      storeProductId: extractProductId(data) || undefined,
+      storeSkuId: extractSkuId(data),
+      buyerOpenid: String(fromUser),
+      paidAt: data.create_time ? new Date(Number(data.create_time) * 1000).toISOString().slice(0, 19).replace('T', ' ') : undefined,
+      rawPayload: msgObj,
+    })
+
+    try {
+      const delivered = await deliverVirtualOrder(String(orderId), fulfillment.fulfillmentText)
+      await markStoreDelivery(String(orderId), delivered ? 'success' : 'failed', { hasDeliveryNote: true })
+    } catch (deliveryErr) {
+      console.warn('[wxshop] 确认发货失败（不影响课程权益生成）:', deliveryErr)
+      await markStoreDelivery(
+        String(orderId),
+        'failed',
+        { hasDeliveryNote: true },
+        deliveryErr instanceof Error ? deliveryErr.message : String(deliveryErr)
+      )
+    }
+
     // 微信要求返回字符串 "success"
     return res.send('success')
   } catch (err) {
@@ -439,7 +470,16 @@ router.post('/order/mock', async (req: Request, res: Response) => {
       amount: Number(amount ?? courseList[0].price),
     })
 
-    return ok(res, { orderNo, ...result })
+    const fulfillment = await createPostPurchaseFulfillment({
+      storeOrderId: orderNo,
+      courseId: Number(courseId),
+      sourceScene: 'miniapp',
+      storeProductId: `mock:${courseId}`,
+      buyerOpenid: String(openid),
+      rawPayload: { mock: true, body },
+    })
+
+    return ok(res, { orderNo, ...result, fulfillment })
   } catch (err) {
     console.error('[wxshop] mock order error:', err)
     return fail(res, 500, err instanceof Error ? err.message : 'mock 下单失败')

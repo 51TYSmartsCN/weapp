@@ -17,6 +17,7 @@ import bannerRoutes from './routes/banner'
 import wxshopRoutes from './routes/wxshop'
 import channelsWebhookRoutes from './routes/channels-webhook'
 import redeemRoutes from './routes/redeem'
+import wechatStoreRoutes from './routes/wechat-store'
 import adminLoginRoutes from './routes/admin/index'
 import adminDashboardRoutes from './routes/admin/dashboard'
 import adminCourseRoutes from './routes/admin/course'
@@ -159,6 +160,7 @@ app.use('/api/favorites', favoriteRoutes)
 app.use('/api/follows', followRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api', redeemRoutes) // POST /api/redeem 兑换码核销（对接.md）
+app.use('/api/wechat-store', wechatStoreRoutes)
 
 // Admin 管理后台路由
 app.use('/api/admin', adminLoginRoutes)       // POST /api/admin/login

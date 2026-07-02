@@ -53,6 +53,15 @@ export const wechatConfig = {
   secret: process.env.WECHAT_SECRET || '',
 }
 
+/** 微信小店购后承接配置 */
+export const fulfillmentConfig = {
+  redeemSalt: process.env.FULFILLMENT_REDEEM_SALT || jwtConfig.secret,
+  claimSalt: process.env.FULFILLMENT_CLAIM_SALT || jwtConfig.secret,
+  claimPage: process.env.FULFILLMENT_CLAIM_PAGE || '/pages/video-unlock/index',
+  claimExpireDays: Number(process.env.FULFILLMENT_CLAIM_EXPIRE_DAYS || 90),
+  urlLinkExpireDays: Number(process.env.FULFILLMENT_URL_LINK_EXPIRE_DAYS || 30),
+}
+
 /** 微信小店订单回调配置(小程序消息推送机制)
  * - callbackToken:在 mp.weixin.qq.com → 开发管理 → 消息推送配置 中设置的 Token
  * - encodingAESKey:消息加密密钥,43位 base64,对应小程序后台 EncodingAESKey
@@ -91,6 +100,7 @@ export const channelsConfig = {
   encodingAESKey: channelsEncodingAESKey,
   appId: process.env.CHANNELS_APP_ID || '',
   appSecret: process.env.CHANNELS_APP_SECRET || '',
+  confirmDeliveryPath: process.env.CHANNELS_CONFIRM_DELIVERY_PATH || '/order/confirm_delivery',
   mockMode: isProduction ? false : process.env.CHANNELS_MOCK === '1' || !channelsToken,
 }
 

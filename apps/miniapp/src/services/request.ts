@@ -50,25 +50,31 @@ export async function request<T>(options: {
   data?: any
   /** 是否跳过自动注入 token（登录接口本身不需要 token） */
   skipAuth?: boolean
+  /** optional: 有 token 就带上，没有也不跳登录 */
+  authMode?: 'required' | 'optional' | 'none'
 }): Promise<T> {
   try {
     const header: Record<string, string> = {}
+    const authMode = options.skipAuth ? 'none' : options.authMode || 'required'
 
     // 自动注入 Bearer token（登录接口除外）
     // 所有需要鉴权的接口，若本地无 token，直接跳转登录页，不再发送请求等待 401
-    if (!options.skipAuth) {
+    if (authMode !== 'none') {
       const token = Taro.getStorageSync(TOKEN_KEY)
-      if (!token) {
+      if (!token && authMode === 'required') {
         redirectToLogin()
         throw new ApiException(401, '请先登录')
       }
-      header['Authorization'] = `Bearer ${token}`
+      if (token) {
+        header['Authorization'] = `Bearer ${token}`
+      }
     }
 
+    const { url, method, data } = options
     const res = await Taro.request({
-      ...options,
-      url: BASE_URL + options.url,
-      method: options.method as any,
+      url: BASE_URL + url,
+      method: method as any,
+      data,
       header,
     })
 

@@ -1,3 +1,5 @@
+import { View, Text } from '@tarojs/components'
+import Taro from '@tarojs/taro'
 import './index.scss'
 
 interface StoreProductProps {
@@ -13,6 +15,51 @@ interface StoreProductProps {
   children?: any
 }
 
-export default function StoreProduct(_: StoreProductProps) {
-  return null
+/** kebab-case → camelCase 转换 */
+function toCamelCase(str: string): string {
+  return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+}
+
+export default function StoreProduct({
+  appid,
+  productId,
+  customStyle,
+  className,
+  onEnterSuccess,
+  onEnterError,
+}: StoreProductProps) {
+  const handleClick = async () => {
+    if (!appid || !productId) {
+      onEnterError?.({ detail: { errMsg: 'missing appid or productId' } })
+      return
+    }
+
+    try {
+      await Taro.navigateToMiniProgram({
+        appId: appid,
+        path: `/pages/product/detail/index?productId=${productId}`,
+        envVersion: 'release',
+      })
+      onEnterSuccess?.({})
+    } catch (err) {
+      onEnterError?.({ detail: err })
+    }
+  }
+
+  // 将 custom-style 中 buy-button 的 kebab-case 样式转 camelCase
+  const rawStyle = (customStyle?.['buy-button'] || {}) as Record<string, string>
+  const buttonStyle: Record<string, string> = {}
+  for (const key of Object.keys(rawStyle)) {
+    buttonStyle[toCamelCase(key)] = rawStyle[key]
+  }
+
+  return (
+    <View
+      className={`store-product ${className || ''}`}
+      style={buttonStyle}
+      onClick={handleClick}
+    >
+      <Text>去微信小店购买</Text>
+    </View>
+  )
 }

@@ -1,51 +1,18 @@
 import { Router, Request, Response } from 'express'
-import crypto from 'crypto'
-import { pool } from '../db'
 import { ok, fail } from '../utils'
 import { WechatCrypto } from '../utils/crypto'
 import { channelsConfig, wechatConfig } from '../config'
 import { handleOrderPaid, resolveCourseId } from './wxshop'
 import { deliverVirtualOrder, sendChannelsCustomMessage } from '../services/channels-api'
+import {
+  createPostPurchaseFulfillment,
+  markStoreDelivery,
+  StoreSourceScene,
+} from '../services/wechat-store-fulfillment'
 
 const router = Router()
 
 const wechatCrypto = new WechatCrypto(channelsConfig.token, channelsConfig.encodingAESKey)
-
-/**
- * 生成兑换码（16 位大写字母+数字，去除易混淆字符）
- * 用于视频号小店下单后无法通过 openid 自动解锁的场景：生成兑换码供用户手动核销
- */
-function generateRedeemCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  const bytes = crypto.randomBytes(16)
-  for (let i = 0; i < 16; i++) {
-    code += chars[bytes[i] % chars.length]
-  }
-  return code
-}
-
-/**
- * 为指定课程 + 订单生成一条兑换码记录
- * @returns 生成的兑换码明文
- */
-async function createRedeemCode(courseId: number, orderNo: string): Promise<string> {
-  // 重试避免极小概率的 unique 冲突
-  for (let i = 0; i < 3; i++) {
-    const code = generateRedeemCode()
-    try {
-      await pool.query(
-        'INSERT INTO redeem_codes (code, course_id, order_no, status) VALUES (?, ?, ?, 0)',
-        [code, courseId, orderNo]
-      )
-      return code
-    } catch (err: any) {
-      if (err.code === 'ER_DUP_ENTRY') continue
-      throw err
-    }
-  }
-  throw new Error('生成兑换码失败：多次重试仍冲突')
-}
 
 /**
  * 从订单事件中尽量提取购买者 openid
@@ -79,16 +46,37 @@ function extractAmount(data: any): number {
   return num > 100 ? num / 100 : num
 }
 
+function extractSkuId(data: any): string {
+  return String(data?.sku_id || data?.skuId || data?.out_sku_id || data?.outSkuId || '')
+}
+
+function resolveSourceScene(payload: any): StoreSourceScene {
+  const raw = String(
+    payload?.source_scene ||
+    payload?.sourceScene ||
+    payload?.scene ||
+    payload?.order_info?.source_scene ||
+    payload?.orderInfo?.sourceScene ||
+    ''
+  )
+  if (raw.includes('live') || raw.includes('直播')) return 'channels_live'
+  if (raw.includes('video') || raw.includes('短视频')) return 'channels_video'
+  if (raw.includes('showcase') || raw.includes('橱窗')) return 'channels_showcase'
+  return 'store'
+}
+
 /**
  * 安全调用发货接口（失败不影响主流程，订单已落库解锁，发货状态可在后台手动补单）
  */
-async function safeDeliver(orderId: string): Promise<boolean> {
+async function safeDeliver(orderId: string, deliveryNote?: string): Promise<boolean> {
   try {
-    const ok = await deliverVirtualOrder(orderId)
+    const ok = await deliverVirtualOrder(orderId, deliveryNote)
     console.log('[channels] 虚拟商品发货结果:', { orderId, ok })
+    await markStoreDelivery(orderId, ok ? 'success' : 'failed', { deliverType: 3, hasDeliveryNote: !!deliveryNote })
     return ok
   } catch (err) {
     console.error('[channels] 虚拟商品发货失败（订单已解锁，可在后台手动补发）:', err)
+    await markStoreDelivery(orderId, 'failed', { deliverType: 3, hasDeliveryNote: !!deliveryNote }, err instanceof Error ? err.message : String(err))
     return false
   }
 }
@@ -222,14 +210,21 @@ router.all('/webhook', async (req: Request, res: Response) => {
         return res.send('success')
       }
 
-      // 2.6 解锁课程
-      // 若能拿到 openid，复用微信小店 handleOrderPaid 自动解锁；
-      // 否则生成兑换码，用户可凭码在小程序核销页手动兑换。
-      //
-      // 三种场景：
-      //   A. 有 openid + 课程未购：handleOrderPaid 自动解锁 + 发货
-      //   B. 有 openid + 课程已购（重复下单）：生成兑换码 + 客服消息推送 + 发货
-      //   C. 无 openid：生成兑换码 + 发货（无法推送客服消息，需订单详情/短信等渠道通知）
+      // 2.6 创建购后承接：兑换码 + URL Link + 小程序码 + 发货文案
+      const fulfillment = await createPostPurchaseFulfillment({
+        storeOrderId: String(orderId),
+        courseId,
+        sourceScene: resolveSourceScene(payload),
+        storeProductId: productId ? String(productId) : undefined,
+        storeSkuId: extractSkuId(orderInfo),
+        buyerOpenid: openid || undefined,
+        paidAt: orderInfo.pay_time
+          ? new Date(Number(orderInfo.pay_time) * 1000).toISOString().slice(0, 19).replace('T', ' ')
+          : undefined,
+        rawPayload: payload,
+      })
+
+      // 若能拿到 openid，仍保留旧的自动解锁体验；购后承接可作为兜底/跨端绑定入口。
       let needDeliver = false
       if (openid) {
         const result = await handleOrderPaid({
@@ -242,30 +237,23 @@ router.all('/webhook', async (req: Request, res: Response) => {
             : undefined,
         })
         console.log('[channels] 订单自动解锁完成:', orderId, 'userId=', result.userId, 'created=', result.created)
-
-        if (result.created) {
-          // 场景 A：新建订单，直接发货
-          needDeliver = true
-        } else {
-          // 场景 B：重复下单，生成兑换码作为补偿，并通过客服消息推送
-          const code = await createRedeemCode(courseId, String(orderId))
-          console.log('[channels] 课程已购，已生成兑换码作为补偿:', { orderId, courseId, code })
-          const msg = `您的兑换码：${code}\n\n请打开 GEO 课程小程序 → 我的 → 兑换课程，输入兑换码即可解锁课程。`
-          await sendChannelsCustomMessage(openid, msg).catch((err) => {
-            console.warn('[channels] 客服消息推送失败（不影响主流程）:', err)
-          })
-          needDeliver = true
-        }
+        await sendChannelsCustomMessage(openid, fulfillment.fulfillmentText).catch((err) => {
+          console.warn('[channels] 客服消息推送失败（不影响主流程）:', err)
+        })
+        needDeliver = true
       } else {
-        // 场景 C：无 openid，仅生成兑换码，无法推送客服消息
-        const code = await createRedeemCode(courseId, String(orderId))
-        console.log('[channels] 无 openid，已生成兑换码（需通过订单详情/短信通知买家）:', { orderId, courseId, code })
+        console.log('[channels] 无 openid，已生成购后承接内容（需通过发货说明/短信/客服后台通知买家）:', {
+          orderId,
+          courseId,
+          redeemCodeSuffix: fulfillment.redeemCode.slice(-4),
+          urlLink: fulfillment.urlLink,
+        })
         needDeliver = true
       }
 
       // 2.7 调用虚拟商品发货接口（deliver_type=3），标记订单已发货
       if (needDeliver) {
-        await safeDeliver(String(orderId))
+        await safeDeliver(String(orderId), fulfillment.fulfillmentText)
       }
 
       // 微信要求返回字符串 "success"

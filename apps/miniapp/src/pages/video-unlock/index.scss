@@ -180,3 +180,35 @@
   font-size: $font-sm;
   text-align: center;
 }
+
+// URL Link / 小程序码承接
+.video-unlock-claim {
+  padding: $base;
+}
+
+.video-unlock-claim-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $lg $base;
+  margin-bottom: $base;
+  background-color: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.video-unlock-claim-title {
+  margin-top: $md;
+  color: $text-primary;
+  font-size: $font-md;
+  font-weight: 600;
+  text-align: center;
+}
+
+.video-unlock-claim-desc {
+  margin-top: $sm;
+  color: $text-secondary;
+  font-size: $font-sm;
+  line-height: 1.6;
+  text-align: center;
+}

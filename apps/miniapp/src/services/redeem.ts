@@ -11,6 +11,7 @@ import { request } from './request'
 export interface RedeemResult {
   courseId: number
   courseTitle: string
+  status?: string
 }
 
 /** 提交兑换码核销 */

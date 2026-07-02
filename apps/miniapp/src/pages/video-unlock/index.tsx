@@ -4,7 +4,15 @@ import { useRouter } from '@tarojs/taro'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import Icon from '../../components/Icon'
-import { redeemCode, showApiError } from '../../services'
+import {
+  claimByScene,
+  claimByToken,
+  getClaimSceneStatus,
+  getClaimTokenStatus,
+  redeemCode,
+  showApiError,
+  type ClaimStatus,
+} from '../../services'
 import './index.scss'
 
 /**
@@ -22,18 +30,79 @@ import './index.scss'
 export default function VideoUnlock() {
   const router = useRouter()
   const [code, setCode] = useState('')
+  const [claimToken, setClaimToken] = useState('')
+  const [claimScene, setClaimScene] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<{ courseId: number; courseTitle: string } | null>(null)
+  const [claimStatus, setClaimStatus] = useState<ClaimStatus | null>(null)
 
-  // 进入页面时若带 code 参数，自动发起兑换
+  // 支持三类入口：URL Link token、小程序码 scene、手动兑换码 code。
   useEffect(() => {
     const queryCode = (router.params.code || '').trim()
+    const queryToken = (router.params.token || '').trim()
+    const queryScene = decodeURIComponent((router.params.scene || '').trim())
+
+    if (queryToken) {
+      setClaimToken(queryToken)
+      loadClaimStatus('token', queryToken)
+      return
+    }
+
+    if (queryScene) {
+      setClaimScene(queryScene)
+      loadClaimStatus('scene', queryScene)
+      return
+    }
+
     if (queryCode) {
       setCode(queryCode)
       doRedeem(queryCode)
     }
   }, [])
+
+  const loadClaimStatus = async (type: 'token' | 'scene', value: string) => {
+    setLoading(true)
+    setError('')
+    setSuccess(null)
+    try {
+      const result = type === 'token'
+        ? await getClaimTokenStatus(value)
+        : await getClaimSceneStatus(value)
+      setClaimStatus(result)
+      if (result.status === 'claimed_current_user' && result.courseId) {
+        setSuccess({ courseId: result.courseId, courseTitle: result.courseTitle || '' })
+      }
+    } catch (err) {
+      showApiError(err, '查询订单失败')
+      setError(err instanceof Error ? err.message : '查询订单失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const doClaim = async () => {
+    if (!claimToken && !claimScene) return
+    setLoading(true)
+    setError('')
+    try {
+      const result = claimToken
+        ? await claimByToken(claimToken)
+        : await claimByScene(claimScene)
+      setClaimStatus(result)
+      if (result.status === 'claimed_current_user' && result.courseId) {
+        setSuccess({ courseId: result.courseId, courseTitle: result.courseTitle || '' })
+        Taro.showToast({ title: '开通成功', icon: 'success' })
+        return
+      }
+      setError(resolveClaimMessage(result))
+    } catch (err) {
+      showApiError(err, '开通失败')
+      setError(err instanceof Error ? err.message : '开通失败')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const doRedeem = async (targetCode?: string) => {
     const finalCode = (targetCode ?? code).trim()
@@ -49,6 +118,7 @@ export default function VideoUnlock() {
     try {
       const result = await redeemCode(finalCode)
       setSuccess(result)
+      setClaimStatus(null)
       Taro.showToast({ title: '兑换成功', icon: 'success' })
     } catch (err) {
       // 未登录时 services 层会自动跳转登录页，这里展示其余错误
@@ -68,8 +138,51 @@ export default function VideoUnlock() {
 
   const handleReset = () => {
     setCode('')
+    setClaimToken('')
+    setClaimScene('')
     setError('')
     setSuccess(null)
+    setClaimStatus(null)
+  }
+
+  const resolveClaimMessage = (status: ClaimStatus) => {
+    if (status.status === 'claimed_other_user') return '该权益已被领取，请联系客服处理'
+    if (status.status === 'revoked') return '订单已退款或权益已失效'
+    if (status.status === 'expired') return '链接已过期，请输入兑换码或联系客服'
+    if (status.status === 'not_found') return '未找到订单权益，请联系客服'
+    return '暂时无法开通，请稍后重试'
+  }
+
+  const renderClaimPanel = () => {
+    if (!claimStatus || success) return null
+    const title = claimStatus.courseTitle || '课程权益'
+    const canClaim = claimStatus.status === 'active'
+    const message = canClaim
+      ? claimStatus.requiresLogin
+        ? '已确认你的课程权益，请登录后开通课程'
+        : '已确认你的课程权益，可立即开通课程'
+      : resolveClaimMessage(claimStatus)
+
+    return (
+      <View className='video-unlock-claim'>
+        <View className='video-unlock-claim-card'>
+          <Icon name={canClaim ? 'qr-code' : 'help-circle'} size={56} color={canClaim ? '#0D9488' : '#EF4444'} />
+          <Text className='video-unlock-claim-title'>{title}</Text>
+          <Text className='video-unlock-claim-desc'>{message}</Text>
+        </View>
+        {canClaim && (
+          <View
+            className={`video-unlock-btn ${loading ? 'video-unlock-btn--disabled' : ''}`}
+            onClick={() => !loading && doClaim()}
+          >
+            <Text>{loading ? '开通中...' : claimStatus.requiresLogin ? '登录并开通' : '立即开通'}</Text>
+          </View>
+        )}
+        <View className='video-unlock-btn video-unlock-btn--ghost' onClick={handleReset}>
+          <Text>使用兑换码</Text>
+        </View>
+      </View>
+    )
   }
 
   return (
@@ -101,6 +214,8 @@ export default function VideoUnlock() {
               <Text>继续兑换</Text>
             </View>
           </View>
+        ) : claimStatus ? (
+          renderClaimPanel()
         ) : (
           <View className='video-unlock-form'>
             <View className='video-unlock-input-wrap'>

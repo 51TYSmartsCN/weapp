@@ -79,3 +79,11 @@ export type { WxshopProduct, WxshopConfig, WxshopEntryState } from './wxshop'
 
 export { redeemCode } from './redeem'
 export type { RedeemResult } from './redeem'
+
+export {
+  getClaimTokenStatus,
+  claimByToken,
+  getClaimSceneStatus,
+  claimByScene,
+} from './wechat-store'
+export type { ClaimStatus, ClaimStatusValue } from './wechat-store'
