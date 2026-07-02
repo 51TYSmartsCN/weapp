@@ -14,7 +14,7 @@ const envOverrideFile = `.env.${NODE_ENV}`
 
 if (process.env.GEO_SERVER_SKIP_DOTENV !== '1') {
   dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
-  dotenv.config({ path: path.resolve(__dirname, '..', envOverrideFile) })
+  dotenv.config({ path: path.resolve(__dirname, '..', envOverrideFile), override: true })
 }
 
 /** 当前运行环境（便于日志/调试） */
