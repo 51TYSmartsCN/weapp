@@ -14,6 +14,7 @@
 - 标签最终指向的 commit 必须等于 `origin/release` HEAD
 - `suops1` self-hosted runner 负责安装依赖、构建、测试和 rsync
 - `t0ops` 只接收产物、创建备份并执行 `pm2 reload geo-course-server`
+- runner 到 `t0ops` 的发布账号优先复用 `tydeploy`，不直接使用 `ops`
 - 若标签校验、构建、测试、同步、reload、验活任一步失败，发布立即中止
 
 ## 0. Admin 静态产物发布约定
@@ -34,6 +35,7 @@
 - Workflow：`.github/workflows/release-deploy.yml`
 - 标签校验：`scripts/verify-release-tag.sh`
 - Runner 部署脚本：`deploy/t0ops/deploy-from-runner.sh`
+- `t0ops` 受限 reload 入口：`/usr/local/bin/geo-course-server-pm2`
 
 runner 脚本会执行：
 
@@ -46,6 +48,44 @@ runner 脚本会执行：
 7. `rsync` 最新产物到 `t0ops`
 8. `pm2 reload geo-course-server`
 9. 校验 `/api/health`、`/admin/login` 和 CORS 行为
+
+## 0.2 `suops1` / `t0ops` 发布准备清单
+
+### `suops1` 需要准备
+
+- 安装并注册 GitHub self-hosted runner
+- runner labels 至少包含：`self-hosted`、`linux`、`suops1`、`weapp-release`
+- 安装基础命令：`git`、`node`、`pnpm`、`rsync`、`ssh`、`curl`、`tar`
+- runner 用户需要能免密 SSH 到 `tydeploy@t0ops`
+- runner 用户的 `known_hosts` 里提前写入 `t0ops` 指纹
+- 网络上要能访问 GitHub、npm registry 和 `t0ops:22`
+
+### `t0ops` 需要准备
+
+- 保留运行时 owner 为 `ops`，不把 PM2 切到 `tydeploy`
+- 创建或复用发布账号：`tydeploy`
+- `tydeploy` 需要有以下 SSH 能力：
+  - `~/.ssh/authorized_keys` 中写入 runner 公钥
+  - 目录权限保持 `700/600`
+- `tydeploy` 只授予发布目录 ACL，不授予整机管理权限
+- 当前发布目录 ACL 目标：
+  - `/opt/geo-course/releases`
+  - `/opt/geo-course/weapp/apps/server/dist`
+  - `/opt/geo-course/weapp/apps/server/public/admin`
+  - `/opt/geo-course/weapp/apps/server/src`
+  - `/opt/geo-course/weapp/deploy/t0ops`
+- 通过 sudoers 提供受限 PM2 入口，而不是给 `tydeploy` 全量 sudo
+- 当前受限入口：
+  - `/usr/local/bin/geo-course-server-pm2 reload`
+  - `/usr/local/bin/geo-course-server-pm2 status`
+- sudoers 约束为：`tydeploy ALL=(ops) NOPASSWD` 仅允许上述命令
+
+### 当前已确认的 `t0ops` 状态
+
+- `geo-course-server` 仍由 `ops` 名下 PM2 托管
+- `tydeploy` 已存在
+- `tydeploy` 的 `.ssh/authorized_keys` 已存在，但是否包含 `suops1` runner 公钥仍需在 runner 侧核对
+- 受限 sudo 与发布目录 ACL 已按上述约束配置完成
 
 ## 1. 部署范围
 

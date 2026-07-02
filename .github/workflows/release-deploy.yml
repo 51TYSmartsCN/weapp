@@ -41,10 +41,12 @@ jobs:
 
       - name: Deploy to t0ops
         env:
-          REMOTE_HOST: t0ops
+          REMOTE_HOST: tydeploy@t0ops
           REMOTE_ROOT: /opt/geo-course/weapp
           REMOTE_RELEASE_ROOT: /opt/geo-course/releases
           REMOTE_PM2_NAME: geo-course-server
+          REMOTE_PM2_OWNER: ops
+          REMOTE_PM2_WRAPPER: /usr/local/bin/geo-course-server-pm2
           PUBLIC_BASE_URL: https://ty-server-api.tysmarts.cn
           DEPLOY_RELEASE_TAG: ${{ github.ref_name }}
         run: bash deploy/t0ops/deploy-from-runner.sh

@@ -2,10 +2,12 @@
 
 set -euo pipefail
 
-REMOTE_HOST="${REMOTE_HOST:-t0ops}"
+REMOTE_HOST="${REMOTE_HOST:-tydeploy@t0ops}"
 REMOTE_ROOT="${REMOTE_ROOT:-/opt/geo-course/weapp}"
 REMOTE_RELEASE_ROOT="${REMOTE_RELEASE_ROOT:-/opt/geo-course/releases}"
 REMOTE_PM2_NAME="${REMOTE_PM2_NAME:-geo-course-server}"
+REMOTE_PM2_OWNER="${REMOTE_PM2_OWNER:-ops}"
+REMOTE_PM2_WRAPPER="${REMOTE_PM2_WRAPPER:-/usr/local/bin/geo-course-server-pm2}"
 PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-https://ty-server-api.tysmarts.cn}"
 ALLOWED_DEV_ORIGIN="${ALLOWED_DEV_ORIGIN:-http://localhost:4007}"
 FORBIDDEN_TEST_ORIGIN="${FORBIDDEN_TEST_ORIGIN:-https://evil.example.com}"
@@ -53,13 +55,14 @@ check_local_prereqs() {
 check_remote_prereqs() {
   ssh "$REMOTE_HOST" "
     set -euo pipefail
-    command -v pm2 >/dev/null 2>&1
     command -v rsync >/dev/null 2>&1
     command -v curl >/dev/null 2>&1
+    command -v sudo >/dev/null 2>&1
     test -d '$REMOTE_ROOT'
     test -d '$REMOTE_SERVER_ROOT'
     test -f '$REMOTE_ROOT/deploy/t0ops/start-geo-course-server.sh'
-    pm2 show '$REMOTE_PM2_NAME' >/dev/null 2>&1
+    test -x '$REMOTE_PM2_WRAPPER'
+    sudo -n -u '$REMOTE_PM2_OWNER' '$REMOTE_PM2_WRAPPER' status >/dev/null 2>&1
   " >/dev/null
 }
 
@@ -147,7 +150,7 @@ sync_remote_release() {
 
 reload_remote_service() {
   log "reloading pm2 process $REMOTE_PM2_NAME"
-  ssh "$REMOTE_HOST" "pm2 reload '$REMOTE_PM2_NAME'"
+  ssh "$REMOTE_HOST" "sudo -n -u '$REMOTE_PM2_OWNER' '$REMOTE_PM2_WRAPPER' reload"
 }
 
 verify_remote_service() {

@@ -14,6 +14,7 @@ test('release deploy workflow uses the committed verification and runner deploy 
   assert.match(workflow, /release-v\*/)
   assert.match(workflow, /runs-on:\s*\[self-hosted, linux, suops1, weapp-release\]/)
   assert.match(workflow, /run:\s+sh scripts\/verify-release-tag\.sh/)
+  assert.match(workflow, /REMOTE_HOST:\s+tydeploy@t0ops/)
   assert.match(workflow, /run:\s+bash deploy\/t0ops\/deploy-from-runner\.sh/)
 })
 
@@ -32,11 +33,14 @@ test('runner deploy script keeps build, deploy, and admin page verification in o
   assert.ok(fs.existsSync(deployScriptPath), `missing deploy script: ${deployScriptPath}`)
 
   const deployScript = fs.readFileSync(deployScriptPath, 'utf8')
+  assert.match(deployScript, /REMOTE_HOST="\$\{REMOTE_HOST:-tydeploy@t0ops\}"/)
+  assert.match(deployScript, /REMOTE_PM2_OWNER="\$\{REMOTE_PM2_OWNER:-ops\}"/)
+  assert.match(deployScript, /REMOTE_PM2_WRAPPER="\$\{REMOTE_PM2_WRAPPER:-\/usr\/local\/bin\/geo-course-server-pm2\}"/)
   assert.match(deployScript, /pnpm install --frozen-lockfile/)
   assert.match(deployScript, /pnpm build:shared/)
   assert.match(deployScript, /pnpm build:server/)
   assert.match(deployScript, /pnpm build:admin/)
-  assert.match(deployScript, /pm2 reload '\$REMOTE_PM2_NAME'/)
+  assert.match(deployScript, /sudo -n -u '\$REMOTE_PM2_OWNER' '\$REMOTE_PM2_WRAPPER' reload/)
   assert.match(deployScript, /PUBLIC_ADMIN_LOGIN_URL="\$PUBLIC_BASE_URL\/admin\/login"/)
   assert.match(deployScript, /run_optional_live_contract_test/)
 })
