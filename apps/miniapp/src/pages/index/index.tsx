@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, ScrollView, Swiper, SwiperItem } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 // import SearchBar from '../../components/SearchBar'
 import SafeTop from '../../components/SafeTop'
 import SectionHeader from '../../components/SectionHeader'
@@ -96,6 +96,22 @@ export default function Index() {
       }
     }
   }
+
+  // 分享给朋友
+  useShareAppMessage(() => {
+    return {
+      title: 'GEO 课程 - 优质在线教育平台',
+      path: '/pages/index/index',
+    }
+  })
+
+  // 分享到朋友圈
+  useShareTimeline(() => {
+    return {
+      title: 'GEO 课程 - 优质在线教育平台',
+      query: '',
+    }
+  })
 
   return (
     <ScrollView className='home-page' scrollY>

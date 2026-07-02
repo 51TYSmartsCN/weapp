@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import Avatar from '../../components/Avatar'
 import Skeleton from '../../components/Skeleton'
@@ -29,9 +29,27 @@ export default function InstructorDetail() {
       .finally(() => setLoading(false))
   }, [router.params.id])
 
+  // 分享给朋友
+  useShareAppMessage(() => {
+    const title = instructor ? `${instructor.name}讲师 - GEO 课程` : 'GEO 讲师介绍'
+    return {
+      title,
+      path: `/pages/instructor-detail/index?id=${router.params.id}`,
+    }
+  })
+
+  // 分享到朋友圈
+  useShareTimeline(() => {
+    const title = instructor ? `${instructor.name}讲师 - GEO 课程` : 'GEO 讲师介绍'
+    return {
+      title,
+      query: `id=${router.params.id}`,
+    }
+  })
+
   return (
     <View className='instructor-detail-page'>
-      <NavBar title='讲师介绍' />
+      <NavBar title='讲师介绍' share copyPath={`/pages/instructor-detail/index?id=${router.params.id}`} />
       <ScrollView
         className='instructor-detail-body'
         scrollY

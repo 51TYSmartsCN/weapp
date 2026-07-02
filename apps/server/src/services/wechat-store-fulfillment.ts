@@ -281,22 +281,18 @@ function renderFulfillmentText(input: {
   qrcodeUrl: string | null
   storeOrderId: string
 }): string {
-  const qrcodeHint = input.qrcodeUrl
-    ? `请扫码随附小程序码进入课程开通页：${input.qrcodeUrl}`
-    : '如未展示小程序码，请点击上方链接或输入兑换码进入课程开通页。'
-
-  return `您购买的《${input.courseTitle}》已生成学习权益。
-
-方式一：点击小程序链接进入学习
-${input.urlLink}
-
-方式二：打开 GEO 课程小程序，进入「我的 - 兑换课程」，输入兑换码：
-${input.redeemCode}
-
-方式三：扫码进入课程开通页
-${qrcodeHint}
-
+  const note = `您购买的《${input.courseTitle}》已生成学习权益。
+兑换码：${input.redeemCode}
+点击前往学习：${input.urlLink}
+也可打开 GEO 课程小程序，进入「我的 - 兑换课程」输入兑换码。
 如已兑换但无法观看，请联系客服并提供订单号：${input.storeOrderId}`
+
+  // 微信小店 delivery_note 当前限制 1000 字符，保留核心入口并做兜底。
+  if (note.length <= 1000) return note
+
+  return `兑换码：${input.redeemCode}
+点击前往学习：${input.urlLink}
+订单号：${input.storeOrderId}`.slice(0, 1000)
 }
 
 export async function createPostPurchaseFulfillment(input: CreateFulfillmentInput): Promise<FulfillmentResult> {

@@ -310,20 +310,16 @@ GET /api/wechat-store/claim-scenes/:scene
 - 接口：`/order/confirm_delivery`
 - 字段：`delivery_note`
 - 效果：内容会同步到买家订单详情页
+- 限制：最大 1000 个字符，支持小程序 URL Link
 
 微信小店虚拟发货或发货说明建议包含三段信息：
 
 ```text
 您购买的《{{courseTitle}}》已生成学习权益。
 
-方式一：点击小程序链接进入学习
-{{urlLink}}
-
-方式二：打开 GEO 课程小程序，进入「我的 - 兑换课程」，输入兑换码：
-{{redeemCode}}
-
-方式三：扫码进入课程开通页
-{{qrCodeHint}}
+兑换码：{{redeemCode}}
+点击前往学习：{{urlLink}}
+也可打开 GEO 课程小程序，进入「我的 - 兑换课程」输入兑换码。
 
 如已兑换但无法观看，请联系客服并提供订单号：{{storeOrderId}}
 ```
@@ -332,7 +328,7 @@ GET /api/wechat-store/claim-scenes/:scene
 
 ### 模板变量如何替换
 
-`{{courseTitle}}`、`{{urlLink}}`、`{{redeemCode}}`、`{{qrCodeHint}}`、`{{storeOrderId}}` 不是微信小店自动替换的变量，而是 GEO Server 在执行发货前渲染出来的占位符。
+`{{courseTitle}}`、`{{urlLink}}`、`{{redeemCode}}`、`{{storeOrderId}}` 不是微信小店自动替换的变量，而是 GEO Server 在执行发货前渲染出来的占位符。
 
 渲染时机：
 
@@ -351,7 +347,6 @@ GET /api/wechat-store/claim-scenes/:scene
 | `{{courseTitle}}` | `courses.title` 或本地课程表 | `GEO 入门课程` |
 | `{{urlLink}}` | `miniapp-link.service.ts` 调微信 URL Link 接口生成 | `https://wxaurl.cn/...` |
 | `{{redeemCode}}` | `redeem-code.service.ts` 生成的兑换码明文 | `GEO-ABCD-EFGH` |
-| `{{qrCodeHint}}` | 小程序码图片的查看说明或客服后台资源提示 | `请扫码随附小程序码进入课程开通页` |
 | `{{storeOrderId}}` | 微信小店订单号 | `1234567890` |
 
 推荐在服务端实现一个小的渲染函数：
@@ -361,20 +356,14 @@ interface FulfillmentTemplateContext {
   courseTitle: string
   urlLink: string
   redeemCode: string
-  qrCodeHint: string
   storeOrderId: string
 }
 
 const fulfillmentTemplate = `您购买的《{{courseTitle}}》已生成学习权益。
 
-方式一：点击小程序链接进入学习
-{{urlLink}}
-
-方式二：打开 GEO 课程小程序，进入「我的 - 兑换课程」，输入兑换码：
-{{redeemCode}}
-
-方式三：扫码进入课程开通页
-{{qrCodeHint}}
+兑换码：{{redeemCode}}
+点击前往学习：{{urlLink}}
+也可打开 GEO 课程小程序，进入「我的 - 兑换课程」输入兑换码。
 
 如已兑换但无法观看，请联系客服并提供订单号：{{storeOrderId}}`
 
@@ -398,7 +387,7 @@ const requiredKeys: Array<keyof FulfillmentTemplateContext> = [
 ]
 ```
 
-如果 `urlLink` 或小程序码生成失败，不能阻塞兑换码发放；应先发包含兑换码的文案，并把 URL Link/小程序码生成任务放入重试队列。`fulfillment_logs` 需要记录本次实际投递了哪些内容。
+`delivery_note` 最大 1000 字符，生产实现需要保留兑换码和 URL Link 这两个核心入口，必要时裁剪课程名或辅助说明。当前代码已做长度兜底。如果 `urlLink` 或小程序码生成失败，不能阻塞兑换码发放；应先发包含兑换码的文案，并把 URL Link/小程序码生成任务放入重试队列。`fulfillment_logs` 需要记录本次实际投递了哪些内容。
 
 ## API 与服务模块建议
 
@@ -518,7 +507,7 @@ https://你的服务端域名/api/channels/webhook
 4. EncodingAESKey 填 `CHANNELS_ENCODING_AES_KEY`。
 5. 在自研接口凭证处保存 `CHANNELS_APP_ID`、`CHANNELS_APP_SECRET`。
 6. 确认「订单发货」接口 `/order/confirm_delivery` 可用，并支持 `delivery_note` 字段。
-7. 将服务端公网出口 IP 加入微信小店自研 IP 白名单。
+7. 将服务端公网出口 IP 加入「微信小店后台 - 开发管理 - 接口权限」中的 IP 白名单。
 8. 课程商品必须在视频号短视频、直播间、橱窗或小店商品页正确挂载。
 
 ### 微信小程序后台

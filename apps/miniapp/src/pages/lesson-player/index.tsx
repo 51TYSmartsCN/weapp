@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { View, Text, Video, ScrollView } from '@tarojs/components'
-import Taro, { useRouter, useDidShow } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { createVideoContext } from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import Icon from '../../components/Icon'
@@ -50,6 +50,24 @@ export default function LessonPlayer() {
         // 网络失败时回退到本地缓存
         setContentMode(getModuleModesSync().lessonPlayer.contentMode)
       })
+  })
+
+  // 分享给朋友
+  useShareAppMessage(() => {
+    const title = course ? `正在学习：${course.title}` : 'GEO 课程学习'
+    return {
+      title,
+      path: `/pages/lesson-player/index?courseId=${courseId}&lessonId=${lessonId}`,
+    }
+  })
+
+  // 分享到朋友圈
+  useShareTimeline(() => {
+    const title = course ? `正在学习：${course.title}` : 'GEO 课程学习'
+    return {
+      title,
+      query: `courseId=${courseId}&lessonId=${lessonId}`,
+    }
   })
 
   // 初次加载:课程信息 + 课时列表 + 权限
@@ -166,7 +184,7 @@ export default function LessonPlayer() {
   if (loading) {
     return (
       <View className='lesson-player-page'>
-        <NavBar title='课程播放' />
+        <NavBar title='课程播放' share copyPath={`/pages/lesson-player/index?courseId=${courseId}&lessonId=${lessonId}`} />
         <View className='player-loading'>
           <View className='player-loading-spinner' />
           <Text className='player-loading-text'>加载中...</Text>
@@ -177,7 +195,7 @@ export default function LessonPlayer() {
 
   return (
     <View className='lesson-player-page'>
-      <NavBar title='课程播放' />
+      <NavBar title='课程播放' share copyPath={`/pages/lesson-player/index?courseId=${courseId}&lessonId=${lessonId}`} />
 
       {/* 内容展示区域 — 视频 / 图文 / 锁屏（由后台模块模式控制） */}
       <View className='player-video-area'>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, Video, ScrollView } from '@tarojs/components'
-import { useRouter, useDidShow } from '@tarojs/taro'
+import { useRouter, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 
@@ -96,6 +96,24 @@ export default function CourseDetail() {
       .catch(() => setFavorited(false))
   }, [courseId])
 
+  // 分享给朋友
+  useShareAppMessage(() => {
+    const title = course ? `${course.title} - GEO 课程` : 'GEO 课程详情'
+    return {
+      title,
+      path: `/pages/course-detail/index?id=${courseId}`,
+    }
+  })
+
+  // 分享到朋友圈
+  useShareTimeline(() => {
+    const title = course ? `${course.title} - GEO 课程` : 'GEO 课程详情'
+    return {
+      title,
+      query: `id=${courseId}`,
+    }
+  })
+
   /** 主按钮点击:已购/免费 → 立即学习 */
   const handlePrimaryAction = () => {
     if (access?.canLearn) {
@@ -183,7 +201,7 @@ export default function CourseDetail() {
 
   return (
     <View className='course-detail-page'>
-      <NavBar title='课程详情' />
+      <NavBar title='课程详情' share copyPath={`/pages/course-detail/index?id=${courseId}`} />
 
       <ScrollView className='detail-scroll' scrollY>
         {loading ? (
