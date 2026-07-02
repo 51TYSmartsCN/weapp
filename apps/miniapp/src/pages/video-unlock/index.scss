@@ -1,0 +1,182 @@
+@use '../../styles/variables.scss' as *;
+
+.video-unlock-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: $bg-secondary;
+}
+
+.video-unlock-body {
+  flex: 1;
+  height: 0;
+}
+
+// 顶部 Hero 区
+.video-unlock-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $xl $base $lg;
+  background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
+}
+
+.video-unlock-hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: $md;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-full;
+}
+
+.video-unlock-hero-title {
+  margin-bottom: $sm;
+  color: $text-inverse;
+  font-size: $font-lg;
+  font-weight: 600;
+}
+
+.video-unlock-hero-desc {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: $font-sm;
+  line-height: 1.5;
+  text-align: center;
+}
+
+// 表单区
+.video-unlock-form {
+  padding: $base;
+}
+
+.video-unlock-input-wrap {
+  display: flex;
+  align-items: center;
+  height: 96rpx;
+  padding: 0 $md;
+  margin-bottom: $sm;
+  background-color: $surface;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+}
+
+.video-unlock-input {
+  flex: 1;
+  height: 96rpx;
+  color: $text-primary;
+  font-size: $font-md;
+  letter-spacing: 2rpx;
+}
+
+.video-unlock-input-placeholder {
+  color: $text-tertiary;
+  font-size: $font-base;
+  letter-spacing: 0;
+}
+
+// 错误提示
+.video-unlock-error {
+  display: flex;
+  align-items: center;
+  padding: $xs $sm;
+  margin-bottom: $sm;
+  color: $error;
+}
+
+.video-unlock-error-text {
+  margin-left: $xs;
+  color: $error;
+  font-size: $font-sm;
+}
+
+// 主按钮
+.video-unlock-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  margin-top: $sm;
+  background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
+  border-radius: $radius-full;
+  color: $text-inverse;
+  font-size: $font-md;
+  font-weight: 600;
+
+  &--ghost {
+    margin-top: $sm;
+    background-color: transparent;
+    border: 2rpx solid $border;
+    color: $text-secondary;
+    font-weight: 400;
+  }
+
+  &--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// 兑换说明
+.video-unlock-tips {
+  padding: $md;
+  margin-top: $base;
+  background-color: $surface;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+}
+
+.video-unlock-tips-title {
+  display: block;
+  margin-bottom: $sm;
+  color: $text-primary;
+  font-size: $font-base;
+  font-weight: 600;
+}
+
+.video-unlock-tips-item {
+  display: block;
+  margin-top: $xs;
+  color: $text-tertiary;
+  font-size: $font-sm;
+  line-height: 1.6;
+}
+
+// 兑换成功区
+.video-unlock-success {
+  padding: $base;
+}
+
+.video-unlock-success-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $lg $base;
+  margin-bottom: $base;
+  background-color: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.video-unlock-success-title {
+  margin-top: $md;
+  color: $success;
+  font-size: $font-lg;
+  font-weight: 600;
+}
+
+.video-unlock-success-course {
+  margin-top: $sm;
+  color: $text-primary;
+  font-size: $font-md;
+  font-weight: 500;
+  text-align: center;
+}
+
+.video-unlock-success-tip {
+  margin-top: $xs;
+  color: $text-tertiary;
+  font-size: $font-sm;
+  text-align: center;
+}

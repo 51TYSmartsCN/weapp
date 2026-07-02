@@ -13,7 +13,8 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { icon: 'receipt', label: '我的订单' },
       { icon: 'ticket', label: '优惠券' },
-      { icon: 'gift', label: '邀请好友' }
+      { icon: 'gift', label: '邀请好友' },
+      { icon: 'book-open', label: '兑换课程' }
     ]
   },
   {

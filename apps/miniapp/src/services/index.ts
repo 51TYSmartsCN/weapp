@@ -76,3 +76,6 @@ export {
   navigateToWxshopProduct,
 } from './wxshop'
 export type { WxshopProduct, WxshopConfig, WxshopEntryState } from './wxshop'
+
+export { redeemCode } from './redeem'
+export type { RedeemResult } from './redeem'

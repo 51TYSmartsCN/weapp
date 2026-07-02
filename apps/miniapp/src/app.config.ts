@@ -22,7 +22,8 @@ export default defineAppConfig({
     'pages/contact-wx/index',
     'pages/settings/index',
     'pages/agreement/index',
-    'pages/privacy/index'
+    'pages/privacy/index',
+    'pages/video-unlock/index'
   ],
   tabBar: {
     color: '#94A3B8',

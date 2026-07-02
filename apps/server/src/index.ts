@@ -15,6 +15,8 @@ import reviewRoutes from './routes/review'
 import profileRoutes from './routes/profile'
 import bannerRoutes from './routes/banner'
 import wxshopRoutes from './routes/wxshop'
+import channelsWebhookRoutes from './routes/channels-webhook'
+import redeemRoutes from './routes/redeem'
 import adminLoginRoutes from './routes/admin/index'
 import adminDashboardRoutes from './routes/admin/dashboard'
 import adminCourseRoutes from './routes/admin/course'
@@ -97,6 +99,13 @@ app.use(
 )
 app.use('/api/wxshop', wxshopRoutes)
 
+// 视频号小店 Webhook(对接.md)：POST body 为加密 JSON，需要原始 body 用于 HMAC-SHA256 验签
+app.use(
+  '/api/channels',
+  express.text({ type: ['application/json', 'text/plain'], limit: '1mb' })
+)
+app.use('/api/channels', channelsWebhookRoutes)
+
 // 提高 JSON body 限制以支持头像 base64 上传（默认 100kb 过小）
 app.use(express.json({ limit: '5mb' }))
 
@@ -149,6 +158,7 @@ app.use('/api/user', userRoutes) // /api/user, /api/user/learning/summary, /api/
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/follows', followRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api', redeemRoutes) // POST /api/redeem 兑换码核销（对接.md）
 
 // Admin 管理后台路由
 app.use('/api/admin', adminLoginRoutes)       // POST /api/admin/login

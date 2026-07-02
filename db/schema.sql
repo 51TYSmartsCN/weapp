@@ -404,4 +404,30 @@ CREATE TABLE `wxshop_products` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信小店商品-课程映射表';
 
+-- ------------------------------------------------------------
+-- 表名：redeem_codes（兑换码表）
+-- ------------------------------------------------------------
+-- 用途：视频号小店 Webhook 收到支付成功事件后，若无法通过 openid 自动解锁，
+--       则生成兑换码；用户在小程序「兑换码核销页」输入兑换码解锁对应课程。
+-- 对接：对接.md → src/pages/video/unlock.tsx → POST /api/redeem
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `redeem_codes`;
+CREATE TABLE `redeem_codes` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `code` VARCHAR(32) NOT NULL COMMENT '兑换码（唯一）',
+  `course_id` BIGINT NOT NULL COMMENT '关联的课程ID',
+  `order_no` VARCHAR(64) NULL COMMENT '来源订单号（视频号小店订单号）',
+  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态（0=未使用 1=已使用 2=已作废）',
+  `user_id` BIGINT NULL COMMENT '兑换用户ID（使用后填入）',
+  `used_at` DATETIME NULL COMMENT '兑换时间',
+  `expire_at` DATETIME NULL COMMENT '过期时间（NULL=永久有效）',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_code` (`code`),
+  KEY `idx_course_id` (`course_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_user_id` (`user_id`),
+  CONSTRAINT `fk_redeem_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='兑换码表';
+
 SET FOREIGN_KEY_CHECKS = 1;
