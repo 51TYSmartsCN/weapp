@@ -18,7 +18,9 @@
 
 - `https://ty-server-api.tysmarts.cn/images/...`
 
-## 2. 先做这 4 个快速检查
+## 2. 发布后先做这 5 个快速检查
+
+如果这次是走 `release-vYYYYMMDD.N` 自动发布，先确认 GitHub Actions 里的 `Release deploy` workflow 已成功，再开始下面的接口检查。
 
 ### 2.1 健康检查
 
@@ -56,7 +58,20 @@ curl -s https://ty-server-api.tysmarts.cn/api/courses
 - 当前应至少返回 `6` 条课程
 - `cover` 字段应为 `https://ty-server-api.tysmarts.cn/images/...`
 
-### 2.4 管理后台未登录校验
+### 2.4 管理后台登录页
+
+```bash
+curl -I https://ty-server-api.tysmarts.cn/admin/login
+```
+
+预期：
+
+- HTTP 状态码：`200`
+- `Content-Type` 包含 `text/html`
+
+这一步用于确认后台静态资源已经跟随本次发布正确上线，避免再次出现打开 `/admin/login` 返回 `404` 的情况。
+
+### 2.5 管理后台未登录校验
 
 ```bash
 curl -i https://ty-server-api.tysmarts.cn/api/admin/dashboard
@@ -69,7 +84,7 @@ curl -i https://ty-server-api.tysmarts.cn/api/admin/dashboard
 
 这一步用于确认 admin 保护已经生效，普通请求不会误进后台接口。
 
-### 2.5 部署后自动化验收
+### 2.6 部署后自动化验收
 
 仓库内提供了一条真实线上验收测试：
 
@@ -80,18 +95,22 @@ node --test apps/server/test/live-api-contract.test.cjs
 用途：
 
 - 部署完成后，按本文档约定逐项校验线上接口
-- 自动验证公开接口、后台未登录保护、后台登录与 dashboard
+- 自动验证公开接口、`/admin/login` 静态页、CORS、后台未登录保护、后台登录与 dashboard
 - 避免只看 `api/health` 就误判发布成功
 
 依赖：
 
-- 根目录 `.env` 里需要提供以下本地测试配置（只供本机验收使用，不提交仓库）：
+- 可通过根目录 `.env` 或当前 shell 环境变量提供以下本地测试配置（只供验收使用，不提交仓库）：
 
 ```ini
 live_api_base_url=https://ty-server-api.tysmarts.cn
 live_api_admin_username=你的线上管理员账号
 live_api_admin_password=你的线上管理员密码
+live_api_allowed_origin=http://localhost:4007
+live_api_forbidden_origin=https://evil.example.com
 ```
+
+如果不额外配置，`live_api_allowed_origin` 和 `live_api_forbidden_origin` 会使用上面的默认值。
 
 ## 3. 前端最先可用的公开接口
 

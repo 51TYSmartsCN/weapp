@@ -26,8 +26,16 @@ function loadEnvFile(filePath) {
 
 function requiredEnv(name, env) {
   const value = env[name]
-  assert.ok(value, `missing ${name} in ${envPath}`)
+  assert.ok(value, `missing ${name} in process.env or ${envPath}`)
   return value
+}
+
+function loadRuntimeEnv() {
+  const fileEnv = fs.existsSync(envPath) ? loadEnvFile(envPath) : {}
+  return {
+    ...fileEnv,
+    ...process.env,
+  }
 }
 
 async function getJson(url, init) {
@@ -45,16 +53,41 @@ async function getJson(url, init) {
 }
 
 test('live API contract matches the frontend integration doc', async () => {
-  assert.ok(fs.existsSync(envPath), `missing env file: ${envPath}`)
-
-  const env = loadEnvFile(envPath)
+  const env = loadRuntimeEnv()
   const baseUrl = requiredEnv('live_api_base_url', env)
   const adminUsername = requiredEnv('live_api_admin_username', env)
   const adminPassword = requiredEnv('live_api_admin_password', env)
+  const allowedOrigin = env.live_api_allowed_origin || 'http://localhost:4007'
+  const forbiddenOrigin = env.live_api_forbidden_origin || 'https://evil.example.com'
 
   const health = await getJson(`${baseUrl}/api/health`)
   assert.equal(health.response.status, 200)
   assert.deepEqual(health.json, { code: 0, data: { status: 'ok' } })
+
+  const adminLoginPage = await fetch(`${baseUrl}/admin/login`)
+  assert.equal(adminLoginPage.status, 200)
+  assert.match(adminLoginPage.headers.get('content-type') || '', /text\/html/)
+  assert.match(await adminLoginPage.text(), /\/admin\/assets\//)
+
+  const allowedCors = await fetch(`${baseUrl}/api/health`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: allowedOrigin,
+      'Access-Control-Request-Method': 'GET',
+    },
+  })
+  assert.equal(allowedCors.status, 204)
+  assert.equal(allowedCors.headers.get('access-control-allow-origin'), allowedOrigin)
+
+  const forbiddenCors = await getJson(`${baseUrl}/api/health`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: forbiddenOrigin,
+      'Access-Control-Request-Method': 'GET',
+    },
+  })
+  assert.equal(forbiddenCors.response.status, 403)
+  assert.deepEqual(forbiddenCors.json, { code: 403, message: 'CORS: origin not allowed' })
 
   const banners = await getJson(`${baseUrl}/api/banners`)
   assert.equal(banners.response.status, 200)
