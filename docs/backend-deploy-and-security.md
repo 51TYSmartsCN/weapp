@@ -2,10 +2,19 @@
 
 本文档只覆盖当前仓库 `@geo/server` 的真实部署面，目标是把后端安全上线到服务器，并与小程序前端联调。
 
-日常发布如无特殊说明，优先使用仓库内脚本：
+当前存在两条发布路径：
 
-- `./scripts/deploy-t0ops.sh deploy`
-- 说明文档：`docs/t0ops-server-admin-deploy-script.md`
+- 正式线上发布：推送 `release-vYYYYMMDD.N` 标签，触发 `.github/workflows/release-deploy.yml`
+- 运维机手工发布：本地维护的 `scripts/deploy-t0ops.sh deploy`（未入库，仅供当前运维机使用）
+
+自动发布链路约束：
+
+- 生产候选分支为 `release`
+- 只有合法 `release-vYYYYMMDD.N` 标签才会触发发布
+- 标签最终指向的 commit 必须等于 `origin/release` HEAD
+- `suops1` self-hosted runner 负责安装依赖、构建、测试和 rsync
+- `t0ops` 只接收产物、创建备份并执行 `pm2 reload geo-course-server`
+- 若标签校验、构建、测试、同步、reload、验活任一步失败，发布立即中止
 
 ## 0. Admin 静态产物发布约定
 
@@ -19,6 +28,24 @@
 - 提交后台改动时只提交源码、脚本、测试、文档
 - 不再单独提交 `apps/server/public/admin/*` 静态文件
 - 只要构建和部署链路正常，线上拿到的仍然是最新后台产物
+
+## 0.1 GitHub Actions 自动发布文件
+
+- Workflow：`.github/workflows/release-deploy.yml`
+- 标签校验：`scripts/verify-release-tag.sh`
+- Runner 部署脚本：`deploy/t0ops/deploy-from-runner.sh`
+
+runner 脚本会执行：
+
+1. `pnpm install --frozen-lockfile`
+2. `pnpm build:shared`
+3. `pnpm build:server`
+4. `pnpm build:admin`
+5. `node --test` 跑本地回归测试
+6. 备份 `t0ops` 当前 `server dist/admin/deploy` 目录
+7. `rsync` 最新产物到 `t0ops`
+8. `pm2 reload geo-course-server`
+9. 校验 `/api/health`、`/admin/login` 和 CORS 行为
 
 ## 1. 部署范围
 

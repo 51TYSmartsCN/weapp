@@ -1,0 +1,50 @@
+name: Release deploy
+
+on:
+  push:
+    tags:
+      - 'release-v*'
+
+concurrency:
+  group: release-deploy-t0ops
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.deleted == false
+    runs-on: [self-hosted, linux, suops1, weapp-release]
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.2.2
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Verify release tag
+        env:
+          PROD_DEPLOY_TAGGERS: ${{ vars.PROD_DEPLOY_TAGGERS }}
+        run: sh scripts/verify-release-tag.sh
+
+      - name: Deploy to t0ops
+        env:
+          REMOTE_HOST: t0ops
+          REMOTE_ROOT: /opt/geo-course/weapp
+          REMOTE_RELEASE_ROOT: /opt/geo-course/releases
+          REMOTE_PM2_NAME: geo-course-server
+          PUBLIC_BASE_URL: https://ty-server-api.tysmarts.cn
+          DEPLOY_RELEASE_TAG: ${{ github.ref_name }}
+        run: bash deploy/t0ops/deploy-from-runner.sh
