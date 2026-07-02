@@ -48,6 +48,14 @@ function replaceWebpackBar(chain: any) {
   }
 }
 
+function registerWxshopComponents(nodeName: string, componentConfig: any) {
+  if (nodeName !== 'store-product') return
+
+  if (!componentConfig.thirdPartyComponents.has('store-product')) {
+    componentConfig.thirdPartyComponents.set('store-product', new Set())
+  }
+}
+
 export default defineConfig<'webpack5'>(async (merge) => {
   const baseConfig: UserConfigExport<'webpack5'> = {
     projectName: 'geo-course',
@@ -81,6 +89,9 @@ export default defineConfig<'webpack5'>(async (merge) => {
       enable: true
     },
     mini: {
+      onParseCreateElement(nodeName, componentConfig) {
+        registerWxshopComponents(nodeName, componentConfig)
+      },
       postcss: {
         pxtransform: {
           enable: true,

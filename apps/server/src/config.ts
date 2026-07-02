@@ -68,6 +68,32 @@ export const wxshopConfig = {
     : process.env.WXSHOP_MOCK === '1' || !wxshopCallbackToken,
 }
 
+/** 视频号小店 Webhook 配置(独立于微信小店消息推送)
+ * - 对接指南: 对接.md
+ * - token / encodingAESKey: 在微信小店后台「服务市场 → 自研 → 消息推送」中配置
+ * - appId / appSecret: 微信小店主体的接口凭证,用于调用 stable_token → access_token → 发货/客服消息等 API
+ *   获取入口: 微信小店商家后台(store.weixin.qq.com 或 channels.weixin.qq.com/shop)
+ *             → 服务市场 → 自研(右上角)
+ *   注意:与小程序 AppID 不同,AppSecret 只在「重置」时显示一次,必须立即保存
+ *   IP 白名单:获取 access_token 前需在「自研」页面下方添加服务器公网 IP
+ * - mockMode: 非生产环境且未配置 token 时自动开启,跳过签名校验便于本地调试
+ *
+ * 回调 URL: https://你的域名/api/channels/webhook
+ * API 域名: https://api.weixin.qq.com (路径前缀 /channels/ec/... 历史沿用)
+ *
+ * 注:跳转目标小程序 AppID 直接复用 WECHAT_APPID(本项目小店购买流程即跳转本小程序),
+ *    无需单独配置 MINI_PROGRAM_APP_ID。
+ */
+const channelsToken = process.env.CHANNELS_TOKEN || ''
+const channelsEncodingAESKey = process.env.CHANNELS_ENCODING_AES_KEY || ''
+export const channelsConfig = {
+  token: channelsToken,
+  encodingAESKey: channelsEncodingAESKey,
+  appId: process.env.CHANNELS_APP_ID || '',
+  appSecret: process.env.CHANNELS_APP_SECRET || '',
+  mockMode: isProduction ? false : process.env.CHANNELS_MOCK === '1' || !channelsToken,
+}
+
 /** CORS 白名单（生产环境使用） */
 export const corsOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')

@@ -46,6 +46,9 @@ export default function Profile() {
       case '邀请好友':
         Taro.navigateTo({ url: '/pages/invitations/index' })
         break
+      case '兑换课程':
+        Taro.navigateTo({ url: '/pages/video-unlock/index' })
+        break
       case '帮助中心':
         Taro.navigateTo({ url: '/pages/help/index' })
         break

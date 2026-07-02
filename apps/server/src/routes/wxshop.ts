@@ -65,7 +65,7 @@ function parseXml(xml: string): Record<string, string> {
 // 业务逻辑
 // ============================================================
 
-async function findOrCreateUserByOpenid(openid: string): Promise<number | null> {
+export async function findOrCreateUserByOpenid(openid: string): Promise<number | null> {
   if (!openid) return null
   const [rows] = await pool.query('SELECT id FROM users WHERE openid = ?', [openid])
   const existing = (rows as any[])[0]
@@ -79,7 +79,7 @@ async function findOrCreateUserByOpenid(openid: string): Promise<number | null> 
   return (r2 as any[])[0]?.id ?? null
 }
 
-async function handleOrderPaid(payload: {
+export async function handleOrderPaid(payload: {
   orderNo: string
   openid: string
   courseId: number
@@ -148,7 +148,7 @@ function extractProductId(data: any): string | null {
 /**
  * 通过商品 ID 查映射表获取课程 ID
  */
-async function resolveCourseId(data: any): Promise<number | null> {
+export async function resolveCourseId(data: any): Promise<number | null> {
   const productId = extractProductId(data)
   if (!productId) return null
 
