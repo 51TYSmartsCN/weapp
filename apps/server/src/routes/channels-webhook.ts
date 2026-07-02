@@ -3,12 +3,9 @@ import { ok, fail } from '../utils'
 import { WechatCrypto } from '../utils/crypto'
 import { channelsConfig, wechatConfig } from '../config'
 import { handleOrderPaid, resolveCourseId } from './wxshop'
-import { deliverVirtualOrder, sendChannelsCustomMessage } from '../services/channels-api'
-import {
-  createPostPurchaseFulfillment,
-  markStoreDelivery,
-  StoreSourceScene,
-} from '../services/wechat-store-fulfillment'
+import { sendChannelsCustomMessage } from '../services/channels-api'
+import { StoreSourceScene } from '../services/wechat-store-fulfillment'
+import { createAndDeliverPostPurchaseFulfillment } from '../services/wechat-store-auto-delivery'
 
 const router = Router()
 
@@ -63,22 +60,6 @@ function resolveSourceScene(payload: any): StoreSourceScene {
   if (raw.includes('video') || raw.includes('短视频')) return 'channels_video'
   if (raw.includes('showcase') || raw.includes('橱窗')) return 'channels_showcase'
   return 'store'
-}
-
-/**
- * 安全调用发货接口（失败不影响主流程，订单已落库解锁，发货状态可在后台手动补单）
- */
-async function safeDeliver(orderId: string, deliveryNote?: string): Promise<boolean> {
-  try {
-    const ok = await deliverVirtualOrder(orderId, deliveryNote)
-    console.log('[channels] 虚拟商品发货结果:', { orderId, ok })
-    await markStoreDelivery(orderId, ok ? 'success' : 'failed', { deliverType: 3, hasDeliveryNote: !!deliveryNote })
-    return ok
-  } catch (err) {
-    console.error('[channels] 虚拟商品发货失败（订单已解锁，可在后台手动补发）:', err)
-    await markStoreDelivery(orderId, 'failed', { deliverType: 3, hasDeliveryNote: !!deliveryNote }, err instanceof Error ? err.message : String(err))
-    return false
-  }
 }
 
 /**
@@ -210,8 +191,8 @@ router.all('/webhook', async (req: Request, res: Response) => {
         return res.send('success')
       }
 
-      // 2.6 创建购后承接：兑换码 + URL Link + 小程序码 + 发货文案
-      const fulfillment = await createPostPurchaseFulfillment({
+      // 2.6 创建购后承接并自动发货：兑换码 + 小程序入口 + 小程序码 + delivery_note
+      const autoDelivery = await createAndDeliverPostPurchaseFulfillment({
         storeOrderId: String(orderId),
         courseId,
         sourceScene: resolveSourceScene(payload),
@@ -223,9 +204,14 @@ router.all('/webhook', async (req: Request, res: Response) => {
           : undefined,
         rawPayload: payload,
       })
+      const fulfillment = autoDelivery.fulfillment
+      console.log('[channels] 自动履约发货完成:', {
+        orderId,
+        delivered: autoDelivery.delivered,
+        deliveryError: autoDelivery.deliveryError,
+      })
 
       // 若能拿到 openid，仍保留旧的自动解锁体验；购后承接可作为兜底/跨端绑定入口。
-      let needDeliver = false
       if (openid) {
         const result = await handleOrderPaid({
           orderNo: String(orderId),
@@ -240,7 +226,6 @@ router.all('/webhook', async (req: Request, res: Response) => {
         await sendChannelsCustomMessage(openid, fulfillment.fulfillmentText).catch((err) => {
           console.warn('[channels] 客服消息推送失败（不影响主流程）:', err)
         })
-        needDeliver = true
       } else {
         console.log('[channels] 无 openid，已生成购后承接内容（需通过发货说明/短信/客服后台通知买家）:', {
           orderId,
@@ -248,12 +233,6 @@ router.all('/webhook', async (req: Request, res: Response) => {
           redeemCodeSuffix: fulfillment.redeemCode.slice(-4),
           urlLink: fulfillment.urlLink,
         })
-        needDeliver = true
-      }
-
-      // 2.7 调用虚拟商品发货接口（deliver_type=3），标记订单已发货
-      if (needDeliver) {
-        await safeDeliver(String(orderId), fulfillment.fulfillmentText)
       }
 
       // 微信要求返回字符串 "success"

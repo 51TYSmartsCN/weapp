@@ -512,7 +512,7 @@ CREATE TABLE `claim_tokens` (
   `short_code` VARCHAR(32) NOT NULL COMMENT '小程序码 scene 短码',
   `entitlement_id` BIGINT NOT NULL COMMENT '课程权益ID',
   `store_order_id` VARCHAR(64) NOT NULL COMMENT '微信小店订单号',
-  `url_link` TEXT NULL COMMENT '小程序 URL Link',
+  `url_link` TEXT NULL COMMENT '小程序入口链接，优先 Short Link，降级 URL Link',
   `qrcode_url` VARCHAR(512) NULL COMMENT '小程序码图片 URL',
   `status` VARCHAR(16) NOT NULL DEFAULT 'active' COMMENT '状态 active/claimed/revoked/expired',
   `expires_at` DATETIME NULL COMMENT '过期时间',
@@ -534,7 +534,7 @@ DROP TABLE IF EXISTS `fulfillment_logs`;
 CREATE TABLE `fulfillment_logs` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `store_order_id` VARCHAR(64) NOT NULL COMMENT '微信小店订单号',
-  `channel` VARCHAR(32) NOT NULL COMMENT 'redeem_code/url_link/qrcode/store_delivery/customer_service/sms',
+  `channel` VARCHAR(32) NOT NULL COMMENT 'redeem_code/short_link/url_link/qrcode/store_delivery/customer_service/sms',
   `status` VARCHAR(16) NOT NULL COMMENT 'success/failed/retrying',
   `payload` JSON NULL COMMENT '投递内容摘要',
   `error_message` VARCHAR(512) NULL COMMENT '失败原因',

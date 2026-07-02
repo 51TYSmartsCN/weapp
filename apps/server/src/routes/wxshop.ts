@@ -3,9 +3,7 @@ import crypto from 'crypto'
 import { pool } from '../db'
 import { ok, fail } from '../utils'
 import { wxshopConfig, wechatConfig } from '../config'
-import { createPostPurchaseFulfillment } from '../services/wechat-store-fulfillment'
-import { deliverVirtualOrder } from '../services/channels-api'
-import { markStoreDelivery } from '../services/wechat-store-fulfillment'
+import { createAndDeliverPostPurchaseFulfillment } from '../services/wechat-store-auto-delivery'
 
 const router = Router()
 
@@ -338,7 +336,7 @@ router.post('/order/callback', async (req: Request, res: Response) => {
 
     console.log('[wxshop] 订单处理完成: orderId=', orderId, 'userId=', result.userId, 'created=', result.created)
 
-    const fulfillment = await createPostPurchaseFulfillment({
+    const autoDelivery = await createAndDeliverPostPurchaseFulfillment({
       storeOrderId: String(orderId),
       courseId,
       sourceScene: 'miniapp',
@@ -348,19 +346,11 @@ router.post('/order/callback', async (req: Request, res: Response) => {
       paidAt: data.create_time ? new Date(Number(data.create_time) * 1000).toISOString().slice(0, 19).replace('T', ' ') : undefined,
       rawPayload: msgObj,
     })
-
-    try {
-      const delivered = await deliverVirtualOrder(String(orderId), fulfillment.fulfillmentText)
-      await markStoreDelivery(String(orderId), delivered ? 'success' : 'failed', { hasDeliveryNote: true })
-    } catch (deliveryErr) {
-      console.warn('[wxshop] 确认发货失败（不影响课程权益生成）:', deliveryErr)
-      await markStoreDelivery(
-        String(orderId),
-        'failed',
-        { hasDeliveryNote: true },
-        deliveryErr instanceof Error ? deliveryErr.message : String(deliveryErr)
-      )
-    }
+    console.log('[wxshop] 自动履约发货完成:', {
+      orderId,
+      delivered: autoDelivery.delivered,
+      deliveryError: autoDelivery.deliveryError,
+    })
 
     // 微信要求返回字符串 "success"
     return res.send('success')
@@ -434,55 +424,6 @@ router.get('/config', async (_req: Request, res: Response) => {
   } catch (err) {
     console.error('[wxshop] get config error:', err)
     return fail(res, 500, '服务器错误')
-  }
-})
-
-/**
- * POST /api/wxshop/order/mock
- * 开发环境模拟下单
- */
-router.post('/order/mock', async (req: Request, res: Response) => {
-  if (!wxshopConfig.mockMode) {
-    return fail(res, 403, 'mock 接口仅在 mockMode 下可用')
-  }
-  try {
-    // express.text() 把 body 转成了字符串,这里手动解析 JSON
-    let body: any = {}
-    if (typeof req.body === 'string' && req.body.length > 0) {
-      try { body = JSON.parse(req.body) } catch { body = {} }
-    } else if (req.body && typeof req.body === 'object') {
-      body = req.body
-    }
-    const { openid, courseId, amount } = body
-    if (!openid || !courseId) {
-      return fail(res, 400, '缺少 openid 或 courseId')
-    }
-
-    const [courseRows] = await pool.query('SELECT price FROM courses WHERE id = ?', [courseId])
-    const courseList = courseRows as any[]
-    if (courseList.length === 0) return fail(res, 404, '课程不存在')
-
-    const orderNo = `WXSHOP_MOCK_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-    const result = await handleOrderPaid({
-      orderNo,
-      openid: String(openid),
-      courseId: Number(courseId),
-      amount: Number(amount ?? courseList[0].price),
-    })
-
-    const fulfillment = await createPostPurchaseFulfillment({
-      storeOrderId: orderNo,
-      courseId: Number(courseId),
-      sourceScene: 'miniapp',
-      storeProductId: `mock:${courseId}`,
-      buyerOpenid: String(openid),
-      rawPayload: { mock: true, body },
-    })
-
-    return ok(res, { orderNo, ...result, fulfillment })
-  } catch (err) {
-    console.error('[wxshop] mock order error:', err)
-    return fail(res, 500, err instanceof Error ? err.message : 'mock 下单失败')
   }
 })
 

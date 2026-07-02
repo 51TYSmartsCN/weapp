@@ -66,6 +66,40 @@ function buildMockPath(query: string): string {
   return `${page}${query ? `?${query}` : ''}`
 }
 
+function buildShortLinkPageUrl(query: string): string {
+  const page = normalizePagePath(fulfillmentConfig.claimPage)
+  return `${page}${query ? `?${query}` : ''}`
+}
+
+export async function generateMiniappShortLink(query: string, pageTitle = '同养AI课程学习'): Promise<string> {
+  if (!wechatConfig.appid || !wechatConfig.secret) {
+    if (isProduction) {
+      throw new Error('[miniapp] 生产环境未配置 WECHAT_APPID / WECHAT_SECRET，无法生成 Short Link')
+    }
+    return `#小程序://同养AI/课程学习/MOCK${Buffer.from(buildMockPath(query)).toString('base64url').slice(0, 8)}`
+  }
+
+  return callMiniappApiWithRetry(async (token) => {
+    const resp = await fetch(`${API_BASE}/wxa/genwxashortlink?access_token=${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page_url: buildShortLinkPageUrl(query),
+        page_title: pageTitle,
+        is_permanent: false,
+      }),
+    })
+    const data = (await resp.json()) as { link?: string } & WxApiBaseResp
+    if (!data.link) {
+      throw Object.assign(
+        new Error(`[miniapp] 生成 Short Link 失败: errcode=${data.errcode} errmsg=${data.errmsg}`),
+        { errcode: data.errcode }
+      )
+    }
+    return data.link
+  })
+}
+
 export async function generateMiniappUrlLink(query: string): Promise<string> {
   if (!wechatConfig.appid || !wechatConfig.secret) {
     if (isProduction) {

@@ -1,6 +1,6 @@
-# 微信小店购后自动发兑换码、URL Link、小程序码实施方案
+# 微信小店购后自动发兑换码、小程序入口、小程序码实施方案
 
-更新日期：2026-07-02
+更新日期：2026-07-03
 
 ## 目标
 
@@ -14,7 +14,7 @@
 最终交付要求：每笔有效课程订单支付成功后，系统自动生成并投递三类承接方式：
 
 1. 兑换码：用户可在 GEO 小程序兑换页手动输入。
-2. 小程序 URL Link：用户点击后直达 GEO 小程序承接页。
+2. 小程序入口：优先使用 Short Link（如 `#小程序://同养AI/首页/ZUUloHP4YkniZvi`），失败时降级 URL Link。
 3. 小程序码：用户扫码进入 GEO 小程序承接页。
 
 三者必须绑定同一个服务端权益记录，不能各自独立开课。
@@ -23,7 +23,7 @@
 
 1. 以微信小店订单为唯一可信来源，不信任前端传入的订单状态。
 2. 订单回调必须幂等，同一订单重复回调不能重复发码、重复开课。
-3. 兑换码、URL Link、小程序码只是不同入口，最终都进入同一个 `claimToken` 核验流程。
+3. 兑换码、小程序入口、小程序码只是不同入口，最终都进入同一个 `claimToken` 核验流程。
 4. 用户购买前可能没有 GEO 账号；承接页必须支持先核验订单，再登录/绑定用户。
 5. 退款、售后、重复支付、重复领取必须可追踪、可撤销、可人工补偿。
 
@@ -44,11 +44,11 @@ sequenceDiagram
   API->>DB: 写入订单、商品明细、来源场景
   API->>DB: 匹配 productId 到 courseId
   API->>DB: 创建课程权益、兑换码、claimToken
-  API->>WX: 生成 URL Link
+  API->>WX: 生成 Short Link，失败时降级 URL Link
   API->>WX: 生成小程序码
   API->>S: 调用确认发货接口写入 delivery_note
   API-->>U: 通过发货说明/客服/短信提供三类入口
-  U->>M: 打开 URL Link、扫码或输入兑换码
+  U->>M: 打开小程序入口、扫码或输入兑换码
   M->>API: 核验 claimToken/scene/redeemCode
   API->>DB: 绑定用户并开通课程
   API-->>M: 返回开课结果
@@ -118,7 +118,7 @@ sequenceDiagram
 
 ### `claim_tokens`
 
-保存 URL Link 和小程序码共用的领取 token。
+保存小程序入口和小程序码共用的领取 token。
 
 | 字段 | 说明 |
 | --- | --- |
@@ -138,7 +138,7 @@ sequenceDiagram
 | --- | --- |
 | `id` | 日志 ID |
 | `store_order_id` | 微信小店订单号 |
-| `channel` | `redeem_code`、`url_link`、`qrcode`、`store_delivery`、`customer_service`、`sms` |
+| `channel` | `redeem_code`、`short_link`、`url_link`、`qrcode`、`store_delivery`、`customer_service`、`sms` |
 | `status` | `success`、`failed`、`retrying` |
 | `payload` | 投递内容摘要，不保存完整敏感链接 |
 | `error_message` | 失败原因 |
@@ -174,7 +174,7 @@ stateDiagram-v2
 关键约束：
 
 - `EntitlementCreated` 对同一 `store_order_id + store_product_id + store_sku_id` 只能成功一次。
-- `Delivered` 可以重复执行，但必须复用同一兑换码、URL Link、小程序码。
+- `Delivered` 可以重复执行，但必须复用同一兑换码、小程序入口、小程序码。
 - `Claimed` 后再次打开链接，应展示“已开通课程”，不能再次绑定到另一个用户。
 - `Refunded` 后未领取权益直接作废；已领取权益按业务规则撤销或转人工处理。
 
@@ -215,14 +215,14 @@ Content-Type: application/json
 5. 标记兑换码 `used`，权益 `active`。
 6. 返回课程 ID 和跳转路径。
 
-## URL Link 方案
+## 小程序入口方案
 
 ### 生成方式
 
-服务端调用微信小程序 URL Link 接口生成直达链接，目标页面建议：
+服务端优先调用微信小程序 Short Link 接口生成直达链接，目标页面建议：
 
 ```text
-/pages/course-unlock/index
+/pages/video-unlock/index
 ```
 
 query 示例：
@@ -233,10 +233,10 @@ token=CLAIM_TOKEN&source=wechat_store
 
 注意：
 
-- URL Link 必须由服务端生成，不能在小程序前端生成。
+- Short Link 和 URL Link 必须由服务端生成，不能在小程序前端生成。
 - `CLAIM_TOKEN` 使用随机 token，不直接暴露微信小店订单号。
-- 生产环境使用 `env_version=release`。
-- URL Link 过期后，承接页要提示用户输入兑换码或联系客服。
+- Short Link 请求体使用 `page_url` 承载页面和 query；降级 URL Link 时使用 `env_version=release`。
+- 小程序入口过期后，承接页要提示用户输入兑换码或联系客服。
 
 ### 承接接口
 
@@ -310,7 +310,7 @@ GET /api/wechat-store/claim-scenes/:scene
 - 接口：`/order/confirm_delivery`
 - 字段：`delivery_note`
 - 效果：内容会同步到买家订单详情页
-- 限制：最大 1000 个字符，支持小程序 URL Link
+- 限制：最大 1000 个字符，支持小程序 Short Link 或 URL Link
 
 微信小店虚拟发货或发货说明建议包含三段信息：
 
@@ -328,7 +328,7 @@ GET /api/wechat-store/claim-scenes/:scene
 
 ### 模板变量如何替换
 
-`{{courseTitle}}`、`{{urlLink}}`、`{{redeemCode}}`、`{{storeOrderId}}` 不是微信小店自动替换的变量，而是 GEO Server 在执行发货前渲染出来的占位符。
+`{{courseTitle}}`、`{{urlLink}}`、`{{redeemCode}}`、`{{storeOrderId}}` 不是微信小店自动替换的变量，而是 GEO Server 在执行发货前渲染出来的占位符。`{{urlLink}}` 当前表示小程序入口，代码会优先生成类似 `#小程序://同养AI/首页/ZUUloHP4YkniZvi` 的 Short Link；如果 Short Link 接口失败，再降级生成普通 URL Link。
 
 渲染时机：
 
@@ -336,7 +336,7 @@ GET /api/wechat-store/claim-scenes/:scene
 2. 服务端查询订单详情，拿到 `storeOrderId`、商品 ID、SKU、买家信息。
 3. 服务端通过 `wechat_store_product_id -> course_id` 映射查到课程。
 4. 服务端创建或复用课程权益、兑换码、claimToken。
-5. 服务端调用微信小程序接口生成 URL Link 和小程序码。
+5. 服务端调用微信小程序接口生成小程序入口和小程序码。
 6. 服务端把模板里的变量替换成真实值，得到最终发货文案。
 7. 服务端把最终文案写入微信小店虚拟发货说明，或提供给客服/短信/后台补发。
 
@@ -345,7 +345,7 @@ GET /api/wechat-store/claim-scenes/:scene
 | 变量 | 来源 | 示例 |
 | --- | --- | --- |
 | `{{courseTitle}}` | `courses.title` 或本地课程表 | `GEO 入门课程` |
-| `{{urlLink}}` | `miniapp-link.service.ts` 调微信 URL Link 接口生成 | `https://wxaurl.cn/...` |
+| `{{urlLink}}` | `wechat-miniapp-api.ts` 优先调微信 Short Link 接口生成，失败时降级 URL Link | `#小程序://同养AI/首页/ZUUloHP4YkniZvi` |
 | `{{redeemCode}}` | `redeem-code.service.ts` 生成的兑换码明文 | `GEO-ABCD-EFGH` |
 | `{{storeOrderId}}` | 微信小店订单号 | `1234567890` |
 
@@ -387,11 +387,11 @@ const requiredKeys: Array<keyof FulfillmentTemplateContext> = [
 ]
 ```
 
-`delivery_note` 最大 1000 字符，生产实现需要保留兑换码和 URL Link 这两个核心入口，必要时裁剪课程名或辅助说明。当前代码已做长度兜底。如果 `urlLink` 或小程序码生成失败，不能阻塞兑换码发放；应先发包含兑换码的文案，并把 URL Link/小程序码生成任务放入重试队列。`fulfillment_logs` 需要记录本次实际投递了哪些内容。
+`delivery_note` 最大 1000 字符，生产实现需要保留兑换码和小程序入口这两个核心信息，必要时裁剪课程名或辅助说明。当前代码已做长度兜底。小程序入口优先使用 Short Link，失败后降级 URL Link；如果入口和小程序码都生成失败，不能投递不可用链接，应记录失败日志并等待重试或人工处理。`fulfillment_logs` 需要记录本次实际投递了哪些内容。
 
 ## API 与服务模块建议
 
-当前代码已按本章节落地：微信小店/视频号回调会调用 `wechat-store-fulfillment.ts`，生成兑换码、URL Link、小程序码，并写入发货日志。
+当前代码已按本章节落地：微信小店/视频号回调会调用 `wechat-store-fulfillment.ts`，生成兑换码、小程序入口、小程序码，并写入发货日志。小程序入口优先为 Short Link，回退为 URL Link。
 
 ### 服务端模块
 
@@ -410,11 +410,10 @@ apps/server/src/services/channels-api.ts
 | `POST /api/channels/webhook` | 接收微信小店/视频号小店订单事件 |
 | `GET /api/wxshop/order/callback` | 小程序消息推送回调地址校验 |
 | `POST /api/wxshop/order/callback` | 接收小程序内微信小店订单事件 |
-| `GET /api/wechat-store/claim-tokens/:token` | 查询 URL Link 承接状态 |
-| `POST /api/wechat-store/claim-tokens/:token/claim` | 领取 URL Link 绑定的课程权益 |
+| `GET /api/wechat-store/claim-tokens/:token` | 查询小程序入口承接状态 |
+| `POST /api/wechat-store/claim-tokens/:token/claim` | 领取小程序入口绑定的课程权益 |
 | `GET /api/wechat-store/claim-scenes/:scene` | 小程序码 scene 换取领取状态 |
 | `POST /api/wechat-store/claim-scenes/:scene/claim` | 领取小程序码绑定的课程权益 |
-| `POST /api/wechat-store/orders/mock-fulfillment` | 开发环境模拟生成购后承接内容 |
 | `POST /api/redeem` | 兑换码领取，已兼容新权益模型 |
 
 ### 小程序服务层
@@ -455,18 +454,18 @@ apps/server/.env.example
 | 变量 | 用途 | 要求 |
 | --- | --- | --- |
 | `BASE_URL` | 拼接小程序码图片 URL、外部访问地址 | 生产必须是公网 HTTPS 域名 |
-| `WECHAT_APPID` | GEO 小程序 AppID，用于生成 URL Link 和小程序码 | 必须是承接页所在小程序 |
+| `WECHAT_APPID` | GEO 小程序 AppID，用于生成 Short Link、URL Link 和小程序码 | 必须是承接页所在小程序 |
 | `WECHAT_SECRET` | GEO 小程序 AppSecret | 只放服务端，不下发前端 |
 | `CHANNELS_TOKEN` | 微信小店自研消息推送 Token | 与微信小店后台一致 |
 | `CHANNELS_ENCODING_AES_KEY` | 微信小店消息密钥 | 与微信小店后台一致 |
 | `CHANNELS_APP_ID` | 微信小店主体接口 AppID | 微信小店后台「服务市场 - 自研」获取 |
 | `CHANNELS_APP_SECRET` | 微信小店主体接口密钥 | 只在重置时显示一次 |
 | `CHANNELS_CONFIRM_DELIVERY_PATH` | 微信小店确认发货接口路径 | 默认 `/order/confirm_delivery` |
-| `FULFILLMENT_CLAIM_PAGE` | URL Link/小程序码进入的页面 | 默认 `/pages/video-unlock/index` |
+| `FULFILLMENT_CLAIM_PAGE` | Short Link、URL Link、小程序码进入的页面 | 默认 `/pages/video-unlock/index` |
 | `FULFILLMENT_REDEEM_SALT` | 兑换码 hash 盐 | 生产必须设置强随机值 |
 | `FULFILLMENT_CLAIM_SALT` | claimToken hash 盐 | 生产必须设置强随机值 |
 | `FULFILLMENT_CLAIM_EXPIRE_DAYS` | 兑换/领取有效期 | 默认 90 |
-| `FULFILLMENT_URL_LINK_EXPIRE_DAYS` | 微信 URL Link 有效期 | 默认 30 |
+| `FULFILLMENT_URL_LINK_EXPIRE_DAYS` | 微信 URL Link 降级入口有效期 | 默认 30 |
 
 ### 数据库
 
@@ -515,7 +514,7 @@ https://你的服务端域名/api/channels/webhook
 1. `WECHAT_APPID` 对应的小程序必须已发布正式版。
 2. 承接页 `/pages/video-unlock/index` 必须在 `apps/miniapp/src/app.config.ts` 注册。
 3. 小程序服务器域名必须配置服务端 HTTPS 域名，否则小程序内 API 请求会失败。
-4. URL Link 和小程序码生成需要小程序 `AppSecret` 有效。
+4. Short Link、URL Link 和小程序码生成需要小程序 `AppSecret` 有效。
 
 ### 小程序前端
 
@@ -533,25 +532,6 @@ pnpm build:miniapp
 
 ## 联调步骤
 
-### 本地 mock 验证
-
-开发环境 `WXSHOP_MOCK=1` 时，可以直接调用：
-
-```bash
-curl -X POST http://localhost:4000/api/wechat-store/orders/mock-fulfillment \
-  -H 'Content-Type: application/json' \
-  -d '{"courseId":1,"sourceScene":"channels_live","storeProductId":"mock-product-1"}'
-```
-
-返回里会包含：
-
-- `redeemCode`
-- `urlLink`
-- `shortCode`
-- `fulfillmentText`
-
-本地未配置 `WECHAT_APPID/WECHAT_SECRET` 时，`urlLink` 会是 mock 链接，小程序码会进入重试日志；配置真实小程序密钥后会调用微信接口生成真实 URL Link 和小程序码。
-
 ### 真机链路验证
 
 1. 在数据库确认 `wxshop_products.product_id` 与微信小店商品 ID 一致。
@@ -567,8 +547,8 @@ SELECT short_code, url_link, qrcode_url, status FROM claim_tokens ORDER BY id DE
 SELECT channel, status, error_message FROM fulfillment_logs ORDER BY id DESC LIMIT 10;
 ```
 
-5. 在微信小店买家订单详情页查看发货说明，应能看到兑换码和小程序 URL Link。
-6. 用返回的 URL Link 或小程序码进入 `/pages/video-unlock/index`。
+5. 在微信小店买家订单详情页查看发货说明，应能看到兑换码和小程序入口。正常情况下入口应是类似 `#小程序://同养AI/首页/ZUUloHP4YkniZvi` 的 Short Link；如果短链接口不可用，会降级为 URL Link。
+6. 用返回的小程序入口或小程序码进入 `/pages/video-unlock/index`。
 7. 未登录时应先展示课程权益；登录后点击开通，课程进入「我的课程」。
 8. 用兑换码手动兑换也应开通同一门课程，且不会重复创建权益。
 
@@ -616,10 +596,11 @@ apps/miniapp/src/pages/video-unlock/index.tsx
 | 异常 | 处理 |
 | --- | --- |
 | 回调没收到 | 定时任务按最近订单拉取微信小店订单详情补偿 |
-| URL Link 生成失败 | 保留兑换码和小程序码，进入重试队列 |
-| 小程序码生成失败 | 保留兑换码和 URL Link，进入重试队列 |
+| Short Link 生成失败 | 自动降级 URL Link，并记录 `short_link failed` 日志 |
+| URL Link 也生成失败 | 不投递不可用链接，记录失败日志并等待重试或人工处理 |
+| 小程序码生成失败 | 保留兑换码和小程序入口，进入重试队列 |
 | 虚拟发货失败 | 后台展示失败订单，支持手动重试 |
-| 用户不会操作 | 客服按订单号查询兑换码、URL Link、小程序码补发 |
+| 用户不会操作 | 客服按订单号查询兑换码、小程序入口、小程序码补发 |
 | 订单重复回调 | 命中幂等键后直接返回成功 |
 
 ## 后台运营能力
@@ -628,7 +609,7 @@ apps/miniapp/src/pages/video-unlock/index.tsx
 
 1. 按微信小店订单号查询课程权益。
 2. 查看兑换码后四位、状态、领取用户、领取时间。
-3. 查看 URL Link、小程序码生成状态。
+3. 查看小程序入口、小程序码生成状态。
 4. 手动重试发货。
 5. 手动作废兑换码/权益。
 6. 查看退款处理状态。
@@ -638,9 +619,9 @@ apps/miniapp/src/pages/video-unlock/index.tsx
 
 ### 正常订单
 
-- 视频号直播下单后，服务端能收到订单并生成兑换码、URL Link、小程序码。
+- 视频号直播下单后，服务端能收到订单并生成兑换码、小程序入口、小程序码。
 - 小程序内跳微信小店下单后，走同一套发货和开课流程。
-- 用户点击 URL Link，可进入正确课程承接页。
+- 用户点击小程序入口，可进入正确课程承接页。
 - 用户扫码小程序码，可进入正确课程承接页。
 - 用户输入兑换码，可开通正确课程。
 - 三种方式不会重复创建权益。
@@ -648,23 +629,24 @@ apps/miniapp/src/pages/video-unlock/index.tsx
 ### 幂等
 
 - 同一支付成功回调重复发送 3 次，只生成一份权益。
-- 重复点击 URL Link，不会重复绑定到多个用户。
+- 重复点击小程序入口，不会重复绑定到多个用户。
 - 兑换码使用后再次输入，提示已使用。
 
 ### 售后
 
-- 未领取订单退款后，兑换码、URL Link、小程序码全部失效。
+- 未领取订单退款后，兑换码、小程序入口、小程序码全部失效。
 - 已领取订单退款后，按业务规则撤销或进入人工售后。
 - 客服能通过微信小店订单号查到发货和领取状态。
 
 ### 安全
 
-- URL Link 和小程序码中不包含订单号、手机号、兑换码明文。
+- Short Link、URL Link 和小程序码中不包含订单号、手机号、兑换码明文。
 - 当前实现为兼容旧流程会保存兑换码明文和 hash；生产环境需限制数据库/后台访问权限，后续可升级为加密存储。
 - 小程序端不保存微信小店 AppSecret，不直接调用微信开放接口。
 
 ## 参考资料
 
+- 小程序 Short Link：<https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/short-link/generateShortLink.html>
 - 小程序 URL Link：<https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/url-link/generateUrlLink.html>
 - 获取不限制的小程序码：<https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/qrcode-link/qr-code/getUnlimitedQRCode.html>
 - 小程序稳定版接口调用凭据：<https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-access-token/getStableAccessToken.html>

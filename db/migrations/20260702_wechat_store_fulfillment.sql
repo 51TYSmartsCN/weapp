@@ -1,4 +1,4 @@
--- 微信小店购后承接：兑换码 hash、claimToken、URL Link、小程序码、发货日志
+-- 微信小店购后承接：兑换码 hash、claimToken、小程序入口、小程序码、发货日志
 -- 适用于已存在数据库。若是全新数据库，直接执行 db/schema.sql 即可。
 
 ALTER TABLE `redeem_codes`
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `claim_tokens` (
   `short_code` VARCHAR(32) NOT NULL COMMENT '小程序码 scene 短码',
   `entitlement_id` BIGINT NOT NULL COMMENT '课程权益ID',
   `store_order_id` VARCHAR(64) NOT NULL COMMENT '微信小店订单号',
-  `url_link` TEXT NULL COMMENT '小程序 URL Link',
+  `url_link` TEXT NULL COMMENT '小程序入口链接，优先 Short Link，降级 URL Link',
   `qrcode_url` VARCHAR(512) NULL COMMENT '小程序码图片 URL',
   `status` VARCHAR(16) NOT NULL DEFAULT 'active' COMMENT '状态 active/claimed/revoked/expired',
   `expires_at` DATETIME NULL COMMENT '过期时间',
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `claim_tokens` (
 CREATE TABLE IF NOT EXISTS `fulfillment_logs` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `store_order_id` VARCHAR(64) NOT NULL COMMENT '微信小店订单号',
-  `channel` VARCHAR(32) NOT NULL COMMENT 'redeem_code/url_link/qrcode/store_delivery/customer_service/sms',
+  `channel` VARCHAR(32) NOT NULL COMMENT 'redeem_code/short_link/url_link/qrcode/store_delivery/customer_service/sms',
   `status` VARCHAR(16) NOT NULL COMMENT 'success/failed/retrying',
   `payload` JSON NULL COMMENT '投递内容摘要',
   `error_message` VARCHAR(512) NULL COMMENT '失败原因',

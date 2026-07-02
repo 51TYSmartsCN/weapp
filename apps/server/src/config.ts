@@ -65,7 +65,7 @@ export const fulfillmentConfig = {
 /** 微信小店订单回调配置(小程序消息推送机制)
  * - callbackToken:在 mp.weixin.qq.com → 开发管理 → 消息推送配置 中设置的 Token
  * - encodingAESKey:消息加密密钥,43位 base64,对应小程序后台 EncodingAESKey
- * - mockMode:仅 WXSHOP_MOCK=1 时开启,跳过签名校验+允许 mock 接口
+ * - mockMode:仅开发联调时跳过签名校验；不再提供 mock 下单/发货接口
  */
 const wxshopCallbackToken = process.env.WXSHOP_CALLBACK_TOKEN || ''
 const wxshopEncodingAESKey = process.env.WXSHOP_ENCODING_AES_KEY || ''

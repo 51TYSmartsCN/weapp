@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
 import { pool } from '../db'
 import { fulfillmentConfig } from '../config'
-import { generateMiniappUrlLink, generateUnlimitedQRCode } from './wechat-miniapp-api'
+import { generateMiniappShortLink, generateMiniappUrlLink, generateUnlimitedQRCode } from './wechat-miniapp-api'
 
 export type StoreSourceScene =
   | 'miniapp'
@@ -235,11 +235,30 @@ async function getOrCreateClaimToken(entitlementId: number, storeOrderId: string
     let qrcodeUrl: string | null = null
 
     try {
-      urlLink = await generateMiniappUrlLink(query)
-      await logFulfillment(storeOrderId, 'url_link', 'success', { shortCode })
-    } catch (err) {
-      await logFulfillment(storeOrderId, 'url_link', 'failed', { shortCode }, err instanceof Error ? err.message : String(err))
-      throw err
+      urlLink = await generateMiniappShortLink(query, '同养AI课程学习')
+      await logFulfillment(storeOrderId, 'short_link', 'success', { shortCode })
+    } catch (shortLinkErr) {
+      await logFulfillment(
+        storeOrderId,
+        'short_link',
+        'failed',
+        { shortCode },
+        shortLinkErr instanceof Error ? shortLinkErr.message : String(shortLinkErr)
+      )
+
+      try {
+        urlLink = await generateMiniappUrlLink(query)
+        await logFulfillment(storeOrderId, 'url_link', 'success', { shortCode })
+      } catch (urlLinkErr) {
+        await logFulfillment(
+          storeOrderId,
+          'url_link',
+          'failed',
+          { shortCode },
+          urlLinkErr instanceof Error ? urlLinkErr.message : String(urlLinkErr)
+        )
+        throw urlLinkErr
+      }
     }
 
     try {
