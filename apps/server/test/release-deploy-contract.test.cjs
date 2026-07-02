@@ -41,6 +41,7 @@ test('runner deploy script keeps build, deploy, and admin page verification in o
   assert.match(deployScript, /pnpm build:shared/)
   assert.match(deployScript, /pnpm build:server/)
   assert.match(deployScript, /pnpm build:admin/)
+  assert.match(deployScript, /REMOTE_SYNC_FLAGS=\(-rlz --delete --omit-dir-times --no-perms --no-owner --no-group\)/)
   assert.match(deployScript, /sudo -n -u '\$REMOTE_PM2_OWNER' '\$REMOTE_PM2_WRAPPER' reload/)
   assert.match(deployScript, /PUBLIC_ADMIN_LOGIN_URL="\$PUBLIC_BASE_URL\/admin\/login"/)
   assert.match(deployScript, /run_optional_live_contract_test/)
