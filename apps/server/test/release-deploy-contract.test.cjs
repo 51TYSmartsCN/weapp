@@ -14,6 +14,7 @@ test('release deploy workflow uses the committed verification and runner deploy 
   assert.match(workflow, /release-v\*/)
   assert.match(workflow, /runs-on:\s*\[self-hosted, linux, suops1, weapp-release\]/)
   assert.match(workflow, /run:\s+sh scripts\/verify-release-tag\.sh/)
+  assert.match(workflow, /node-version:\s*24/)
   assert.match(workflow, /REMOTE_HOST:\s+tydeploy@t0ops/)
   assert.match(workflow, /run:\s+bash deploy\/t0ops\/deploy-from-runner\.sh/)
 })
