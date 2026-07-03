@@ -101,7 +101,6 @@ runner 脚本会执行：
 
 - `admin` 路由必须使用 admin token，普通小程序用户 token 不能访问 `/api/admin/*`
 - `NODE_ENV=production` 时缺少关键环境变量会直接启动失败
-- `NODE_ENV=production` 时 `WXSHOP_MOCK` 不再生效
 - `CORS` 在生产环境按 `CORS_ORIGINS` 白名单放行
 
 对应关键环境变量：
@@ -176,7 +175,6 @@ NODE_TLS_REJECT_UNAUTHORIZED=1
 - `JWT_SECRET` 必须是高强度随机字符串
 - `ADMIN_PASSWORD` 不要继续使用默认值
 - `CORS_ORIGINS` 只填真实浏览器后台域名，不要写 `*`
-- 生产环境不要设置 `WXSHOP_MOCK=1`
 
 ## 5. 数据库初始化
 
@@ -331,11 +329,10 @@ sudo systemctl reload nginx
 2. 普通小程序登录后，用用户 token 请求 `/api/admin/dashboard` 返回 `403`
 3. admin 登录成功后，请求 `/api/admin/dashboard` 返回 `200`
 4. 去掉任意一个生产必填 env 后，服务应启动失败而不是带默认值继续跑
-5. 将 `WXSHOP_MOCK=1` 注入生产环境时，`config` 仍应强制关闭 mock
-6. 从非白名单浏览器域名访问 admin API，应被 CORS 拦截
-7. 微信登录真实可用，不再走 mock openid
-8. 微信小店回调验签通过
-9. 数据库仅允许 `t0ops` 对应出口 IP 或可信内网网段访问，不对公网暴露
+5. 从非白名单浏览器域名访问 admin API，应被 CORS 拦截
+6. 微信登录真实可用，不再走 mock openid
+7. 微信小店回调验签通过
+8. 数据库仅允许 `t0ops` 对应出口 IP 或可信内网网段访问，不对公网暴露
 10. 服务重启后健康检查恢复正常
 
 ## 11. 当前仍然存在但未在本轮代码中解决的风险

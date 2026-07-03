@@ -1,4 +1,4 @@
-import { channelsConfig, isProduction } from '../config'
+import { channelsConfig } from '../config'
 
 /**
  * 微信小店（原视频号小店）开放 API 封装
@@ -81,13 +81,8 @@ export function invalidateChannelsAccessToken(): void {
  * 字段：delivery_note（买家订单详情页可见）
  */
 export async function confirmDeliveryWithNote(orderId: string, deliveryNote: string): Promise<boolean> {
-  if (isProduction && !channelsConfig.appId) {
-    console.warn('[channels] 跳过确认发货调用：未配置 CHANNELS_APP_ID')
-    return false
-  }
   if (!channelsConfig.appId) {
-    console.log('[channels] mock 跳过确认发货调用：', { orderId, deliveryNote })
-    return false
+    throw new Error('[channels] 未配置 CHANNELS_APP_ID，无法确认发货')
   }
 
   return callChannelsApiWithRetry(async (token) => {
@@ -125,13 +120,8 @@ export async function deliverVirtualOrder(orderId: string, deliveryNote?: string
     return confirmDeliveryWithNote(orderId, deliveryNote.trim())
   }
 
-  if (isProduction && !channelsConfig.appId) {
-    console.warn('[channels] 跳过发货调用：未配置 CHANNELS_APP_ID')
-    return false
-  }
   if (!channelsConfig.appId) {
-    console.log('[channels] mock 跳过发货调用：orderId=', orderId)
-    return false
+    throw new Error('[channels] 未配置 CHANNELS_APP_ID，无法发货')
   }
 
   return callChannelsApiWithRetry(async (token) => {
@@ -171,7 +161,7 @@ export async function deliverVirtualOrder(orderId: string, deliveryNote?: string
  */
 export async function sendChannelsCustomMessage(openid: string, content: string): Promise<boolean> {
   if (!channelsConfig.appId) {
-    console.log('[channels] mock 跳过客服消息：openid=', openid)
+    console.warn('[channels] 未配置 CHANNELS_APP_ID，跳过客服消息：openid=', openid)
     return false
   }
   if (!openid) {

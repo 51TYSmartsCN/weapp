@@ -65,16 +65,12 @@ export const fulfillmentConfig = {
 /** 微信小店订单回调配置(小程序消息推送机制)
  * - callbackToken:在 mp.weixin.qq.com → 开发管理 → 消息推送配置 中设置的 Token
  * - encodingAESKey:消息加密密钥,43位 base64,对应小程序后台 EncodingAESKey
- * - mockMode:仅开发联调时跳过签名校验；不再提供 mock 下单/发货接口
  */
 const wxshopCallbackToken = process.env.WXSHOP_CALLBACK_TOKEN || ''
 const wxshopEncodingAESKey = process.env.WXSHOP_ENCODING_AES_KEY || ''
 export const wxshopConfig = {
   callbackToken: wxshopCallbackToken,
   encodingAESKey: wxshopEncodingAESKey,
-  mockMode: isProduction
-    ? false
-    : process.env.WXSHOP_MOCK === '1' || !wxshopCallbackToken,
 }
 
 /** 视频号小店 Webhook 配置(独立于微信小店消息推送)
@@ -85,8 +81,6 @@ export const wxshopConfig = {
  *             → 服务市场 → 自研(右上角)
  *   注意:与小程序 AppID 不同,AppSecret 只在「重置」时显示一次,必须立即保存
  *   IP 白名单:获取 access_token 前需在「自研」页面下方添加服务器公网 IP
- * - mockMode: 非生产环境且未配置 token 时自动开启,跳过签名校验便于本地调试
- *
  * 回调 URL: https://你的域名/api/channels/webhook
  * API 域名: https://api.weixin.qq.com (路径前缀 /channels/ec/... 历史沿用)
  *
@@ -101,7 +95,6 @@ export const channelsConfig = {
   appId: process.env.CHANNELS_APP_ID || '',
   appSecret: process.env.CHANNELS_APP_SECRET || '',
   confirmDeliveryPath: process.env.CHANNELS_CONFIRM_DELIVERY_PATH || '/order/confirm_delivery',
-  mockMode: isProduction ? false : process.env.CHANNELS_MOCK === '1' || !channelsToken,
 }
 
 /** CORS 白名单（生产环境使用） */

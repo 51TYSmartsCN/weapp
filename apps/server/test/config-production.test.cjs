@@ -19,7 +19,6 @@ function loadConfigWithEnv(envOverrides) {
       key === 'WXSHOP_ENCODING_AES_KEY' ||
       key === 'ADMIN_USERNAME' ||
       key === 'ADMIN_PASSWORD' ||
-      key === 'WXSHOP_MOCK' ||
       key === 'CORS_ORIGINS' ||
       key === 'GEO_SERVER_SKIP_DOTENV'
     ) {
@@ -57,7 +56,7 @@ test('production config fails fast when required secrets are missing', () => {
   assert.match(error.message, /(WXSHOP_ENCODING_AES_KEY|CORS_ORIGINS)/)
 })
 
-test('production config disables wxshop mock mode when callback token exists', () => {
+test('production config exposes only wxshop callback secrets', () => {
   const { result, error } = loadConfigWithEnv({
     NODE_ENV: 'production',
     GEO_SERVER_SKIP_DOTENV: '1',
@@ -69,9 +68,8 @@ test('production config disables wxshop mock mode when callback token exists', (
     ADMIN_USERNAME: 'admin-user',
     ADMIN_PASSWORD: 'admin-password',
     CORS_ORIGINS: 'https://admin.example.com',
-    WXSHOP_MOCK: '1',
   })
 
   assert.equal(error, undefined)
-  assert.equal(result.wxshopConfig.mockMode, false)
+  assert.deepEqual(Object.keys(result.wxshopConfig).sort(), ['callbackToken', 'encodingAESKey'])
 })

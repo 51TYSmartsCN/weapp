@@ -189,12 +189,13 @@ router.get('/order/callback', (req: Request, res: Response) => {
   }
 
   // URL 校验时签名是 sha1(sort(token, timestamp, nonce)),不包含加密消息
-  if (!wxshopConfig.mockMode) {
-    const arr = [wxshopConfig.callbackToken, String(timestamp), String(nonce)].sort()
-    const expected = crypto.createHash('sha1').update(arr.join('')).digest('hex')
-    if (expected !== signature) {
-      return fail(res, 403, '签名校验失败')
-    }
+  if (!wxshopConfig.callbackToken) {
+    return fail(res, 500, '未配置 WXSHOP_CALLBACK_TOKEN')
+  }
+  const arr = [wxshopConfig.callbackToken, String(timestamp), String(nonce)].sort()
+  const expected = crypto.createHash('sha1').update(arr.join('')).digest('hex')
+  if (expected !== signature) {
+    return fail(res, 403, '签名校验失败')
   }
 
   return res.send(String(echostr))
@@ -249,20 +250,21 @@ router.post('/order/callback', async (req: Request, res: Response) => {
         return fail(res, 400, '加密消息缺少 Encrypt 字段')
       }
 
-      if (!wxshopConfig.mockMode) {
-        const msgSig = msg_signature || msgObj.MsgSignature || msgObj.msgSignature
-        if (!msgSig) {
-          return fail(res, 400, '缺少 msg_signature')
-        }
-        const expected = calcSignature(
-          wxshopConfig.callbackToken,
-          String(timestamp || ''),
-          String(nonce || ''),
-          encryptStr
-        )
-        if (expected !== msgSig) {
-          return fail(res, 403, '消息签名校验失败')
-        }
+      if (!wxshopConfig.callbackToken) {
+        return fail(res, 500, '未配置 WXSHOP_CALLBACK_TOKEN')
+      }
+      const msgSig = msg_signature || msgObj.MsgSignature || msgObj.msgSignature
+      if (!msgSig) {
+        return fail(res, 400, '缺少 msg_signature')
+      }
+      const expected = calcSignature(
+        wxshopConfig.callbackToken,
+        String(timestamp || ''),
+        String(nonce || ''),
+        encryptStr
+      )
+      if (expected !== msgSig) {
+        return fail(res, 403, '消息签名校验失败')
       }
 
       // 解密
@@ -272,7 +274,7 @@ router.post('/order/callback', async (req: Request, res: Response) => {
       const { text, appid } = decryptMsg(wxshopConfig.encodingAESKey, encryptStr)
 
       // 校验 appid 一致性
-      if (!wxshopConfig.mockMode && appid !== wechatConfig.appid) {
+      if (appid !== wechatConfig.appid) {
         console.warn('[wxshop] 解密后 appid 不匹配:', appid, 'vs', wechatConfig.appid)
       }
 
@@ -284,12 +286,13 @@ router.post('/order/callback', async (req: Request, res: Response) => {
       }
     } else {
       // 明文模式:校验 signature = sha1(sort(token, timestamp, nonce))
-      if (!wxshopConfig.mockMode) {
-        const arr = [wxshopConfig.callbackToken, String(timestamp || ''), String(nonce || '')].sort()
-        const expected = crypto.createHash('sha1').update(arr.join('')).digest('hex')
-        if (expected !== signature) {
-          return fail(res, 403, '签名校验失败')
-        }
+      if (!wxshopConfig.callbackToken) {
+        return fail(res, 500, '未配置 WXSHOP_CALLBACK_TOKEN')
+      }
+      const arr = [wxshopConfig.callbackToken, String(timestamp || ''), String(nonce || '')].sort()
+      const expected = crypto.createHash('sha1').update(arr.join('')).digest('hex')
+      if (expected !== signature) {
+        return fail(res, 403, '签名校验失败')
       }
     }
 

@@ -84,18 +84,16 @@ router.all('/webhook', async (req: Request, res: Response) => {
         return fail(res, 400, '缺少参数: signature/timestamp/nonce/echostr')
       }
 
-      if (!channelsConfig.mockMode) {
-        if (!channelsConfig.token) {
-          return fail(res, 500, '未配置 CHANNELS_TOKEN')
-        }
-        const valid = wechatCrypto.checkSignature(
-          String(signature),
-          String(timestamp),
-          String(nonce)
-        )
-        if (!valid) {
-          return fail(res, 403, '签名校验失败')
-        }
+      if (!channelsConfig.token) {
+        return fail(res, 500, '未配置 CHANNELS_TOKEN')
+      }
+      const valid = wechatCrypto.checkSignature(
+        String(signature),
+        String(timestamp),
+        String(nonce)
+      )
+      if (!valid) {
+        return fail(res, 403, '签名校验失败')
       }
 
       res.setHeader('Content-Type', 'text/plain')
@@ -121,18 +119,19 @@ router.all('/webhook', async (req: Request, res: Response) => {
       }
 
       // 2.1 验证 POST 签名（HMAC-SHA256）
-      if (!channelsConfig.mockMode) {
-        if (!timestamp || !nonce || !signature) {
-          return fail(res, 401, '缺少签名 headers: x-wx-timestamp/x-wx-nonce/x-wx-signature')
-        }
-        const expected = wechatCrypto.generatePostSignature(
-          String(timestamp),
-          String(nonce),
-          rawBody
-        )
-        if (expected !== signature) {
-          return fail(res, 401, '签名校验失败')
-        }
+      if (!channelsConfig.token) {
+        return fail(res, 500, '未配置 CHANNELS_TOKEN')
+      }
+      if (!timestamp || !nonce || !signature) {
+        return fail(res, 401, '缺少签名 headers: x-wx-timestamp/x-wx-nonce/x-wx-signature')
+      }
+      const expected = wechatCrypto.generatePostSignature(
+        String(timestamp),
+        String(nonce),
+        rawBody
+      )
+      if (expected !== signature) {
+        return fail(res, 401, '签名校验失败')
       }
 
       // 2.2 解析请求体（可能是加密 JSON 或明文 JSON）
@@ -152,7 +151,7 @@ router.all('/webhook', async (req: Request, res: Response) => {
         const { text, appid } = wechatCrypto.decrypt(encryptStr)
 
         // 校验 appid 一致性
-        if (!channelsConfig.mockMode && wechatConfig.appid && appid !== wechatConfig.appid) {
+        if (wechatConfig.appid && appid !== wechatConfig.appid) {
           console.warn('[channels] 解密后 appid 不匹配:', appid, 'vs', wechatConfig.appid)
         }
 
