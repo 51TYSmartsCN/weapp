@@ -12,6 +12,8 @@ PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-https://ty-server-api.tysmarts.cn}"
 ALLOWED_DEV_ORIGIN="${ALLOWED_DEV_ORIGIN:-http://localhost:4007}"
 FORBIDDEN_TEST_ORIGIN="${FORBIDDEN_TEST_ORIGIN:-https://evil.example.com}"
 DEPLOY_RELEASE_TAG="${DEPLOY_RELEASE_TAG:-${GITHUB_REF_NAME:-manual}}"
+HTTP_WAIT_ATTEMPTS="${HTTP_WAIT_ATTEMPTS:-10}"
+HTTP_WAIT_SECONDS="${HTTP_WAIT_SECONDS:-3}"
 
 REMOTE_SERVER_ROOT="$REMOTE_ROOT/apps/server"
 REMOTE_ADMIN_ROOT="$REMOTE_SERVER_ROOT/public/admin"
@@ -42,6 +44,29 @@ die() {
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+wait_for_http() {
+  local label="$1"
+  local command="$2"
+  local attempt
+  local output=""
+
+  for ((attempt = 1; attempt <= HTTP_WAIT_ATTEMPTS; attempt += 1)); do
+    if output="$(bash -lc "$command" 2>&1)"; then
+      printf '%s\n' "$output"
+      return 0
+    fi
+
+    log "$label not ready (attempt $attempt/$HTTP_WAIT_ATTEMPTS)"
+    printf '%s\n' "$output" >&2
+
+    if (( attempt < HTTP_WAIT_ATTEMPTS )); then
+      sleep "$HTTP_WAIT_SECONDS"
+    fi
+  done
+
+  die "$label did not become ready after $HTTP_WAIT_ATTEMPTS attempts"
 }
 
 check_local_prereqs() {
@@ -156,10 +181,14 @@ reload_remote_service() {
 
 verify_remote_service() {
   log "verifying remote health endpoint via loopback"
-  ssh "$REMOTE_HOST" "curl -fsS -i '$LOCAL_HEALTH_URL' | sed -n '1,12p'"
+  wait_for_http \
+    "remote loopback health" \
+    "ssh \"$REMOTE_HOST\" \"curl -fsS '$LOCAL_HEALTH_URL' | sed -n '1,12p'\""
 
   log "verifying public health endpoint"
-  curl -fsS -i "$PUBLIC_HEALTH_URL" | sed -n '1,12p'
+  wait_for_http \
+    "public health" \
+    "curl -fsS '$PUBLIC_HEALTH_URL' | sed -n '1,12p'"
 
   log "verifying localhost dev origin is allowed"
   ssh "$REMOTE_HOST" "curl -fsS -i -X OPTIONS '$LOCAL_HEALTH_URL' -H 'Origin: $ALLOWED_DEV_ORIGIN' -H 'Access-Control-Request-Method: GET' | sed -n '1,20p'"
