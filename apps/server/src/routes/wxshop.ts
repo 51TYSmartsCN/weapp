@@ -146,13 +146,7 @@ function extractProductId(data: any): string | null {
   return null
 }
 
-/**
- * 通过商品 ID 查映射表获取课程 ID
- */
-export async function resolveCourseId(data: any): Promise<number | null> {
-  const productId = extractProductId(data)
-  if (!productId) return null
-
+async function resolveCourseIdByProductId(productId: string): Promise<number | null> {
   try {
     const [rows] = await pool.query(
       'SELECT course_id FROM wxshop_products WHERE product_id = ? AND status = 1 LIMIT 1',
@@ -166,6 +160,36 @@ export async function resolveCourseId(data: any): Promise<number | null> {
     console.warn('[wxshop] 查 wxshop_products 映射表失败:', err)
   }
   return null
+}
+
+export async function resolveCourseIdFromProductInfos(
+  productInfos: any[],
+  lookupCourseId: (productId: string) => Promise<number | null> = resolveCourseIdByProductId
+): Promise<number | null> {
+  for (const productInfo of productInfos) {
+    const productId = extractProductId(productInfo)
+    if (!productId) continue
+
+    const courseId = await lookupCourseId(productId)
+    if (courseId) return courseId
+  }
+
+  return null
+}
+
+/**
+ * 通过商品 ID 查映射表获取课程 ID
+ */
+export async function resolveCourseId(data: any): Promise<number | null> {
+  if (Array.isArray(data?.product_infos) && data.product_infos.length > 0) {
+    const courseId = await resolveCourseIdFromProductInfos(data.product_infos)
+    if (courseId) return courseId
+  }
+
+  const productId = extractProductId(data)
+  if (!productId) return null
+
+  return resolveCourseIdByProductId(productId)
 }
 
 function extractSkuId(data: any): string {
