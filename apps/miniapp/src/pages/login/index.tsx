@@ -3,7 +3,20 @@ import { View, Text, Button, Input, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import SafeTop from '../../components/SafeTop'
 import Icon from '../../components/Icon'
-import { login, updateProfile, showApiError, getAppInfoSync, fetchAppInfo, resolveUrl, type AppInfo } from '../../services'
+import {
+  fetchAppInfo,
+  getAppInfoSync,
+  HOME_PAGE_URL,
+  isTabPageUrl,
+  LOGIN_PAGE_URL,
+  LOGIN_RETURN_URL_KEY,
+  login,
+  resolveDecodedReturnUrl,
+  resolveUrl,
+  showApiError,
+  type AppInfo,
+  updateProfile,
+} from '../../services'
 import type { User } from '../../types'
 import './index.scss'
 
@@ -25,6 +38,28 @@ export default function Login() {
   const [nickname, setNickname] = useState('')
   const [nicknameInputFocus, setNicknameInputFocus] = useState(false)
 
+  const resolvePostLoginUrl = () => {
+    const queryReturnUrl = resolveDecodedReturnUrl(String(Taro.getCurrentInstance().router?.params?.returnUrl || ''))
+    const storedReturnUrl = resolveDecodedReturnUrl(Taro.getStorageSync(LOGIN_RETURN_URL_KEY))
+    const targetUrl = queryReturnUrl || storedReturnUrl || HOME_PAGE_URL
+    Taro.removeStorageSync(LOGIN_RETURN_URL_KEY)
+    return targetUrl
+  }
+
+  const navigateAfterLogin = () => {
+    const targetUrl = resolvePostLoginUrl()
+    const targetPage = targetUrl.split('?')[0]
+    if (targetPage === LOGIN_PAGE_URL) {
+      Taro.switchTab({ url: HOME_PAGE_URL })
+      return
+    }
+    if (isTabPageUrl(targetUrl) && !targetUrl.includes('?')) {
+      Taro.switchTab({ url: targetUrl })
+      return
+    }
+    Taro.reLaunch({ url: targetUrl })
+  }
+
   /** 步骤 1：微信一键登录 */
   const handleLogin = async () => {
     if (!agreed) {
@@ -39,7 +74,7 @@ export default function Login() {
       // 后端返回 hasProfile=true 直接进首页；否则进入资料完善步骤
       if (user.hasProfile) {
         Taro.showToast({ title: '登录成功', icon: 'success' })
-        setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 300)
+        setTimeout(() => navigateAfterLogin(), 300)
       } else {
         setStep('profile')
       }
@@ -73,7 +108,7 @@ export default function Login() {
     try {
       await updateProfile({ nickname: name, avatarTempPath })
       Taro.showToast({ title: '登录成功', icon: 'success' })
-      setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 300)
+      setTimeout(() => navigateAfterLogin(), 300)
     } catch (err) {
       showApiError(err, '资料保存失败，请重试')
     } finally {
@@ -83,7 +118,7 @@ export default function Login() {
 
   /** 跳过资料完善（使用占位头像/昵称直接进入） */
   const handleSkip = () => {
-    Taro.switchTab({ url: '/pages/index/index' })
+    navigateAfterLogin()
   }
 
   const toggleAgree = () => setAgreed((v) => !v)
