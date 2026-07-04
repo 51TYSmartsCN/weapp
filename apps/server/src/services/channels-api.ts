@@ -1,4 +1,4 @@
-import { channelsConfig } from '../config'
+import { channelsConfig, wechatConfig } from '../config'
 
 /**
  * 微信小店（原视频号小店）开放 API 封装
@@ -21,6 +21,128 @@ const TOKEN_REFRESH_LEAD_MS = 5 * 60 * 1000
 interface WxApiBaseResp {
   errcode?: number
   errmsg?: string
+}
+
+export interface ChannelsOrderProductInfo {
+  product_id?: string
+  sku_id?: string
+  out_product_id?: string
+  out_sku_id?: string
+}
+
+export interface ChannelsOrderDetail {
+  order_id?: string
+  openid?: string
+  unionid?: string
+  pay_time?: number | string
+  order_price?: number | string
+  pay_price?: number | string
+  product_infos?: ChannelsOrderProductInfo[]
+  order_detail?: {
+    product_infos?: ChannelsOrderProductInfo[]
+  }
+}
+
+export interface BuildCourseDeliveryRequestInput {
+  orderId: string
+  productInfos: ChannelsOrderProductInfo[]
+  miniappAppId: string
+  miniappPath: string
+}
+
+export interface DeliverVirtualOrderInput {
+  orderId: string
+  productInfos: ChannelsOrderProductInfo[]
+  miniappPath: string
+}
+
+function normalizeMiniappPath(path: string): string {
+  return path.replace(/^\//, '')
+}
+
+function normalizeProductInfo(productInfo: ChannelsOrderProductInfo): ChannelsOrderProductInfo {
+  const normalized: ChannelsOrderProductInfo = {}
+  if (productInfo.product_id) normalized.product_id = String(productInfo.product_id)
+  if (productInfo.sku_id) normalized.sku_id = String(productInfo.sku_id)
+  if (productInfo.out_product_id) normalized.out_product_id = String(productInfo.out_product_id)
+  if (productInfo.out_sku_id) normalized.out_sku_id = String(productInfo.out_sku_id)
+  return normalized
+}
+
+export function getOrderProductInfos(order: ChannelsOrderDetail | null | undefined): ChannelsOrderProductInfo[] {
+  if (!order) return []
+  const productInfos = Array.isArray(order.order_detail?.product_infos)
+    ? order.order_detail?.product_infos
+    : Array.isArray(order.product_infos)
+      ? order.product_infos
+      : []
+
+  return productInfos
+    .map(normalizeProductInfo)
+    .filter((productInfo) => Boolean(productInfo.product_id || productInfo.out_product_id))
+}
+
+export function pickBuyerOpenidFromOrderDetail(order: ChannelsOrderDetail | null | undefined): string {
+  if (!order?.openid) return ''
+  return String(order.openid).trim()
+}
+
+export function pickBuyerUnionidFromOrderDetail(order: ChannelsOrderDetail | null | undefined): string {
+  if (!order?.unionid) return ''
+  return String(order.unionid).trim()
+}
+
+function formatUnixTimestampToMysql(value: number | string): string {
+  const timestamp = Number(value)
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return ''
+  return new Date(timestamp * 1000).toISOString().slice(0, 19).replace('T', ' ')
+}
+
+export function pickPaidAtFromOrderDetail(order: ChannelsOrderDetail | null | undefined): string {
+  if (!order?.pay_time) return ''
+  return formatUnixTimestampToMysql(order.pay_time)
+}
+
+export function pickAmountFromOrderDetail(order: ChannelsOrderDetail | null | undefined): number {
+  const rawAmount = order?.order_price ?? order?.pay_price
+  if (rawAmount == null) return 0
+  const amount = Number(rawAmount)
+  if (!Number.isFinite(amount) || amount <= 0) return 0
+  return amount > 100 ? amount / 100 : amount
+}
+
+export function buildCourseDeliveryRequest(input: BuildCourseDeliveryRequestInput) {
+  if (!input.orderId.trim()) {
+    throw new Error('[channels] 发货缺少 orderId')
+  }
+  if (!input.miniappAppId.trim()) {
+    throw new Error('[channels] 发货缺少小程序 appid')
+  }
+
+  const productInfos = input.productInfos
+    .map(normalizeProductInfo)
+    .filter((productInfo) => Boolean(productInfo.product_id || productInfo.out_product_id))
+
+  if (productInfos.length === 0) {
+    throw new Error(`[channels] 订单 ${input.orderId} 缺少 product_infos，无法发起课程发货`)
+  }
+
+  return {
+    order_id: input.orderId,
+    delivery_list: [
+      {
+        deliver_type: 3,
+        product_infos: productInfos,
+        course_info: {
+          course_path: {
+            type: 0,
+            wxa_appid: input.miniappAppId,
+            wxa_path: normalizeMiniappPath(input.miniappPath),
+          },
+        },
+      },
+    ],
+  }
 }
 
 /**
@@ -105,39 +227,60 @@ export async function confirmDeliveryWithNote(orderId: string, deliveryNote: str
   })
 }
 
-/**
- * 虚拟商品发货。
- *
- * 有 deliveryNote 时优先调用 /order/confirm_delivery，把入口写入 delivery_note。
- * 无 deliveryNote 时保留旧 /channels/ec/order/delivery_send 兼容路径。
- *
- * @param orderId 微信小店订单号（order_id）
- * @param deliveryNote 买家订单详情页可见的发货说明
- * @returns 是否发货成功
- */
-export async function deliverVirtualOrder(orderId: string, deliveryNote?: string): Promise<boolean> {
-  if (deliveryNote && deliveryNote.trim()) {
-    return confirmDeliveryWithNote(orderId, deliveryNote.trim())
-  }
-
-  if (!channelsConfig.appId) {
-    throw new Error('[channels] 未配置 CHANNELS_APP_ID，无法发货')
+export async function getChannelsOrderDetail(orderId: string): Promise<ChannelsOrderDetail> {
+  if (!orderId.trim()) {
+    throw new Error('[channels] 查询订单详情缺少 orderId')
   }
 
   return callChannelsApiWithRetry(async (token) => {
-    const url = `${API_BASE}/channels/ec/order/delivery_send?access_token=${token}`
+    const url = `${API_BASE}/channels/ec/order/get?access_token=${token}`
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         order_id: orderId,
-        delivery_list: [
-          {
-            // 1=自寄快递，3=虚拟商品无需物流发货（视频号小店虚拟商品场景）
-            deliver_type: 3,
-          },
-        ],
       }),
+    })
+    const data = (await resp.json()) as { order?: ChannelsOrderDetail } & WxApiBaseResp
+    if (data.errcode && data.errcode !== 0) {
+      throw Object.assign(new Error(`查询订单详情失败: errcode=${data.errcode} errmsg=${data.errmsg}`), {
+        errcode: data.errcode,
+      })
+    }
+    if (!data.order) {
+      throw new Error(`[channels] 查询订单详情失败：订单 ${orderId} 未返回 order`)
+    }
+    return data.order
+  })
+}
+
+/**
+ * 课程类虚拟商品发货。
+ *
+ * 主流程使用微信小店官方 delivery/send 接口，并携带课程商品明细与小程序课程路径。
+ * @returns 是否发货成功
+ */
+export async function deliverVirtualOrder(input: DeliverVirtualOrderInput): Promise<boolean> {
+  if (!channelsConfig.appId) {
+    throw new Error('[channels] 未配置 CHANNELS_APP_ID，无法发货')
+  }
+  if (!wechatConfig.appid) {
+    throw new Error('[channels] 未配置 WECHAT_APPID，无法生成课程跳转路径')
+  }
+
+  const requestBody = buildCourseDeliveryRequest({
+    orderId: input.orderId,
+    productInfos: input.productInfos,
+    miniappAppId: wechatConfig.appid,
+    miniappPath: input.miniappPath,
+  })
+
+  return callChannelsApiWithRetry(async (token) => {
+    const url = `${API_BASE}/channels/ec/order/delivery/send?access_token=${token}`
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
     })
     const data = (await resp.json()) as WxApiBaseResp
     if (data.errcode && data.errcode !== 0) {

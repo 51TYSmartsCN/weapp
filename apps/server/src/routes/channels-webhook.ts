@@ -2,10 +2,18 @@ import { Router, Request, Response } from 'express'
 import { ok, fail } from '../utils'
 import { WechatCrypto } from '../utils/crypto'
 import { channelsConfig, wechatConfig } from '../config'
-import { handleOrderPaid, resolveCourseId } from './wxshop'
+import { handleOrderPaid, resolveCourseId, resolveCourseIdFromProductInfos } from './wxshop'
 import { sendChannelsCustomMessage } from '../services/channels-api'
 import { StoreSourceScene } from '../services/wechat-store-fulfillment'
 import { createAndDeliverPostPurchaseFulfillment } from '../services/wechat-store-auto-delivery'
+import {
+  getChannelsOrderDetail,
+  getOrderProductInfos,
+  pickAmountFromOrderDetail,
+  pickBuyerOpenidFromOrderDetail,
+  pickBuyerUnionidFromOrderDetail,
+  pickPaidAtFromOrderDetail,
+} from '../services/channels-api'
 
 const router = Router()
 
@@ -45,6 +53,14 @@ function extractAmount(data: any): number {
 
 function extractSkuId(data: any): string {
   return String(data?.sku_id || data?.skuId || data?.out_sku_id || data?.outSkuId || '')
+}
+
+function pickPrimaryProductId(productInfos: Array<{ product_id?: string; out_product_id?: string }>): string {
+  for (const productInfo of productInfos) {
+    const productId = productInfo.product_id || productInfo.out_product_id
+    if (productId && String(productId).trim()) return String(productId).trim()
+  }
+  return ''
 }
 
 function resolveSourceScene(payload: any): StoreSourceScene {
@@ -174,17 +190,27 @@ router.all('/webhook', async (req: Request, res: Response) => {
 
       // 2.4 提取订单关键字段
       const orderId = orderInfo.order_id || orderInfo.orderId || payload.order_id
-      const productId = orderInfo.product_id || orderInfo.productId || ''
-      const openid = extractOpenid(orderInfo)
-      const amount = extractAmount(orderInfo)
-
       if (!orderId) {
         console.warn('[channels] 订单事件缺少 order_id:', payload)
         return res.send('success')
       }
 
-      // 2.5 解析课程 ID（复用 wxshop_products 映射表）
-      const courseId = await resolveCourseId(orderInfo)
+      const orderDetail = await getChannelsOrderDetail(String(orderId))
+      const productInfos = getOrderProductInfos(orderDetail)
+      const productId = pickPrimaryProductId(productInfos) || orderInfo.product_id || orderInfo.productId || ''
+      const openid = pickBuyerOpenidFromOrderDetail(orderDetail) || extractOpenid(orderInfo)
+      const unionid = pickBuyerUnionidFromOrderDetail(orderDetail) || undefined
+      const amount = pickAmountFromOrderDetail(orderDetail) || extractAmount(orderInfo)
+      const paidAt = pickPaidAtFromOrderDetail(orderDetail) || (
+        orderInfo.pay_time
+          ? new Date(Number(orderInfo.pay_time) * 1000).toISOString().slice(0, 19).replace('T', ' ')
+          : undefined
+      )
+
+      // 2.5 解析课程 ID（优先使用订单详情商品明细）
+      const courseId = productInfos.length > 0
+        ? await resolveCourseIdFromProductInfos(productInfos)
+        : await resolveCourseId(orderInfo)
       if (!courseId) {
         console.warn('[channels] 无法解析课程 ID，product_id=', productId, 'order_id=', orderId)
         return res.send('success')
@@ -196,12 +222,15 @@ router.all('/webhook', async (req: Request, res: Response) => {
         courseId,
         sourceScene: resolveSourceScene(payload),
         storeProductId: productId ? String(productId) : undefined,
-        storeSkuId: extractSkuId(orderInfo),
+        storeSkuId: extractSkuId(productInfos[0] || orderInfo),
+        storeProductInfos: productInfos,
         buyerOpenid: openid || undefined,
-        paidAt: orderInfo.pay_time
-          ? new Date(Number(orderInfo.pay_time) * 1000).toISOString().slice(0, 19).replace('T', ' ')
-          : undefined,
-        rawPayload: payload,
+        buyerUnionid: unionid,
+        paidAt,
+        rawPayload: {
+          eventPayload: payload,
+          orderDetail,
+        },
       })
       const fulfillment = autoDelivery.fulfillment
       console.log('[channels] 自动履约发货完成:', {
@@ -217,9 +246,7 @@ router.all('/webhook', async (req: Request, res: Response) => {
           openid,
           courseId,
           amount,
-          paidAt: orderInfo.pay_time
-            ? new Date(Number(orderInfo.pay_time) * 1000).toISOString().slice(0, 19).replace('T', ' ')
-            : undefined,
+          paidAt,
         })
         console.log('[channels] 订单自动解锁完成:', orderId, 'userId=', result.userId, 'created=', result.created)
         await sendChannelsCustomMessage(openid, fulfillment.fulfillmentText).catch((err) => {

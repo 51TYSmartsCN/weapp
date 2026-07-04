@@ -18,6 +18,12 @@ export interface CreateFulfillmentInput {
   sourceScene: StoreSourceScene
   storeProductId?: string
   storeSkuId?: string
+  storeProductInfos?: Array<{
+    product_id?: string
+    sku_id?: string
+    out_product_id?: string
+    out_sku_id?: string
+  }>
   buyerOpenid?: string
   buyerUnionid?: string
   paidAt?: string
