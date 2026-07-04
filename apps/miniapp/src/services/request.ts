@@ -1,4 +1,10 @@
 import Taro from '@tarojs/taro'
+import {
+  buildLoginPageUrl,
+  buildReturnUrl,
+  LOGIN_RETURN_URL_KEY,
+  sanitizeReturnUrl,
+} from './login-redirect'
 
 /**
  * 后端服务地址
@@ -104,9 +110,21 @@ export async function request<T>(options: {
 function redirectToLogin() {
   if (isRedirectingToLogin) return
   isRedirectingToLogin = true
-  Taro.reLaunch({ url: '/pages/login/index' }).finally(() => {
+  const returnUrl = getCurrentPageUrl()
+  const sanitizedReturnUrl = sanitizeReturnUrl(returnUrl)
+  if (sanitizedReturnUrl) {
+    Taro.setStorageSync(LOGIN_RETURN_URL_KEY, sanitizedReturnUrl)
+  }
+  Taro.reLaunch({ url: buildLoginPageUrl(sanitizedReturnUrl) }).finally(() => {
     isRedirectingToLogin = false
   })
+}
+
+function getCurrentPageUrl(): string {
+  const pages = Taro.getCurrentPages()
+  const currentPage = pages[pages.length - 1] as { route?: string; options?: Record<string, string> } | undefined
+  if (!currentPage?.route) return ''
+  return buildReturnUrl(`/${currentPage.route}`, currentPage.options)
 }
 
 /** 统一展示后端错误：前端不再自行构造错误文案 */

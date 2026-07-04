@@ -16,6 +16,17 @@ export {
 export type { UpdateProfilePayload } from './auth'
 
 export {
+  LOGIN_PAGE_URL,
+  HOME_PAGE_URL,
+  LOGIN_RETURN_URL_KEY,
+  sanitizeReturnUrl,
+  buildReturnUrl,
+  buildLoginPageUrl,
+  resolveDecodedReturnUrl,
+  isTabPageUrl,
+} from './login-redirect'
+
+export {
   getHotCourses,
   getAllCourses,
   getCourseById,
