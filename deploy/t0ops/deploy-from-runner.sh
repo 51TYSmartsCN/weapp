@@ -30,6 +30,7 @@ PUBLIC_ADMIN_LOGIN_URL="$PUBLIC_BASE_URL/admin/login"
 
 RELEASE_ID=""
 REMOTE_SYNC_FLAGS=(-rlz --delete --omit-dir-times --no-perms --no-owner --no-group)
+REMOTE_RSYNC_PATH="sudo -n rsync"
 
 log() {
   printf '[deploy-from-runner] %s\n' "$*"
@@ -42,6 +43,10 @@ die() {
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+remote_write_rsync() {
+  rsync --rsync-path="$REMOTE_RSYNC_PATH" "$@"
 }
 
 check_local_prereqs() {
@@ -137,16 +142,16 @@ create_remote_backup() {
 
 sync_remote_release() {
   log "syncing server dist to $REMOTE_HOST"
-  rsync "${REMOTE_SYNC_FLAGS[@]}" "$SERVER_ROOT/dist/" "$REMOTE_HOST:$REMOTE_DIST_ROOT/"
+  remote_write_rsync "${REMOTE_SYNC_FLAGS[@]}" "$SERVER_ROOT/dist/" "$REMOTE_HOST:$REMOTE_DIST_ROOT/"
 
   log "syncing admin static files to $REMOTE_HOST"
-  rsync "${REMOTE_SYNC_FLAGS[@]}" "$SERVER_ADMIN_PUBLIC_ROOT/" "$REMOTE_HOST:$REMOTE_ADMIN_ROOT/"
+  remote_write_rsync "${REMOTE_SYNC_FLAGS[@]}" "$SERVER_ADMIN_PUBLIC_ROOT/" "$REMOTE_HOST:$REMOTE_ADMIN_ROOT/"
 
   log "syncing server source entry for runtime/source parity"
-  rsync -rlz --no-perms --no-owner --no-group "$SERVER_ROOT/src/index.ts" "$REMOTE_HOST:$REMOTE_SRC_ROOT/index.ts"
+  remote_write_rsync -rlz --no-perms --no-owner --no-group "$SERVER_ROOT/src/index.ts" "$REMOTE_HOST:$REMOTE_SRC_ROOT/index.ts"
 
   log "syncing deploy runtime scripts to $REMOTE_HOST"
-  rsync "${REMOTE_SYNC_FLAGS[@]}" "$REPO_ROOT/deploy/t0ops/" "$REMOTE_HOST:$REMOTE_DEPLOY_ROOT/"
+  remote_write_rsync "${REMOTE_SYNC_FLAGS[@]}" "$REPO_ROOT/deploy/t0ops/" "$REMOTE_HOST:$REMOTE_DEPLOY_ROOT/"
 }
 
 reload_remote_service() {
