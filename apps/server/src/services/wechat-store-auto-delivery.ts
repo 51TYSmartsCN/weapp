@@ -18,6 +18,16 @@ function buildClaimScenePath(shortCode: string): string {
   return `${fulfillmentConfig.claimPage}?scene=${scene}`
 }
 
+function isAlreadyDeliveredOrderError(err: unknown): boolean {
+  const errcode = typeof err === 'object' && err !== null && 'errcode' in err
+    ? Number((err as { errcode?: unknown }).errcode)
+    : null
+  if (errcode !== 109001) return false
+
+  const message = err instanceof Error ? err.message : String(err)
+  return message.includes('已发货') || message.includes('已经发货') || message.includes('完成发货')
+}
+
 /**
  * 支付成功后的自动履约入口：
  * 1. 为订单生成兑换码、每单唯一小程序入口和小程序码
@@ -49,6 +59,17 @@ export async function createAndDeliverPostPurchaseFulfillment(input: CreateFulfi
     })
     return { fulfillment, delivered }
   } catch (err) {
+    if (isAlreadyDeliveredOrderError(err)) {
+      await markStoreDelivery(fulfillment.storeOrderId, 'success', {
+        autoDelivery: true,
+        deliveryMode: 'course_path',
+        shortCode: fulfillment.shortCode,
+        sourceScene: input.sourceScene,
+        idempotentAlreadyDelivered: true,
+      })
+      return { fulfillment, delivered: true }
+    }
+
     const deliveryError = err instanceof Error ? err.message : String(err)
     await markStoreDelivery(
       fulfillment.storeOrderId,
