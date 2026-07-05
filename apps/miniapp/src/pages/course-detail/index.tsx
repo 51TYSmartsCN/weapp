@@ -9,13 +9,19 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, toggleFavorite, checkFavorite, getInstructorById } from '../../services'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, toggleFavorite, checkFavorite, getInstructorById, resolveColor, resolveUrl } from '../../services'
 import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
 import type { WxshopEntryState } from '../../services'
 import './index.scss'
 
 // 默认在线课程封面（当 course.cover 缺失时兜底）
 const DEFAULT_COURSE_COVER = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Online%20course%20cover%20with%20abstract%20learning%20concept%2C%20teal%20emerald%20gradient%20background%2C%20modern%20minimal%20education%20illustration&image_size=landscape_4_3'
+
+function resolveCourseCover(cover?: string): string {
+  if (!cover) return DEFAULT_COURSE_COVER
+  if (cover.startsWith('/')) return resolveUrl(cover)
+  return cover
+}
 
 export default function CourseDetail() {
   const router = useRouter()
@@ -242,7 +248,7 @@ export default function CourseDetail() {
             ) : (
               <Image
                 className='detail-cover'
-                src={course?.cover || DEFAULT_COURSE_COVER}
+                src={resolveCourseCover(course?.cover)}
                 mode='aspectFill'
               />
             )}
@@ -277,11 +283,7 @@ export default function CourseDetail() {
             {instructor && (
               <View className='detail-section'>
                 <View className='detail-card instructor-detail-card'>
-                  {instructor.avatar ? (
-                    <Image className='instructor-avatar' src={instructor.avatar} mode='aspectFill' />
-                  ) : (
-                    <Avatar text={instructor.name?.charAt(0) || '?'} size={80} />
-                  )}
+                  <Avatar text={instructor.name?.charAt(0) || '?'} size={80} bg={resolveColor(instructor.color)} src={instructor.avatar} />
                   <View className='instructor-info'>
                     <View className='instructor-header'>
                       <View>

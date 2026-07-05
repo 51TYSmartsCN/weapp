@@ -12,6 +12,7 @@ import {
   getCertificates,
   getCourseById,
   isLoggedIn,
+  resolveUrl,
   showApiError,
 } from '../../services'
 import { UserCourseStatus } from '../../types'
@@ -248,9 +249,9 @@ export default function Learning() {
                       style={(() => {
                         const cover = course?.cover
                         if (!cover) return undefined
-                        // http 开头视为图片 URL，否则视为 CSS 渐变背景
-                        if (/^https?:\/\//i.test(cover)) {
-                          return { backgroundImage: `url(${cover})` }
+                        // http/相对路径视为图片 URL，否则视为 CSS 渐变背景
+                        if (/^https?:\/\//i.test(cover) || cover.startsWith('/')) {
+                          return { backgroundImage: `url(${cover.startsWith('/') ? resolveUrl(cover) : cover})` }
                         }
                         return { background: cover }
                       })()}
