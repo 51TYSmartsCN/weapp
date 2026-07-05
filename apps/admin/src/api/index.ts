@@ -69,6 +69,16 @@ export const courseApi = {
   toggleAccess(id: number) {
     return request<{ requiresAccess: boolean }>({ method: 'PUT', url: `/admin/courses/${id}/access` })
   },
+  uploadCover(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request<{ url: string }>({
+      method: 'POST',
+      url: '/admin/courses/cover',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
 }
 
 // ===================== Instructors =====================

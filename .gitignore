@@ -15,3 +15,6 @@ comp_extract
 
 # 服务端托管的 admin 静态产物由部署前同步生成，不纳入版本控制
 apps/server/public/admin/
+
+# 服务端运行时上传的课程封面图（由 admin 封面上传接口写入，属运行时产物）
+apps/server/public/images/courses/

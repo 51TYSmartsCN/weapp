@@ -14,12 +14,14 @@ import {
   Image,
   message,
   Card,
+  Upload,
 } from 'antd'
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { courseApi, instructorApi } from '../../api'
 
 const { TextArea } = Input
+const COURSE_COVER_MAX_SIZE_MB = 2
 
 // ===================== 类型定义 =====================
 
@@ -85,6 +87,8 @@ export default function Courses() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState<CourseItem | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
+  const [coverUrl, setCoverUrl] = useState('')
+  const [uploadingCover, setUploadingCover] = useState(false)
   const [form] = Form.useForm<CourseFormData>()
 
   // 讲师列表
@@ -141,6 +145,7 @@ export default function Courses() {
     setEditingRecord(null)
     form.resetFields()
     form.setFieldsValue({ status: 1, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true })
+    setCoverUrl('')
     setModalOpen(true)
   }
 
@@ -157,7 +162,13 @@ export default function Courses() {
       status: record.status,
       requiresAccess: record.requiresAccess,
     })
+    setCoverUrl(record.cover || '')
     setModalOpen(true)
+  }
+
+  const handleModalCancel = () => {
+    setModalOpen(false)
+    setUploadingCover(false)
   }
 
   const handleModalOk = async () => {
@@ -424,7 +435,7 @@ export default function Courses() {
         title={editingRecord ? '编辑课程' : '新增课程'}
         open={modalOpen}
         onOk={handleModalOk}
-        onCancel={() => setModalOpen(false)}
+        onCancel={handleModalCancel}
         confirmLoading={confirmLoading}
         destroyOnClose
         width={560}
@@ -471,8 +482,62 @@ export default function Courses() {
             <InputNumber min={0} precision={2} style={{ width: '100%' }} placeholder="请输入原价（可选）" />
           </Form.Item>
 
-          <Form.Item label="封面图片 URL" name="cover">
-            <Input placeholder="请输入封面图片地址" />
+          <Form.Item label="封面图片">
+            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+              <Upload
+                accept="image/png,image/jpeg"
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  const isAllowedType = ['image/png', 'image/jpeg'].includes(file.type)
+                  if (!isAllowedType) {
+                    message.error('仅支持 JPG/PNG 格式')
+                    return Upload.LIST_IGNORE
+                  }
+
+                  const isAllowedSize = file.size / 1024 / 1024 <= COURSE_COVER_MAX_SIZE_MB
+                  if (!isAllowedSize) {
+                    message.error(`封面图片大小不能超过 ${COURSE_COVER_MAX_SIZE_MB}MB`)
+                    return Upload.LIST_IGNORE
+                  }
+
+                  return true
+                }}
+                customRequest={async (options) => {
+                  const { file, onSuccess, onError } = options
+                  setUploadingCover(true)
+                  try {
+                    const { url } = await courseApi.uploadCover(file as File)
+                    form.setFieldValue('cover', url)
+                    setCoverUrl(url)
+                    message.success('封面上传成功')
+                    onSuccess?.({ url })
+                  } catch (err) {
+                    message.error('封面上传失败')
+                    onError?.(err as Error)
+                  } finally {
+                    setUploadingCover(false)
+                  }
+                }}
+              >
+                <Button icon={<UploadOutlined />} loading={uploadingCover}>
+                  上传封面图片
+                </Button>
+              </Upload>
+              {coverUrl ? (
+                <Image
+                  src={coverUrl}
+                  width={160}
+                  height={90}
+                  style={{ borderRadius: 8, objectFit: 'cover' }}
+                />
+              ) : null}
+              <Form.Item name="cover" style={{ marginBottom: 0 }}>
+                <Input
+                  placeholder="仅支持 JPG/PNG，最大 2MB；上传后会自动回填，也可手动输入图片地址"
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                />
+              </Form.Item>
+            </Space>
           </Form.Item>
 
           <Form.Item label="热门推荐" name="isHot" valuePropName="checked">
