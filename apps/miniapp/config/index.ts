@@ -56,6 +56,34 @@ function registerWxshopComponents(nodeName: string, componentConfig: any) {
   }
 }
 
+const miniConfig: any = {
+  onParseCreateElement(nodeName: string, componentConfig: any) {
+    registerWxshopComponents(nodeName, componentConfig)
+  },
+  postcss: {
+    pxtransform: {
+      enable: true,
+      config: {}
+    },
+    cssModules: {
+      enable: false,
+      config: {
+        namingPattern: 'module',
+        generateScopedName: '[name]__[local]___[hash:base64:5]'
+      }
+    }
+  },
+  webpackChain(chain: any) {
+    chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin)
+    if (chain.plugins.has('miniCssExtractPlugin')) {
+      chain.plugin('miniCssExtractPlugin').tap((args) => [
+        { ...args[0], ignoreOrder: true }
+      ])
+    }
+    replaceWebpackBar(chain)
+  }
+}
+
 export default defineConfig<'webpack5'>(async (merge) => {
   const baseConfig: UserConfigExport<'webpack5'> = {
     projectName: 'geo-course',
@@ -88,33 +116,7 @@ export default defineConfig<'webpack5'>(async (merge) => {
     cache: {
       enable: true
     },
-    mini: {
-      onParseCreateElement(nodeName, componentConfig) {
-        registerWxshopComponents(nodeName, componentConfig)
-      },
-      postcss: {
-        pxtransform: {
-          enable: true,
-          config: {}
-        },
-        cssModules: {
-          enable: false,
-          config: {
-            namingPattern: 'module',
-            generateScopedName: '[name]__[local]___[hash:base64:5]'
-          }
-        }
-      },
-      webpackChain(chain) {
-        chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin)
-        if (chain.plugins.has('miniCssExtractPlugin')) {
-          chain.plugin('miniCssExtractPlugin').tap((args) => [
-            { ...args[0], ignoreOrder: true }
-          ])
-        }
-        replaceWebpackBar(chain)
-      }
-    },
+    mini: miniConfig,
     h5: {
       publicPath: '/',
       staticDirectory: 'static',
