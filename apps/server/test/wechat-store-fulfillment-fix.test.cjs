@@ -100,6 +100,18 @@ test('channels webhook accepts official wxshop order paid event name', () => {
   })
 })
 
+test('channels webhook preserves large numeric wxshop order ids from JSON text', () => {
+  const channelsWebhook = loadModule(channelsWebhookModulePath)
+
+  const payload = channelsWebhook.parseWxshopJsonPreservingLargeIntegers(
+    '{"Event":"channels_ec_order_pay","order_info":{"order_id":3737552192816962560,"pay_time":1783240349}}'
+  )
+  const event = channelsWebhook.extractOfficialWxshopPaidEvent(payload)
+
+  assert.equal(payload.order_info.order_id, '3737552192816962560')
+  assert.equal(event.orderId, '3737552192816962560')
+})
+
 test('course resolution prefers order detail product infos', async () => {
   const wxshop = loadModule(wxshopModulePath)
   let seenProductId = null

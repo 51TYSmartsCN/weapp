@@ -68,6 +68,11 @@ function getRawBody(req: Request): string {
   return ''
 }
 
+export function parseWxshopJsonPreservingLargeIntegers(text: string): any {
+  const normalized = text.replace(/(:\s*)(-?\d{16,})(?=\s*[,}\]])/g, '$1"$2"')
+  return JSON.parse(normalized)
+}
+
 export function isOfficialWxshopMessagePushRequest(input: {
   query?: Record<string, any>
   headers?: Record<string, any>
@@ -289,7 +294,7 @@ router.all('/webhook', async (req: Request, res: Response) => {
 
         let payload: any
         try {
-          payload = JSON.parse(text)
+          payload = parseWxshopJsonPreservingLargeIntegers(text)
         } catch {
           return fail(res, 500, '解密后内容非合法 JSON')
         }
@@ -334,7 +339,7 @@ router.all('/webhook', async (req: Request, res: Response) => {
       // 2.2 解析请求体（可能是加密 JSON 或明文 JSON）
       let payload: any
       try {
-        payload = JSON.parse(rawBody)
+        payload = parseWxshopJsonPreservingLargeIntegers(rawBody)
       } catch {
         return fail(res, 400, '请求体非合法 JSON')
       }
@@ -353,7 +358,7 @@ router.all('/webhook', async (req: Request, res: Response) => {
         }
 
         try {
-          payload = JSON.parse(text)
+          payload = parseWxshopJsonPreservingLargeIntegers(text)
         } catch {
           return fail(res, 500, '解密后内容非合法 JSON')
         }
