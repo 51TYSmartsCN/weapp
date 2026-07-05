@@ -584,9 +584,18 @@ export async function markStoreDelivery(
   errorMessage?: string
 ): Promise<void> {
   await logFulfillment(storeOrderId, 'store_delivery', status, payload, errorMessage)
+  if (status === 'success') {
+    await pool.query(
+      `UPDATE wechat_store_orders SET fulfillment_status = 'delivered'
+       WHERE store_order_id = ?`,
+      [storeOrderId]
+    )
+    return
+  }
+
   await pool.query(
-    `UPDATE wechat_store_orders SET fulfillment_status = ?
-     WHERE store_order_id = ?`,
-    [status === 'success' ? 'delivered' : 'failed', storeOrderId]
+    `UPDATE wechat_store_orders SET fulfillment_status = 'failed'
+     WHERE store_order_id = ? AND fulfillment_status <> 'delivered'`,
+    [storeOrderId]
   )
 }
