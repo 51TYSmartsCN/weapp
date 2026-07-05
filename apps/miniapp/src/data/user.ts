@@ -9,7 +9,7 @@ export const user: User = {
   studyHours: 86,
   hasProfile: true,
   continueCourse: {
-    title: 'GEO 实战入门',
+    title: 'GEO 实战入门：从零掌握 AI 搜索优化',
     progress: 65,
     completed: 8,
     total: 12,
