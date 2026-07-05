@@ -5,8 +5,12 @@ import { optionalAuthMiddleware, AuthRequest } from '../auth'
 
 const router = Router()
 
-/** 将 courses 行（含 instructor_name）映射为前端 Course 对象 */
+/** 将 courses 行（含 instructor_name、tag_names）映射为前端 Course 对象 */
 function mapCourse(row: any) {
+  const tagStr: string | null = row.tag_names ?? null
+  const tags = tagStr
+    ? Array.from(new Set(tagStr.split(',').map((s) => s.trim()).filter(Boolean)))
+    : []
   return {
     id: row.id,
     title: row.title,
@@ -18,11 +22,22 @@ function mapCourse(row: any) {
     price: Number(row.price),
     originalPrice: row.original_price != null ? Number(row.original_price) : undefined,
     cover: row.cover,
+    tags,
     isHot: !!row.is_hot,
     status: row.status,
     requiresAccess: !!row.requires_access,
   }
 }
+
+/**
+ * 课程列表/详情查询的固定 JOIN 片段：
+ * 通过 course_categories + categories 关联出分类名，用 GROUP_CONCAT 聚合为 tag_names。
+ * 调用方 SQL 需配合 `GROUP BY c.id` 使用。
+ */
+const COURSE_TAG_JOIN = `
+  LEFT JOIN course_categories cc ON cc.course_id = c.id
+  LEFT JOIN categories cat ON cat.id = cc.category_id
+`
 
 /** GET /api/courses
  * 支持 query: hot、category、page(默认1)、size(默认20)
@@ -39,28 +54,36 @@ router.get('/courses', async (req, res) => {
     let params: any[]
 
     if (hot === '1' || (hot as any) === 1) {
-      sql = `SELECT c.*, i.name AS instructor_name
+      sql = `SELECT c.*, i.name AS instructor_name,
+                    GROUP_CONCAT(DISTINCT cat.name SEPARATOR ',') AS tag_names
              FROM courses c
              LEFT JOIN instructors i ON c.instructor_id = i.id
+             ${COURSE_TAG_JOIN}
              WHERE c.is_hot = 1 AND c.status = 1
+             GROUP BY c.id
              ORDER BY c.id
              LIMIT ? OFFSET ?`
       params = [size, offset]
     } else if (category) {
-      sql = `SELECT c.*, i.name AS instructor_name
+      sql = `SELECT c.*, i.name AS instructor_name,
+                    GROUP_CONCAT(DISTINCT cat.name SEPARATOR ',') AS tag_names
              FROM courses c
              LEFT JOIN instructors i ON c.instructor_id = i.id
              JOIN course_categories cc ON cc.course_id = c.id
              JOIN categories cat ON cat.id = cc.category_id
              WHERE cat.code = ? AND c.status = 1
+             GROUP BY c.id
              ORDER BY c.id
              LIMIT ? OFFSET ?`
       params = [String(category), size, offset]
     } else {
-      sql = `SELECT c.*, i.name AS instructor_name
+      sql = `SELECT c.*, i.name AS instructor_name,
+                    GROUP_CONCAT(DISTINCT cat.name SEPARATOR ',') AS tag_names
              FROM courses c
              LEFT JOIN instructors i ON c.instructor_id = i.id
+             ${COURSE_TAG_JOIN}
              WHERE c.status = 1
+             GROUP BY c.id
              ORDER BY c.id
              LIMIT ? OFFSET ?`
       params = [size, offset]
@@ -80,10 +103,13 @@ router.get('/courses/:id', async (req, res) => {
   try {
     const id = Number(req.params.id)
     const [rows] = await pool.query(
-      `SELECT c.*, i.name AS instructor_name
+      `SELECT c.*, i.name AS instructor_name,
+              GROUP_CONCAT(DISTINCT cat.name SEPARATOR ',') AS tag_names
        FROM courses c
        LEFT JOIN instructors i ON c.instructor_id = i.id
-       WHERE c.id = ?`,
+       ${COURSE_TAG_JOIN}
+       WHERE c.id = ?
+       GROUP BY c.id`,
       [id]
     )
     const row = (rows as any[])[0]
