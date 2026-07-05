@@ -2,7 +2,7 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import MenuItem from '../../components/MenuItem'
-import { logout, getAppInfoSync } from '../../services'
+import { getAppInfoSync, logout } from '../../services'
 import './index.scss'
 
 const SETTINGS = [
@@ -44,7 +44,7 @@ export default function Settings() {
         } finally {
           Taro.hideLoading()
         }
-        Taro.reLaunch({ url: '/pages/login/index' })
+        Taro.switchTab({ url: '/pages/profile/index' })
       },
     })
   }

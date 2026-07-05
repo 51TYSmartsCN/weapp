@@ -24,6 +24,75 @@
   padding: 0 $base;
 }
 
+.learning-guest-card {
+  background: linear-gradient(180deg, $primary-lightest 0%, $surface 100%);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: 56rpx $base;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.learning-guest-icon {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.learning-guest-title {
+  margin-top: $md;
+  font-size: $font-lg;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.45;
+}
+
+.learning-guest-desc {
+  margin-top: $sm;
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.7;
+}
+
+.learning-guest-primary,
+.learning-guest-secondary {
+  width: 100%;
+  height: 88rpx;
+  border-radius: $radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.learning-guest-primary {
+  margin-top: $lg;
+  background: $primary;
+}
+
+.learning-guest-primary-text {
+  color: $text-inverse;
+  font-size: $font-base;
+  font-weight: 600;
+}
+
+.learning-guest-secondary {
+  margin-top: $sm;
+  background: $surface;
+  border: 1rpx solid $border;
+}
+
+.learning-guest-secondary-text {
+  color: $text-primary;
+  font-size: $font-base;
+  font-weight: 500;
+}
+
 /* === 继续学习 === */
 .continue-card {
   background: $surface;

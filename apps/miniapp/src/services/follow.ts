@@ -14,7 +14,12 @@ export async function toggleFollow(instructorId: number, options?: RequestOption
 export async function checkFollow(instructorId: number, options?: RequestOptions): Promise<boolean> {
   if (shouldUseLocal(options)) return false
   // TODO: return Taro.request({ url: `/api/follows/check?instructor_id=${instructorId}` })
-  return request<boolean>({ url: '/api/follows/check', method: 'GET', data: { instructor_id: instructorId } })
+  return request<boolean>({
+    url: '/api/follows/check',
+    method: 'GET',
+    data: { instructor_id: instructorId },
+    authMode: 'optional',
+  })
 }
 
 /** 获取当前用户关注列表 */
