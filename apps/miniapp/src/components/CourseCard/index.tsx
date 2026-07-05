@@ -1,6 +1,7 @@
 import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import Icon from '../Icon'
+import { resolveUrl } from '../../services'
 import type { Course } from '../../types'
 import './index.scss'
 
@@ -13,7 +14,13 @@ interface CourseCardProps {
 
 /** 判断 cover 是否为图片 URL（http 开头），否则视为 CSS 渐变背景 */
 function isImageCover(cover: string): boolean {
-  return /^https?:\/\//i.test(cover)
+  return /^https?:\/\//i.test(cover) || cover.startsWith('/')
+}
+
+function resolveCourseCover(cover: string): string {
+  if (!cover) return ''
+  if (cover.startsWith('/')) return resolveUrl(cover)
+  return cover
 }
 
 export default function CourseCard({ course, mode = 'grid', icon, iconColor }: CourseCardProps) {
@@ -23,13 +30,14 @@ export default function CourseCard({ course, mode = 'grid', icon, iconColor }: C
 
   const renderCover = (withIcon: boolean) => {
     const isImg = isImageCover(course.cover)
+    const coverSrc = resolveCourseCover(course.cover)
     return (
       <View
         className='course-cover'
         style={isImg ? undefined : { background: course.cover }}
       >
         {isImg ? (
-          <Image className='course-cover-img' src={course.cover} mode='aspectFill' />
+          <Image className='course-cover-img' src={coverSrc} mode='aspectFill' />
         ) : null}
         {/* 仅在非图片（渐变背景）时叠加 icon，图片本身即为视觉主体 */}
         {withIcon && icon && !isImg ? (
