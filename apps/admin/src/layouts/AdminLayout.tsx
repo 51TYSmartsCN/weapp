@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react'
-import { Layout, Menu, Avatar, Dropdown, Button, Tabs, Breadcrumb } from 'antd'
+import { useState, useCallback } from 'react'
+import { Layout, Menu, Avatar, Dropdown, Button, Breadcrumb } from 'antd'
 import {
   DashboardOutlined,
   BookOutlined,
@@ -26,12 +26,6 @@ import './AdminLayout.css'
 
 const { Header, Sider, Content } = Layout
 
-interface TabItem {
-  key: string
-  label: string
-  icon: React.ReactNode
-}
-
 const menuItemsMap: Record<string, { label: string; icon: React.ReactNode }> = {
   '/': { label: '仪表盘', icon: <DashboardOutlined /> },
   '/courses': { label: '课程管理', icon: <BookOutlined /> },
@@ -50,73 +44,18 @@ const menuItemsMap: Record<string, { label: string; icon: React.ReactNode }> = {
   '/wxshop-config': { label: '小店配置', icon: <SettingOutlined /> },
 }
 
-const tabBarStyle: React.CSSProperties = {
-  background: '#fff',
-  margin: '0 -24px',
-  padding: '0 16px',
-  borderBottom: '1px solid #f0f0f0',
-}
-
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const [tabs, setTabs] = useState<TabItem[]>([{ key: '/', ...menuItemsMap['/'] }])
-  const [activeTab, setActiveTab] = useState('/')
   const navigate = useNavigate()
   const location = useLocation()
 
-  // 同步路由变化
-  useEffect(() => {
-    const path = location.pathname
-    if (!menuItemsMap[path]) return
-    setActiveTab(path)
-    setTabs((prev) => {
-      if (prev.some((t) => t.key === path)) return prev
-      return [...prev, { key: path, ...menuItemsMap[path] }]
-    })
-  }, [location.pathname])
-
-  const handleTabChange = useCallback(
-    (key: string) => {
-      setActiveTab(key)
-      navigate(key)
-    },
-    [navigate]
-  )
-
-  const handleTabEdit = useCallback(
-    (targetKey: string, action: 'add' | 'remove') => {
-      if (action === 'remove') {
-        // 至少保留一个 tab
-        if (tabs.length <= 1) return
-
-        const targetIndex = tabs.findIndex((t) => t.key === targetKey)
-        const newTabs = tabs.filter((t) => t.key !== targetKey)
-        setTabs(newTabs)
-
-        // 如果关闭的是当前激活的 tab，切换到相邻的
-        if (activeTab === targetKey) {
-          const nextTab = newTabs[Math.min(targetIndex, newTabs.length - 1)]
-          const nextKey = nextTab?.key || '/'
-          setActiveTab(nextKey)
-          navigate(nextKey)
-        }
-      }
-    },
-    [tabs, activeTab, navigate]
-  )
-
   const handleMenuClick = useCallback(
     ({ key }: { key: string }) => {
-      if (key === activeTab) return
       if (!menuItemsMap[key]) return
-      setTabs((prev) => {
-        if (prev.some((t) => t.key === key)) return prev
-        return [...prev, { key, ...menuItemsMap[key] }]
-      })
-      setActiveTab(key)
+      if (key === location.pathname) return
       navigate(key)
     },
-    [activeTab, navigate]
+    [location.pathname, navigate]
   )
 
   const handleLogout = () => {
@@ -131,15 +70,7 @@ export default function AdminLayout() {
     },
   }
 
-  const tabItems = tabs.map((tab) => ({
-    key: tab.key,
-    label: (
-      <span>
-        {tab.icon}
-        <span style={{ marginLeft: 6 }}>{tab.label}</span>
-      </span>
-    ),
-  }))
+  const currentPage = menuItemsMap[location.pathname]
 
   return (
     <Layout className="admin-layout">
@@ -178,12 +109,12 @@ export default function AdminLayout() {
             items={[
               { title: '后台管理' },
               {
-                title: (
+                title: currentPage ? (
                   <span>
-                    {menuItemsMap[location.pathname]?.icon}
-                    <span style={{ marginLeft: 4 }}>{menuItemsMap[location.pathname]?.label}</span>
+                    {currentPage.icon}
+                    <span style={{ marginLeft: 4 }}>{currentPage.label}</span>
                   </span>
-                ),
+                ) : '',
               },
             ]}
           />
@@ -195,18 +126,7 @@ export default function AdminLayout() {
           </Dropdown>
         </Header>
         <Content className="admin-content">
-          <Tabs
-            activeKey={activeTab}
-            onChange={handleTabChange}
-            onEdit={handleTabEdit as any}
-            type="editable-card"
-            hideAdd
-            style={tabBarStyle}
-            items={tabItems}
-          />
-          <div style={{ padding: '16px 0' }}>
-            <Outlet />
-          </div>
+          <Outlet />
         </Content>
       </Layout>
     </Layout>
