@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, Input, ScrollView } from '@tarojs/components'
+import { View, Text, Input } from '@tarojs/components'
 import { useRouter } from '@tarojs/taro'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
@@ -15,11 +15,21 @@ import {
 } from '../../services'
 import './index.scss'
 
+function decodeQueryValue(value?: string) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
 /**
  * 兑换码核销页
  *
  * 对应对接.md 中的 src/pages/video/unlock.tsx，适配项目规范：
- * - 使用 Taro 组件（View/Text/Input/ScrollView），不使用 HTML 标签
+ * - 使用 Taro 组件（View/Text/Input），不使用 HTML 标签
  * - 通过 services 层调用 /api/redeem，不在页面内直接 request
  * - 样式使用 rpx + variables.scss
  *
@@ -39,9 +49,10 @@ export default function VideoUnlock() {
 
   // 支持三类入口：URL Link token、小程序码 scene、手动兑换码 code。
   useEffect(() => {
-    const queryCode = (router.params.code || '').trim()
-    const queryToken = (router.params.token || '').trim()
-    const queryScene = decodeURIComponent((router.params.scene || '').trim())
+    const params = router.params || {}
+    const queryCode = decodeQueryValue(params.code)
+    const queryToken = decodeQueryValue(params.token)
+    const queryScene = decodeQueryValue(params.scene)
 
     if (queryToken) {
       setClaimToken(queryToken)
@@ -188,7 +199,7 @@ export default function VideoUnlock() {
   return (
     <View className='video-unlock-page'>
       <NavBar title='兑换课程' />
-      <ScrollView className='video-unlock-body' scrollY>
+      <View className='video-unlock-body'>
         <View className='video-unlock-hero'>
           <View className='video-unlock-hero-icon'>
             <Icon name='lock' size={64} color='#FFFFFF' />
@@ -254,7 +265,7 @@ export default function VideoUnlock() {
         )}
 
         <View className='safe-bottom' />
-      </ScrollView>
+      </View>
     </View>
   )
 }
