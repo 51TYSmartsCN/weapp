@@ -26,8 +26,12 @@ interface WxApiBaseResp {
 export interface ChannelsOrderProductInfo {
   product_id?: string
   sku_id?: string
+  product_cnt?: number
+  sku_cnt?: number
+  real_price?: number | string
   out_product_id?: string
   out_sku_id?: string
+  title?: string
 }
 
 export interface ChannelsOrderDetail {
@@ -64,9 +68,31 @@ function normalizeProductInfo(productInfo: ChannelsOrderProductInfo): ChannelsOr
   const normalized: ChannelsOrderProductInfo = {}
   if (productInfo.product_id) normalized.product_id = String(productInfo.product_id)
   if (productInfo.sku_id) normalized.sku_id = String(productInfo.sku_id)
+  const count = Number(productInfo.product_cnt ?? productInfo.sku_cnt ?? 0)
+  if (Number.isFinite(count) && count > 0) normalized.product_cnt = count
+  if (productInfo.sku_cnt != null) normalized.sku_cnt = Number(productInfo.sku_cnt)
+  if (productInfo.real_price != null) normalized.real_price = productInfo.real_price
   if (productInfo.out_product_id) normalized.out_product_id = String(productInfo.out_product_id)
   if (productInfo.out_sku_id) normalized.out_sku_id = String(productInfo.out_sku_id)
+  if (productInfo.title) normalized.title = String(productInfo.title)
   return normalized
+}
+
+function toDeliveryProductInfo(productInfo: ChannelsOrderProductInfo): {
+  product_id: string
+  sku_id: string
+  product_cnt: number
+} | null {
+  const productId = productInfo.product_id ? String(productInfo.product_id).trim() : ''
+  const skuId = productInfo.sku_id ? String(productInfo.sku_id).trim() : ''
+  if (!productId || !skuId) return null
+
+  const productCount = Number(productInfo.product_cnt ?? productInfo.sku_cnt ?? 1)
+  return {
+    product_id: productId,
+    sku_id: skuId,
+    product_cnt: Number.isFinite(productCount) && productCount > 0 ? productCount : 1,
+  }
 }
 
 export function getOrderProductInfos(order: ChannelsOrderDetail | null | undefined): ChannelsOrderProductInfo[] {
@@ -79,7 +105,16 @@ export function getOrderProductInfos(order: ChannelsOrderDetail | null | undefin
 
   return productInfos
     .map(normalizeProductInfo)
-    .filter((productInfo) => Boolean(productInfo.product_id || productInfo.out_product_id))
+    .filter((productInfo) => Boolean(
+      productInfo.product_id ||
+      productInfo.out_product_id ||
+      productInfo.sku_id ||
+      productInfo.out_sku_id ||
+      productInfo.product_cnt ||
+      productInfo.sku_cnt ||
+      productInfo.real_price ||
+      productInfo.title
+    ))
 }
 
 export function pickBuyerOpenidFromOrderDetail(order: ChannelsOrderDetail | null | undefined): string {
@@ -105,8 +140,17 @@ export function pickPaidAtFromOrderDetail(order: ChannelsOrderDetail | null | un
 
 export function pickAmountFromOrderDetail(order: ChannelsOrderDetail | null | undefined): number {
   const rawAmount = order?.order_price ?? order?.pay_price
-  if (rawAmount == null) return 0
-  const amount = Number(rawAmount)
+  if (rawAmount != null) {
+    const amount = Number(rawAmount)
+    if (!Number.isFinite(amount) || amount <= 0) return 0
+    return amount > 100 ? amount / 100 : amount
+  }
+
+  const productInfos = getOrderProductInfos(order)
+  const amount = productInfos.reduce((sum, productInfo) => {
+    const realPrice = Number(productInfo.real_price)
+    return Number.isFinite(realPrice) && realPrice > 0 ? sum + realPrice : sum
+  }, 0)
   if (!Number.isFinite(amount) || amount <= 0) return 0
   return amount > 100 ? amount / 100 : amount
 }
@@ -121,10 +165,11 @@ export function buildCourseDeliveryRequest(input: BuildCourseDeliveryRequestInpu
 
   const productInfos = input.productInfos
     .map(normalizeProductInfo)
-    .filter((productInfo) => Boolean(productInfo.product_id || productInfo.out_product_id))
+    .map(toDeliveryProductInfo)
+    .filter((productInfo): productInfo is NonNullable<typeof productInfo> => productInfo != null)
 
   if (productInfos.length === 0) {
-    throw new Error(`[channels] 订单 ${input.orderId} 缺少 product_infos，无法发起课程发货`)
+    throw new Error(`[channels] 订单 ${input.orderId} 缺少有效 product_id/sku_id/product_cnt，无法发起课程发货`)
   }
 
   return {
