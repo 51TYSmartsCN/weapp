@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express'
+import crypto from 'crypto'
 import { ok, fail } from '../utils'
 import { WechatCrypto } from '../utils/crypto'
-import { channelsConfig, wechatConfig } from '../config'
+import { channelsConfig } from '../config'
 import { handleOrderPaid, resolveCourseId, resolveCourseIdFromProductInfos } from './wxshop'
 import { sendChannelsCustomMessage } from '../services/channels-api'
 import { StoreSourceScene } from '../services/wechat-store-fulfillment'
@@ -18,6 +19,12 @@ import {
 const router = Router()
 
 const wechatCrypto = new WechatCrypto(channelsConfig.token, channelsConfig.encodingAESKey)
+
+interface OfficialWxshopPaidEvent {
+  orderId: string
+  buyerOpenid: string
+  payTime?: number
+}
 
 /**
  * 从订单事件中尽量提取购买者 openid
@@ -55,6 +62,54 @@ function extractSkuId(data: any): string {
   return String(data?.sku_id || data?.skuId || data?.out_sku_id || data?.outSkuId || '')
 }
 
+function getRawBody(req: Request): string {
+  if (typeof req.body === 'string') return req.body
+  if (req.body && typeof req.body === 'object') return JSON.stringify(req.body)
+  return ''
+}
+
+export function isOfficialWxshopMessagePushRequest(input: {
+  query?: Record<string, any>
+  headers?: Record<string, any>
+}): boolean {
+  const query = input.query || {}
+  return Boolean(
+    query.timestamp &&
+    query.nonce &&
+    query.msg_signature &&
+    String(query.encrypt_type || '').toLowerCase() === 'aes'
+  )
+}
+
+export function generateOfficialWxshopMessageSignature(
+  token: string,
+  timestamp: string,
+  nonce: string,
+  encrypt: string
+): string {
+  return crypto
+    .createHash('sha1')
+    .update([token, timestamp, nonce, encrypt].sort().join(''))
+    .digest('hex')
+}
+
+export function extractOfficialWxshopPaidEvent(payload: any): OfficialWxshopPaidEvent | null {
+  const event = payload?.Event || payload?.event || ''
+  if (event !== 'channels_ec_order_pay') return null
+
+  const orderInfo = payload.order_info || payload.orderInfo || {}
+  const orderId = orderInfo.order_id || orderInfo.orderId || payload.order_id || payload.orderId
+  if (!orderId) return null
+
+  const rawPayTime = orderInfo.pay_time || orderInfo.payTime || payload.pay_time || payload.payTime
+  const payTime = Number(rawPayTime)
+  return {
+    orderId: String(orderId),
+    buyerOpenid: extractOpenid(payload) || extractOpenid(orderInfo),
+    payTime: Number.isFinite(payTime) && payTime > 0 ? payTime : undefined,
+  }
+}
+
 function pickPrimaryProductId(productInfos: Array<{ product_id?: string; out_product_id?: string }>): string {
   for (const productInfo of productInfos) {
     const productId = productInfo.product_id || productInfo.out_product_id
@@ -76,6 +131,79 @@ function resolveSourceScene(payload: any): StoreSourceScene {
   if (raw.includes('video') || raw.includes('短视频')) return 'channels_video'
   if (raw.includes('showcase') || raw.includes('橱窗')) return 'channels_showcase'
   return 'store'
+}
+
+async function fulfillPaidChannelsOrder(input: {
+  orderId: string
+  payload: any
+  orderInfo: any
+  fallbackOpenid?: string
+  fallbackPayTime?: number
+}) {
+  const orderDetail = await getChannelsOrderDetail(input.orderId)
+  const productInfos = getOrderProductInfos(orderDetail)
+  const productId = pickPrimaryProductId(productInfos) || input.orderInfo.product_id || input.orderInfo.productId || ''
+  const openid = pickBuyerOpenidFromOrderDetail(orderDetail) || input.fallbackOpenid || extractOpenid(input.orderInfo)
+  const unionid = pickBuyerUnionidFromOrderDetail(orderDetail) || undefined
+  const amount = pickAmountFromOrderDetail(orderDetail) || extractAmount(input.orderInfo)
+  const paidAt = pickPaidAtFromOrderDetail(orderDetail) || (
+    input.fallbackPayTime
+      ? new Date(input.fallbackPayTime * 1000).toISOString().slice(0, 19).replace('T', ' ')
+      : input.orderInfo.pay_time
+        ? new Date(Number(input.orderInfo.pay_time) * 1000).toISOString().slice(0, 19).replace('T', ' ')
+        : undefined
+  )
+
+  const courseId = productInfos.length > 0
+    ? await resolveCourseIdFromProductInfos(productInfos)
+    : await resolveCourseId(input.orderInfo)
+  if (!courseId) {
+    console.warn('[channels] 无法解析课程 ID，product_id=', productId, 'order_id=', input.orderId)
+    return
+  }
+
+  const autoDelivery = await createAndDeliverPostPurchaseFulfillment({
+    storeOrderId: input.orderId,
+    courseId,
+    sourceScene: resolveSourceScene(input.payload),
+    storeProductId: productId ? String(productId) : undefined,
+    storeSkuId: extractSkuId(productInfos[0] || input.orderInfo),
+    storeProductInfos: productInfos,
+    buyerOpenid: openid || undefined,
+    buyerUnionid: unionid,
+    paidAt,
+    rawPayload: {
+      eventPayload: input.payload,
+      orderDetail,
+    },
+  })
+  const fulfillment = autoDelivery.fulfillment
+  console.log('[channels] 自动履约发货完成:', {
+    orderId: input.orderId,
+    delivered: autoDelivery.delivered,
+    deliveryError: autoDelivery.deliveryError,
+  })
+
+  if (openid) {
+    const result = await handleOrderPaid({
+      orderNo: input.orderId,
+      openid,
+      courseId,
+      amount,
+      paidAt,
+    })
+    console.log('[channels] 订单自动解锁完成:', input.orderId, 'userId=', result.userId, 'created=', result.created)
+    await sendChannelsCustomMessage(openid, fulfillment.fulfillmentText).catch((err) => {
+      console.warn('[channels] 客服消息推送失败（不影响主流程）:', err)
+    })
+  } else {
+    console.log('[channels] 无 openid，已生成购后承接内容（需通过发货说明/短信/客服后台通知买家）:', {
+      orderId: input.orderId,
+      courseId,
+      redeemCodeSuffix: fulfillment.redeemCode.slice(-4),
+      urlLink: fulfillment.urlLink,
+    })
+  }
 }
 
 /**
@@ -118,21 +246,74 @@ router.all('/webhook', async (req: Request, res: Response) => {
 
     if (method === 'POST') {
       // 2. POST 请求：接收订单事件
-      const timestamp = req.headers['x-wx-timestamp'] as string
-      const nonce = req.headers['x-wx-nonce'] as string
-      const signature = req.headers['x-wx-signature'] as string
-
-      // 获取原始 body（index.ts 中已用 express.text 挂载，req.body 为字符串）
-      let rawBody = ''
-      if (typeof req.body === 'string') {
-        rawBody = req.body
-      } else if (req.body && typeof req.body === 'object') {
-        rawBody = JSON.stringify(req.body)
-      }
+      const rawBody = getRawBody(req)
 
       if (!rawBody) {
         return fail(res, 400, '请求体为空')
       }
+
+      if (isOfficialWxshopMessagePushRequest({ query: req.query, headers: req.headers })) {
+        if (!channelsConfig.token) {
+          return fail(res, 500, '未配置 CHANNELS_TOKEN')
+        }
+        if (!channelsConfig.encodingAESKey) {
+          return fail(res, 500, '未配置 CHANNELS_ENCODING_AES_KEY，无法解密')
+        }
+
+        let encryptedPayload: any
+        try {
+          encryptedPayload = JSON.parse(rawBody)
+        } catch {
+          return fail(res, 400, '请求体非合法 JSON')
+        }
+
+        const encryptStr = encryptedPayload.Encrypt || encryptedPayload.encrypt
+        if (!encryptStr) {
+          return fail(res, 400, '加密消息缺少 Encrypt 字段')
+        }
+
+        const expected = generateOfficialWxshopMessageSignature(
+          channelsConfig.token,
+          String(req.query.timestamp),
+          String(req.query.nonce),
+          String(encryptStr)
+        )
+        if (expected !== String(req.query.msg_signature)) {
+          return fail(res, 401, '消息签名校验失败')
+        }
+
+        const { text, appid } = wechatCrypto.decrypt(String(encryptStr))
+        if (channelsConfig.appId && appid !== channelsConfig.appId) {
+          console.warn('[channels] 解密后微信小店 appid 不匹配:', appid, 'vs', channelsConfig.appId)
+        }
+
+        let payload: any
+        try {
+          payload = JSON.parse(text)
+        } catch {
+          return fail(res, 500, '解密后内容非合法 JSON')
+        }
+
+        const paidEvent = extractOfficialWxshopPaidEvent(payload)
+        if (!paidEvent) {
+          console.log('[channels] 非微信小店支付成功事件，跳过:', payload.Event || payload.event || '')
+          return res.send('success')
+        }
+
+        await fulfillPaidChannelsOrder({
+          orderId: paidEvent.orderId,
+          payload,
+          orderInfo: payload.order_info || payload.orderInfo || {},
+          fallbackOpenid: paidEvent.buyerOpenid,
+          fallbackPayTime: paidEvent.payTime,
+        })
+
+        return res.send('success')
+      }
+
+      const timestamp = req.headers['x-wx-timestamp'] as string
+      const nonce = req.headers['x-wx-nonce'] as string
+      const signature = req.headers['x-wx-signature'] as string
 
       // 2.1 验证 POST 签名（HMAC-SHA256）
       if (!channelsConfig.token) {
@@ -166,9 +347,9 @@ router.all('/webhook', async (req: Request, res: Response) => {
         }
         const { text, appid } = wechatCrypto.decrypt(encryptStr)
 
-        // 校验 appid 一致性
-        if (wechatConfig.appid && appid !== wechatConfig.appid) {
-          console.warn('[channels] 解密后 appid 不匹配:', appid, 'vs', wechatConfig.appid)
+        // 微信小店消息解密尾部 appid 是微信小店 AppID，不是课程小程序 AppID。
+        if (channelsConfig.appId && appid !== channelsConfig.appId) {
+          console.warn('[channels] 解密后微信小店 appid 不匹配:', appid, 'vs', channelsConfig.appId)
         }
 
         try {
@@ -183,7 +364,7 @@ router.all('/webhook', async (req: Request, res: Response) => {
       const orderInfo = payload.order_info || payload.orderInfo || {}
 
       // 非目标事件直接返回 success，避免微信重试
-      if (event !== 'channels_ec_order_pay_success') {
+      if (event !== 'channels_ec_order_pay_success' && event !== 'channels_ec_order_pay') {
         console.log('[channels] 非支付成功事件，跳过:', event)
         return res.send('success')
       }
@@ -195,71 +376,12 @@ router.all('/webhook', async (req: Request, res: Response) => {
         return res.send('success')
       }
 
-      const orderDetail = await getChannelsOrderDetail(String(orderId))
-      const productInfos = getOrderProductInfos(orderDetail)
-      const productId = pickPrimaryProductId(productInfos) || orderInfo.product_id || orderInfo.productId || ''
-      const openid = pickBuyerOpenidFromOrderDetail(orderDetail) || extractOpenid(orderInfo)
-      const unionid = pickBuyerUnionidFromOrderDetail(orderDetail) || undefined
-      const amount = pickAmountFromOrderDetail(orderDetail) || extractAmount(orderInfo)
-      const paidAt = pickPaidAtFromOrderDetail(orderDetail) || (
-        orderInfo.pay_time
-          ? new Date(Number(orderInfo.pay_time) * 1000).toISOString().slice(0, 19).replace('T', ' ')
-          : undefined
-      )
-
-      // 2.5 解析课程 ID（优先使用订单详情商品明细）
-      const courseId = productInfos.length > 0
-        ? await resolveCourseIdFromProductInfos(productInfos)
-        : await resolveCourseId(orderInfo)
-      if (!courseId) {
-        console.warn('[channels] 无法解析课程 ID，product_id=', productId, 'order_id=', orderId)
-        return res.send('success')
-      }
-
-      // 2.6 创建购后承接并自动发货：兑换码 + 小程序入口 + 小程序码 + delivery_note
-      const autoDelivery = await createAndDeliverPostPurchaseFulfillment({
-        storeOrderId: String(orderId),
-        courseId,
-        sourceScene: resolveSourceScene(payload),
-        storeProductId: productId ? String(productId) : undefined,
-        storeSkuId: extractSkuId(productInfos[0] || orderInfo),
-        storeProductInfos: productInfos,
-        buyerOpenid: openid || undefined,
-        buyerUnionid: unionid,
-        paidAt,
-        rawPayload: {
-          eventPayload: payload,
-          orderDetail,
-        },
+      await fulfillPaidChannelsOrder({
+        orderId: String(orderId),
+        payload,
+        orderInfo,
+        fallbackOpenid: extractOpenid(payload),
       })
-      const fulfillment = autoDelivery.fulfillment
-      console.log('[channels] 自动履约发货完成:', {
-        orderId,
-        delivered: autoDelivery.delivered,
-        deliveryError: autoDelivery.deliveryError,
-      })
-
-      // 若能拿到 openid，仍保留旧的自动解锁体验；购后承接可作为兜底/跨端绑定入口。
-      if (openid) {
-        const result = await handleOrderPaid({
-          orderNo: String(orderId),
-          openid,
-          courseId,
-          amount,
-          paidAt,
-        })
-        console.log('[channels] 订单自动解锁完成:', orderId, 'userId=', result.userId, 'created=', result.created)
-        await sendChannelsCustomMessage(openid, fulfillment.fulfillmentText).catch((err) => {
-          console.warn('[channels] 客服消息推送失败（不影响主流程）:', err)
-        })
-      } else {
-        console.log('[channels] 无 openid，已生成购后承接内容（需通过发货说明/短信/客服后台通知买家）:', {
-          orderId,
-          courseId,
-          redeemCodeSuffix: fulfillment.redeemCode.slice(-4),
-          urlLink: fulfillment.urlLink,
-        })
-      }
 
       // 微信要求返回字符串 "success"
       return res.send('success')

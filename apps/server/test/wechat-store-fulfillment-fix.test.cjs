@@ -4,6 +4,7 @@ const path = require('node:path')
 
 const channelsApiModulePath = path.resolve(__dirname, '../dist/services/channels-api.js')
 const wxshopModulePath = path.resolve(__dirname, '../dist/routes/wxshop.js')
+const channelsWebhookModulePath = path.resolve(__dirname, '../dist/routes/channels-webhook.js')
 
 function loadModule(modulePath) {
   delete require.cache[modulePath]
@@ -15,7 +16,7 @@ test('course delivery payload includes product infos and miniapp course path', (
 
   const payload = channelsApi.buildCourseDeliveryRequest({
     orderId: 'wx-order-1',
-    productInfos: [{ product_id: 'p1', sku_id: 'sku1' }],
+    productInfos: [{ product_id: 'p1', sku_id: 'sku1', sku_cnt: 2 }],
     miniappAppId: 'wx123',
     miniappPath: 'pages/video-unlock/index?token=abc',
   })
@@ -25,7 +26,7 @@ test('course delivery payload includes product infos and miniapp course path', (
     delivery_list: [
       {
         deliver_type: 3,
-        product_infos: [{ product_id: 'p1', sku_id: 'sku1' }],
+        product_infos: [{ product_id: 'p1', sku_id: 'sku1', product_cnt: 2 }],
         course_info: {
           course_path: {
             type: 0,
@@ -35,6 +36,55 @@ test('course delivery payload includes product infos and miniapp course path', (
         },
       },
     ],
+  })
+})
+
+test('channels webhook recognizes official wxshop message push query signatures', () => {
+  const channelsWebhook = loadModule(channelsWebhookModulePath)
+
+  assert.equal(
+    channelsWebhook.isOfficialWxshopMessagePushRequest({
+      query: {
+        signature: 'plain-signature',
+        timestamp: '1783235777',
+        nonce: '1849150504',
+        encrypt_type: 'aes',
+        msg_signature: 'encrypted-signature',
+      },
+      headers: {},
+    }),
+    true
+  )
+  assert.equal(
+    channelsWebhook.generateOfficialWxshopMessageSignature(
+      'token',
+      '1714112445',
+      '415670741',
+      'EncryptValue'
+    ),
+    '03de89c50e642c93033dd7f4ef86a8356e80e345'
+  )
+})
+
+test('channels webhook accepts official wxshop order paid event name', () => {
+  const channelsWebhook = loadModule(channelsWebhookModulePath)
+
+  const event = channelsWebhook.extractOfficialWxshopPaidEvent({
+    ToUserName: 'gh_store',
+    FromUserName: 'buyer-openid',
+    CreateTime: 1783235777,
+    MsgType: 'event',
+    Event: 'channels_ec_order_pay',
+    order_info: {
+      order_id: 3737550999277696000,
+      pay_time: 1783235777,
+    },
+  })
+
+  assert.deepEqual(event, {
+    orderId: '3737550999277696000',
+    buyerOpenid: 'buyer-openid',
+    payTime: 1783235777,
   })
 })
 
@@ -69,5 +119,15 @@ test('order detail helpers normalize buyer and pay time', () => {
   assert.equal(
     channelsApi.pickPaidAtFromOrderDetail({ pay_time: 1720000000 }),
     '2024-07-03 09:46:40'
+  )
+  assert.equal(
+    channelsApi.pickAmountFromOrderDetail({
+      order_detail: {
+        product_infos: [
+          { real_price: 990 },
+        ],
+      },
+    }),
+    9.9
   )
 })
