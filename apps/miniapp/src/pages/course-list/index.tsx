@@ -22,6 +22,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 }
 
 const SORT_KEYS: SortKey[] = ['default', 'newest', 'priceAsc', 'priceDesc', 'rating']
+const COURSE_LIST_FETCH_SIZE = 1000
 
 export default function CourseList() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -31,23 +32,25 @@ export default function CourseList() {
   const [keyword, setKeyword] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('default')
   const [loading, setLoading] = useState(true)
-  const [visibleCount, setVisibleCount] = useState(4)
 
   useEffect(() => {
     setLoading(true)
     getCategories()
       .then((cats) => {
-        setCategories(cats)
-        setActiveCategory(cats[0] ?? Category.All)
+        const normalizedCategories = cats.includes(Category.All) ? cats : [Category.All, ...cats]
+        setCategories(normalizedCategories)
+        setActiveCategory(Category.All)
         // 并行拉取每个分类的真实课程列表，计数直接取 length
         // All 走 getAllCourses（后端无 category 过滤），其余走 getCoursesByCategory
         return Promise.all(
-          cats.map((cat) =>
-            cat === Category.All ? getAllCourses() : getCoursesByCategory(cat)
+          normalizedCategories.map((cat) =>
+            cat === Category.All
+              ? getAllCourses({ size: COURSE_LIST_FETCH_SIZE })
+              : getCoursesByCategory(cat, { size: COURSE_LIST_FETCH_SIZE })
           )
         ).then((results) => {
           const map: Record<string, Course[]> = {}
-          cats.forEach((cat, i) => {
+          normalizedCategories.forEach((cat, i) => {
             map[cat] = results[i]
           })
           setCoursesByCategory(map)
@@ -71,11 +74,6 @@ export default function CourseList() {
       fail: () => {},
     })
   }
-
-  // 切换分类 / 关键词 / 排序时重置分页
-  useEffect(() => {
-    setVisibleCount(4)
-  }, [activeCategory, keyword, sortKey])
 
   const categoryCounts = useMemo<Record<string, number>>(() => {
     const counts: Record<string, number> = {}
@@ -120,17 +118,6 @@ export default function CourseList() {
     }
     return sorted
   }, [activeCourses, keyword, sortKey])
-
-  const loadMore = () => {
-    const total = filteredSorted.length
-    if (visibleCount >= total) {
-      Taro.showToast({ title: '没有更多了', icon: 'none' })
-      return
-    }
-    setVisibleCount((prev) => Math.min(prev + 2, total))
-  }
-
-  const displayCourses = filteredSorted.slice(0, visibleCount)
 
   return (
     <View className='course-list-page'>
@@ -186,7 +173,7 @@ export default function CourseList() {
           </ScrollView>
 
           {/* Right Content */}
-          <ScrollView className='list-content' scrollY onScrollToLower={loadMore} lowerThreshold={80}>
+          <ScrollView className='list-content' scrollY>
             {filteredSorted.length === 0 ? (
               <View className='empty-state'>
                 <Icon name='book-open' size={96} color='#94A3B8' />
@@ -194,7 +181,7 @@ export default function CourseList() {
               </View>
             ) : (
               <View className='course-list'>
-                {displayCourses.map((course) => (
+                {filteredSorted.map((course) => (
                   <CourseCard key={course.id} course={course} mode='list' />
                 ))}
               </View>

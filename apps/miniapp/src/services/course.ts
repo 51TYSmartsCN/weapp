@@ -42,19 +42,31 @@ export async function getCategories(options?: RequestOptions): Promise<Category[
 }
 
 /** 按分类筛选课程 */
-export async function getCoursesByCategory(category: Category, options?: RequestOptions): Promise<Course[]> {
+export async function getCoursesByCategory(
+  category: Category,
+  options?: RequestOptions & { page?: number; size?: number }
+): Promise<Course[]> {
   const tagFilter = CATEGORY_TAG[category]
   if (shouldUseLocal(options)) {
     // All → 不过滤
     if (tagFilter === null) return allCourses
     return allCourses.filter((c) => c.tags?.includes(tagFilter))
   }
+  const { page, size } = options || {}
+  const data: Record<string, string | number> = {}
+  if (page != null) data.page = page
+  if (size != null) data.size = size
   // All → 不过滤，直接调全部课程接口
   if (tagFilter === null) {
-    return request<Course[]>({ url: '/api/courses', method: 'GET', skipAuth: true })
+    return request<Course[]>({ url: '/api/courses', method: 'GET', data, skipAuth: true })
   }
   // TODO: return Taro.request({ url: `/api/courses?category=${category}` })
-  return request<Course[]>({ url: '/api/courses', method: 'GET', data: { category }, skipAuth: true })
+  return request<Course[]>({
+    url: '/api/courses',
+    method: 'GET',
+    data: { ...data, category },
+    skipAuth: true,
+  })
 }
 
 /**
