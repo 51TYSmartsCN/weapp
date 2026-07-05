@@ -2,10 +2,11 @@ import { Router, Request, Response } from 'express'
 import crypto from 'crypto'
 import { pool } from '../db'
 import { ok, fail } from '../utils'
-import { wxshopConfig, wechatConfig } from '../config'
+import { wxshopConfig, wechatConfig, baseUrl } from '../config'
 import { createAndDeliverPostPurchaseFulfillment } from '../services/wechat-store-auto-delivery'
 
 const router = Router()
+const DEFAULT_AVATAR_URL = `${baseUrl}/images/avatars/default.png`
 
 // ============================================================
 // 加解密工具(小程序消息推送 WXBizMsgCrypt 标准实现
@@ -74,7 +75,7 @@ export async function findOrCreateUserByOpenid(openid: string): Promise<number |
 
   await pool.query(
     'INSERT INTO users (openid, name, avatar, vip) VALUES (?, ?, ?, 0)',
-    [openid, '微信用户', null]
+    [openid, '微信用户', DEFAULT_AVATAR_URL]
   )
   const [r2] = await pool.query('SELECT id FROM users WHERE openid = ?', [openid])
   return (r2 as any[])[0]?.id ?? null

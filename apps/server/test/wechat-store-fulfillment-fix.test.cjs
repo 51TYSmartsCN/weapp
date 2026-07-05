@@ -3,12 +3,24 @@ const assert = require('node:assert/strict')
 const path = require('node:path')
 
 const channelsApiModulePath = path.resolve(__dirname, '../dist/services/channels-api.js')
+const dbModulePath = path.resolve(__dirname, '../dist/db.js')
 const wxshopModulePath = path.resolve(__dirname, '../dist/routes/wxshop.js')
 const channelsWebhookModulePath = path.resolve(__dirname, '../dist/routes/channels-webhook.js')
 
 function loadModule(modulePath) {
   delete require.cache[modulePath]
   return require(modulePath)
+}
+
+function loadWxshopWithMockPool(pool) {
+  delete require.cache[wxshopModulePath]
+  require.cache[dbModulePath] = {
+    id: dbModulePath,
+    filename: dbModulePath,
+    loaded: true,
+    exports: { pool },
+  }
+  return require(wxshopModulePath)
 }
 
 test('course delivery payload includes product infos and miniapp course path', () => {
@@ -130,4 +142,29 @@ test('order detail helpers normalize buyer and pay time', () => {
     }),
     9.9
   )
+})
+
+test('wxshop auto-created users use a non-null placeholder avatar', async () => {
+  const queries = []
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params })
+      if (String(sql).startsWith('SELECT id FROM users')) {
+        return queries.length === 1 ? [[]] : [[{ id: 123 }]]
+      }
+      if (String(sql).startsWith('INSERT INTO users')) {
+        return [{ affectedRows: 1 }]
+      }
+      throw new Error(`unexpected query: ${sql}`)
+    },
+  }
+  const wxshop = loadWxshopWithMockPool(pool)
+
+  const userId = await wxshop.findOrCreateUserByOpenid('buyer-openid')
+
+  const insertQuery = queries.find((query) => String(query.sql).startsWith('INSERT INTO users'))
+  assert.equal(userId, 123)
+  assert.ok(insertQuery, 'expected user insert query')
+  assert.equal(typeof insertQuery.params[2], 'string')
+  assert.notEqual(insertQuery.params[2], '')
 })
