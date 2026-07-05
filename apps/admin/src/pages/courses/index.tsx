@@ -18,7 +18,7 @@ import {
 } from 'antd'
 import { PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { courseApi, instructorApi } from '../../api'
+import { categoryApi, courseApi, instructorApi } from '../../api'
 
 const { TextArea } = Input
 const COURSE_COVER_MAX_SIZE_MB = 2
@@ -39,8 +39,17 @@ interface CourseItem {
   isHot: boolean
   status: number
   requiresAccess: boolean
+  categoryIds: number[]
+  categoryNames: string[]
   createdAt: string
   updatedAt: string
+}
+
+interface CategoryItem {
+  id: number
+  code: string
+  name: string
+  sort: number
 }
 
 interface InstructorItem {
@@ -63,6 +72,7 @@ interface CourseFormData {
   title: string
   desc: string
   instructorId: number | null
+  categoryIds: number[]
   price: number
   originalPrice: number
   cover: string
@@ -93,6 +103,7 @@ export default function Courses() {
 
   // 讲师列表
   const [instructors, setInstructors] = useState<InstructorItem[]>([])
+  const [categories, setCategories] = useState<CategoryItem[]>([])
 
   // ---------- 加载讲师列表 ----------
   const loadInstructors = useCallback(async () => {
@@ -101,6 +112,15 @@ export default function Courses() {
       setInstructors(Array.isArray(data) ? data : [])
     } catch {
       // 静默处理
+    }
+  }, [])
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const data = await categoryApi.getList()
+      setCategories(Array.isArray(data) ? data : [])
+    } catch {
+      message.error('加载分类列表失败')
     }
   }, [])
 
@@ -123,7 +143,8 @@ export default function Courses() {
 
   useEffect(() => {
     loadInstructors()
-  }, [loadInstructors])
+    loadCategories()
+  }, [loadInstructors, loadCategories])
 
   useEffect(() => {
     loadList()
@@ -135,8 +156,8 @@ export default function Courses() {
     setPage(1)
   }
 
-  const handleStatusChange = (val: number | undefined) => {
-    setStatusFilter(val === undefined || val === -1 ? undefined : val)
+  const handleStatusChange = (val: number) => {
+    setStatusFilter(val === -1 ? undefined : val)
     setPage(1)
   }
 
@@ -144,7 +165,15 @@ export default function Courses() {
   const openCreate = () => {
     setEditingRecord(null)
     form.resetFields()
-    form.setFieldsValue({ status: 1, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true })
+    form.setFieldsValue({
+      status: 1,
+      isHot: false,
+      price: 0,
+      originalPrice: 0,
+      cover: '',
+      requiresAccess: true,
+      categoryIds: [],
+    })
     setCoverUrl('')
     setModalOpen(true)
   }
@@ -155,6 +184,7 @@ export default function Courses() {
       title: record.title,
       desc: record.desc,
       instructorId: record.instructorId,
+      categoryIds: record.categoryIds ?? [],
       price: record.price,
       originalPrice: record.originalPrice ?? 0,
       cover: record.cover,
@@ -288,6 +318,23 @@ export default function Courses() {
       render: (text: string) => text || '-',
     },
     {
+      title: '分类',
+      dataIndex: 'categoryNames',
+      width: 180,
+      render: (categoryNames: string[]) =>
+        categoryNames?.length ? (
+          <>
+            {categoryNames.map((name) => (
+              <Tag key={name} color='blue'>
+                {name}
+              </Tag>
+            ))}
+          </>
+        ) : (
+          <Tag>未分类</Tag>
+        ),
+    },
+    {
       title: '价格',
       dataIndex: 'price',
       width: 90,
@@ -400,12 +447,11 @@ export default function Courses() {
           />
           <Select
             placeholder="状态筛选"
-            allowClear
             style={{ width: 120 }}
-            value={statusFilter}
+            value={statusFilter ?? -1}
             onChange={handleStatusChange}
             options={[
-              { label: '全部', value: undefined },
+              { label: '全部', value: -1 },
               { label: '上架', value: 1 },
               { label: '下架', value: 0 },
             ]}
@@ -419,7 +465,7 @@ export default function Courses() {
         columns={columns}
         dataSource={list}
         loading={loading}
-        scroll={{ x: 1300 }}
+        scroll={{ x: 1480 }}
         pagination={{
           current: page,
           pageSize: size,
@@ -443,7 +489,15 @@ export default function Courses() {
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ status: true, isHot: false, price: 0, originalPrice: 0, cover: '', requiresAccess: true }}
+          initialValues={{
+            status: true,
+            isHot: false,
+            price: 0,
+            originalPrice: 0,
+            cover: '',
+            requiresAccess: true,
+            categoryIds: [],
+          }}
         >
           <Form.Item
             label="课程标题"
@@ -470,6 +524,24 @@ export default function Courses() {
               options={instructors.map((inst) => ({
                 value: inst.id,
                 label: inst.name,
+              }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="课程分类"
+            name="categoryIds"
+            rules={[{ required: true, message: '请至少选择一个课程分类' }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="请选择课程分类"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              options={categories.map((category) => ({
+                value: category.id,
+                label: category.name,
               }))}
             />
           </Form.Item>
