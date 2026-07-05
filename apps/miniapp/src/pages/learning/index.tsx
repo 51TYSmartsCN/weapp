@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import SafeTop from '../../components/SafeTop'
 import Skeleton from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import Icon from '../../components/Icon'
 import {
+  buildLoginPageUrl,
   getLearningSummary,
   getStudyRecords,
   getCertificates,
   getCourseById,
+  isLoggedIn,
   showApiError,
 } from '../../services'
 import { UserCourseStatus } from '../../types'
@@ -54,8 +56,20 @@ export default function Learning() {
   const [coursesMap, setCoursesMap] = useState<Record<number, Course>>({})
   const [loading, setLoading] = useState(true)
   const [courseTab, setCourseTab] = useState<CourseTab>('all')
+  const [loggedIn, setLoggedIn] = useState(false)
 
-  useEffect(() => {
+  useDidShow(() => {
+    const hasLogin = isLoggedIn()
+    setLoggedIn(hasLogin)
+    if (!hasLogin) {
+      setSummary(null)
+      setStudyRecords([])
+      setCertificates([])
+      setCoursesMap({})
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     Promise.all([getLearningSummary(), getStudyRecords(), getCertificates()])
       .then(([summaryData, studyRecordsData, certificatesData]) => {
@@ -83,7 +97,7 @@ export default function Learning() {
       })
       .catch((err) => showApiError(err, '学习中心数据加载失败'))
       .finally(() => setLoading(false))
-  }, [])
+  })
 
   const handleContinue = (courseId: number) => {
     Taro.navigateTo({ url: `/pages/lesson-player/index?courseId=${courseId}` })
@@ -114,8 +128,6 @@ export default function Learning() {
   const recentStudyRecords = studyRecords.slice(0, 5)
   const continueCourse = summary?.continueCourse ?? null
 
-  if (!summary && !loading) return null
-
   return (
     <ScrollView className='learning-page' scrollY>
       <SafeTop />
@@ -124,7 +136,31 @@ export default function Learning() {
         <Text className='learning-title'>学习中心</Text>
       </View>
 
-      {loading ? (
+      {!loggedIn ? (
+        <View className='learning-section'>
+          <View className='learning-guest-card'>
+            <View className='learning-guest-icon'>
+              <Icon name='play-circle' size={56} color='var(--theme-primary, #0D9488)' />
+            </View>
+            <Text className='learning-guest-title'>登录后可查看学习进度与已购课程</Text>
+            <Text className='learning-guest-desc'>
+              你现在可以先浏览课程和讲师详情，需要保存学习记录时再自主授权登录。
+            </Text>
+            <View
+              className='learning-guest-primary'
+              onClick={() => Taro.navigateTo({ url: buildLoginPageUrl('/pages/learning/index') })}
+            >
+              <Text className='learning-guest-primary-text'>微信授权登录</Text>
+            </View>
+            <View
+              className='learning-guest-secondary'
+              onClick={handleBrowseCourses}
+            >
+              <Text className='learning-guest-secondary-text'>先去浏览课程</Text>
+            </View>
+          </View>
+        </View>
+      ) : loading ? (
         <>
           <View className='learning-section'>
             <SectionHeader title='继续学习' />

@@ -15,7 +15,12 @@ export async function toggleFavorite(courseId: number, options?: RequestOptions)
 export async function checkFavorite(courseId: number, options?: RequestOptions): Promise<boolean> {
   if (shouldUseLocal(options)) return false
   // TODO: return Taro.request({ url: `/api/favorites/check?course_id=${courseId}` })
-  return request<boolean>({ url: '/api/favorites/check', method: 'GET', data: { course_id: courseId } })
+  return request<boolean>({
+    url: '/api/favorites/check',
+    method: 'GET',
+    data: { course_id: courseId },
+    authMode: 'optional',
+  })
 }
 
 /** 获取当前用户收藏列表 */

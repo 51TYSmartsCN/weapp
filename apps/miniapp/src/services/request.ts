@@ -84,11 +84,14 @@ export async function request<T>(options: {
       header,
     })
 
-    // HTTP 401：token 失效或未登录，清除本地 token 并跳转登录页
+    // HTTP 401：必需鉴权请求才自动跳登录；可选鉴权请求按游客态返回错误给调用方自行处理
     if (res.statusCode === 401) {
       Taro.removeStorageSync(TOKEN_KEY)
-      redirectToLogin()
-      throw new ApiException(401, '登录已过期，请重新登录')
+      if (authMode === 'required') {
+        redirectToLogin()
+        throw new ApiException(401, '登录已过期，请重新登录')
+      }
+      throw new ApiException(401, '请先登录')
     }
 
     const body = res.data as ApiResponse<T>

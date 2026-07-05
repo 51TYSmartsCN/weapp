@@ -3,7 +3,7 @@ import type { Course, CourseAccess } from '../types'
 import { Category, CATEGORY_TAG } from '../types'
 import type { RequestOptions } from './config'
 import { shouldUseLocal } from './config'
-import { request } from './request'
+import { ApiException, request } from './request'
 
 /** 获取热门课程列表 */
 export async function getHotCourses(options?: RequestOptions): Promise<Course[]> {
@@ -73,5 +73,18 @@ export async function getCourseAccess(courseId: number, options?: RequestOptions
     // 本地 mock 假设当前用户不是 VIP（真实 VIP 状态需后端接口返回）
     return { courseId, isFree, purchased: isFree, canLearn: isFree, isVip: false }
   }
-  return request<CourseAccess>({ url: `/api/courses/${courseId}/access`, method: 'GET' })
+  try {
+    return await request<CourseAccess>({
+      url: `/api/courses/${courseId}/access`,
+      method: 'GET',
+      authMode: 'optional',
+    })
+  } catch (err) {
+    if (err instanceof ApiException && err.code === 401) {
+      const course = await getCourseById(courseId, { local: false })
+      const isFree = !course || course.price === 0
+      return { courseId, isFree, purchased: isFree, canLearn: isFree, isVip: false }
+    }
+    throw err
+  }
 }

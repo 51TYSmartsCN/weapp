@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import SafeTop from '../../components/SafeTop'
 import Avatar from '../../components/Avatar'
 import MenuItem from '../../components/MenuItem'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getUser, menuGroups, showApiError, logout } from '../../services'
+import { buildLoginPageUrl, getUser, isLoggedIn, logout, menuGroups, showApiError } from '../../services'
 import type { User, MenuGroup } from '../../types'
 import './index.scss'
 
@@ -14,14 +14,23 @@ export default function Profile() {
   const [user, setUser] = useState<User | null>(null)
   const [groups] = useState<MenuGroup[]>(menuGroups)
   const [loading, setLoading] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(false)
 
-  useEffect(() => {
+  useDidShow(() => {
+    const hasLogin = isLoggedIn()
+    setLoggedIn(hasLogin)
+    if (!hasLogin) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     getUser()
       .then(setUser)
       .catch((err) => showApiError(err, '用户信息加载失败'))
       .finally(() => setLoading(false))
-  }, [])
+  })
 
   const handleMenuClick = (label: string) => {
     switch (label) {
@@ -94,18 +103,67 @@ export default function Profile() {
         } finally {
           Taro.hideLoading()
         }
-        Taro.reLaunch({ url: '/pages/login/index' })
+        setLoggedIn(false)
+        setUser(null)
+        setLoading(false)
+        Taro.showToast({ title: '已退出登录', icon: 'success' })
       },
     })
   }
-
-  if (!user && !loading) return null
 
   return (
     <ScrollView className='profile-page' scrollY>
       <SafeTop />
 
-      {loading ? (
+      {!loggedIn ? (
+        <>
+          <View className='profile-header'>
+            <View className='profile-header-card profile-guest-card'>
+              <View className='profile-guest-badge'>游客模式</View>
+              <Text className='profile-guest-title'>先浏览课程内容，再决定是否登录</Text>
+              <Text className='profile-guest-desc'>
+                首页、课程列表、课程详情都可直接查看；登录后再同步学习进度、收藏和订单。
+              </Text>
+              <View className='profile-guest-actions'>
+                <View
+                  className='profile-guest-primary'
+                  onClick={() => Taro.navigateTo({ url: buildLoginPageUrl('/pages/profile/index') })}
+                >
+                  <Text className='profile-guest-primary-text'>微信授权登录</Text>
+                </View>
+                <View
+                  className='profile-guest-secondary'
+                  onClick={() => Taro.switchTab({ url: '/pages/course-list/index' })}
+                >
+                  <Text className='profile-guest-secondary-text'>先去逛课程</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View className='profile-menu-group'>
+            <View className='menu-card'>
+              <MenuItem
+                icon='book-open'
+                label='浏览全部课程'
+                onClick={() => Taro.switchTab({ url: '/pages/course-list/index' })}
+              />
+              <View className='menu-divider' />
+              <MenuItem
+                icon='help-circle'
+                label='帮助中心'
+                onClick={() => Taro.navigateTo({ url: '/pages/help/index' })}
+              />
+              <View className='menu-divider' />
+              <MenuItem
+                icon='message-circle'
+                label='联系客服'
+                onClick={() => Taro.navigateTo({ url: '/pages/contact-wx/index' })}
+              />
+            </View>
+          </View>
+        </>
+      ) : loading ? (
         <>
           <View className='profile-header'>
             <View className='profile-header-card skeleton-profile-header'>
@@ -134,20 +192,20 @@ export default function Profile() {
             <View className='profile-header-card'>
               <View className='profile-user'>
                 <View className='profile-user-info' onClick={handleEditProfile}>
-                <Avatar
-                  src={user?.avatar}
-                  text={user?.name?.charAt(0) ?? ''}
-                  size={120}
-                />
-                <View className='profile-name-wrap'>
-                  <View className='profile-name'>{user?.name}</View>
-                  {user?.vip && <Text className='profile-vip'>VIP 会员</Text>}
-                  <View className='profile-edit-hint'>
-                    <Text className='profile-edit-text'>点击修改头像和昵称</Text>
-                    <Icon name='chevron-right' size={24} color='#94A3B8' />
+                  <Avatar
+                    src={user?.avatar}
+                    text={user?.name?.charAt(0) ?? ''}
+                    size={120}
+                  />
+                  <View className='profile-name-wrap'>
+                    <View className='profile-name'>{user?.name}</View>
+                    {user?.vip && <Text className='profile-vip'>VIP 会员</Text>}
+                    <View className='profile-edit-hint'>
+                      <Text className='profile-edit-text'>点击修改头像和昵称</Text>
+                      <Icon name='chevron-right' size={24} color='#94A3B8' />
+                    </View>
                   </View>
                 </View>
-              </View>
                 <View className='settings-btn' onClick={() => handleMenuClick('设置')}>
                   <Icon name='settings' size={32} color='#475569' />
                 </View>
@@ -214,7 +272,7 @@ export default function Profile() {
       )}
 
       {/* Menu Groups */}
-      {groups.map((group, groupIndex) => (
+      {loggedIn && groups.map((group, groupIndex) => (
         <View key={groupIndex} className='profile-menu-group'>
           <View className='menu-card'>
             {group.items.map((item, index) => (
@@ -232,11 +290,13 @@ export default function Profile() {
       ))}
 
       {/* 退出登录：放在菜单末尾的卡片式按钮，跟随滚动 */}
-      <View className='profile-menu-group'>
-        <View className='menu-card profile-logout-card' onClick={handleLogout}>
-          <Text className='profile-logout-text'>退出登录</Text>
+      {loggedIn && (
+        <View className='profile-menu-group'>
+          <View className='menu-card profile-logout-card' onClick={handleLogout}>
+            <Text className='profile-logout-text'>退出登录</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* 底部留白，避免被 TabBar 遮挡 */}
       <View className='profile-bottom-space' />

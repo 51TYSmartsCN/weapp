@@ -2,11 +2,6 @@ import { PropsWithChildren, useState, CSSProperties, createElement } from 'react
 import { View } from '@tarojs/components'
 import Taro, { useLaunch } from '@tarojs/taro'
 import {
-  buildLoginPageUrl,
-  buildReturnUrl,
-  LOGIN_PAGE_URL,
-  LOGIN_RETURN_URL_KEY,
-  isLoggedIn,
   initTheme,
   refreshTheme,
   getThemeConfigSync,
@@ -23,7 +18,7 @@ import './app.scss'
 function App({ children }: PropsWithChildren<any>) {
   const [theme, setTheme] = useState<ThemeConfig>(getThemeConfigSync())
 
-  useLaunch(async (options) => {
+  useLaunch(async () => {
     // 初始化主题：先用缓存秒开，再异步拉取最新值
     await initTheme()
     setTheme(getThemeConfigSync())
@@ -44,18 +39,6 @@ function App({ children }: PropsWithChildren<any>) {
       refreshAppInfo().catch(() => {})
       refreshWxshopConfig().catch(() => {})
     })
-
-    // 启动时校验登录态：本地无 token 则跳转登录页
-    if (!isLoggedIn()) {
-      const returnUrl = buildReturnUrl(
-        options?.path ? `/${options.path}` : '',
-        options?.query as Record<string, string> | undefined
-      )
-      if (returnUrl && returnUrl !== LOGIN_PAGE_URL) {
-        Taro.setStorageSync(LOGIN_RETURN_URL_KEY, returnUrl)
-      }
-      Taro.reLaunch({ url: buildLoginPageUrl(returnUrl) })
-    }
   })
 
   // 通过根节点 inline style 设置 CSS 变量，所有子页面/组件继承
