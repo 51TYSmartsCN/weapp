@@ -1,15 +1,12 @@
 @use '../../styles/variables.scss' as *;
 
 .video-unlock-page {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
   background-color: $bg-secondary;
 }
 
 .video-unlock-body {
-  flex: 1;
-  height: 0;
+  box-sizing: border-box;
 }
 
 // 顶部 Hero 区
