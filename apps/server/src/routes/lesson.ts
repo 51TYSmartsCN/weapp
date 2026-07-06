@@ -95,8 +95,9 @@ async function checkCourseAccess(
 
 /**
  * GET /api/lessons/:id/play
- * 鉴权后下发带签名的临时视频地址
- * - 必须登录
+ * 校验权限后下发带签名的临时视频地址
+ * - 未登录：免费课或开放课可看
+ * - 已登录：免费课、开放课、已购课可看
  * - 课程 requires_access=0（开放观看）→ 返回
  * - 课程免费(price=0)→ 返回
  * - 课程付费 → 用户在 user_courses 中存在记录才返回,否则 403
@@ -104,9 +105,9 @@ async function checkCourseAccess(
  * 返回 LessonPlayUrl: { lessonId, courseId, videoUrl, expiresAt }
  * videoUrl 为带签名的代理URL，有效期 2 小时
  */
-router.get('/:id/play', authMiddleware, async (req: Request, res: Response) => {
+router.get('/:id/play', optionalAuthMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as AuthRequest).userId!
+    const userId = (req as AuthRequest).userId
     const lessonId = Number(req.params.id)
     if (!Number.isFinite(lessonId)) return fail(res, 400, '参数错误')
 
@@ -124,7 +125,7 @@ router.get('/:id/play', authMiddleware, async (req: Request, res: Response) => {
 
     // 3. 生成带签名的临时播放 token（2小时有效）
     const token = signUrlPayload(
-      { uid: userId, lid: lessonId, cid: courseId, t: 'video' },
+      { uid: userId ?? 0, lid: lessonId, cid: courseId, t: 'video' },
       2 * 60 * 60 * 1000
     )
 

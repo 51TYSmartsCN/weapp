@@ -142,9 +142,10 @@ export default function VideoUnlock() {
 
   const handleGoToCourse = () => {
     if (!success) return
-    Taro.navigateTo({
-      url: `/pages/course-detail/index?id=${success.courseId}`,
-    })
+    const courseUrl = `/pages/course-detail/index?id=${success.courseId}`
+    Taro.redirectTo({ url: courseUrl })
+      .catch(() => Taro.navigateTo({ url: courseUrl }))
+      .catch(() => Taro.showToast({ title: '进入课程失败', icon: 'none' }))
   }
 
   const handleReset = () => {
