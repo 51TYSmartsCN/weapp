@@ -2,6 +2,7 @@ import Taro from '@tarojs/taro'
 import {
   buildLoginPageUrl,
   buildReturnUrl,
+  LOGIN_PAGE_URL,
   LOGIN_RETURN_URL_KEY,
   sanitizeReturnUrl,
 } from './login-redirect'
@@ -112,15 +113,21 @@ export async function request<T>(options: {
 /** 跳转到登录页（带防抖，避免并发 401 触发多次跳转） */
 function redirectToLogin() {
   if (isRedirectingToLogin) return
-  isRedirectingToLogin = true
   const returnUrl = getCurrentPageUrl()
+  const currentPage = returnUrl.split('?')[0]
+  if (currentPage === LOGIN_PAGE_URL) return
+
   const sanitizedReturnUrl = sanitizeReturnUrl(returnUrl)
+  isRedirectingToLogin = true
   if (sanitizedReturnUrl) {
     Taro.setStorageSync(LOGIN_RETURN_URL_KEY, sanitizedReturnUrl)
   }
-  Taro.reLaunch({ url: buildLoginPageUrl(sanitizedReturnUrl) }).finally(() => {
-    isRedirectingToLogin = false
-  })
+  const loginUrl = buildLoginPageUrl(sanitizedReturnUrl)
+  Taro.navigateTo({ url: loginUrl })
+    .catch(() => Taro.redirectTo({ url: loginUrl }))
+    .finally(() => {
+      isRedirectingToLogin = false
+    })
 }
 
 function getCurrentPageUrl(): string {

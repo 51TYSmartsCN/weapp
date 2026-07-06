@@ -121,11 +121,25 @@ export default function Login() {
     navigateAfterLogin()
   }
 
+  /** 取消登录流程：始终回到可浏览首页，避免返回受保护页面后再次触发登录 */
+  const handleCancelLogin = () => {
+    if (loading) return
+    Taro.removeStorageSync(LOGIN_RETURN_URL_KEY)
+    Taro.switchTab({ url: HOME_PAGE_URL })
+  }
+
   const toggleAgree = () => setAgreed((v) => !v)
 
   return (
     <View className='login-page'>
       <SafeTop />
+
+      <View className='login-topbar'>
+        <View className='login-cancel-link' onClick={handleCancelLogin}>
+          <Icon name='arrow-left' size={32} color='#475569' />
+          <Text className='login-cancel-link-text'>返回首页</Text>
+        </View>
+      </View>
 
       {/* 品牌 */}
       <View className='login-brand'>
@@ -222,6 +236,9 @@ export default function Login() {
                 {loading ? '登录中...' : '微信一键登录'}
               </Text>
             </View>
+            <View className='login-secondary-btn' onClick={handleCancelLogin}>
+              <Text className='login-secondary-btn-text'>暂不登录，先去浏览</Text>
+            </View>
           </View>
         </>
       ) : (
@@ -283,7 +300,7 @@ export default function Login() {
               </Text>
             </View>
             <View className='profile-skip' onClick={handleSkip}>
-              <Text className='profile-skip-text'>暂不完善</Text>
+              <Text className='profile-skip-text'>暂不完善，先体验</Text>
             </View>
           </View>
         </>
