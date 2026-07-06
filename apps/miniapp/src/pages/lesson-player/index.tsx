@@ -21,10 +21,16 @@ import type { Course, Lesson, CourseAccess } from '../../types'
 import type { WxshopEntryState } from '../../services'
 import './index.scss'
 
+function buildPlayerPath(courseId: number, lessonId?: number | null) {
+  const query = lessonId ? `courseId=${courseId}&lessonId=${lessonId}` : `courseId=${courseId}`
+  return `/pages/lesson-player/index?${query}`
+}
+
 export default function LessonPlayer() {
   const router = useRouter()
   const courseId = Number(router.params.courseId) || 1
-  const lessonId = Number(router.params.lessonId) || 1
+  const rawLessonId = Number(router.params.lessonId)
+  const lessonId = Number.isFinite(rawLessonId) && rawLessonId > 0 ? rawLessonId : undefined
 
   // 模块展示模式：'video' = 视频播放; 'text-image' = 图文教程
   const [contentMode, setContentMode] = useState<'video' | 'text-image'>(
@@ -41,6 +47,7 @@ export default function LessonPlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [showList, setShowList] = useState(true)
   const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
+  const playerPath = buildPlayerPath(courseId, currentLesson?.id ?? lessonId)
 
   // 每次页面显示时刷新模块模式（覆盖冷启动 / 切前台 / 返回页面三种场景，确保后台改动及时生效）
   useDidShow(() => {
@@ -57,7 +64,7 @@ export default function LessonPlayer() {
     const title = course ? `正在学习：${course.title}` : 'GEO 课程学习'
     return {
       title,
-      path: `/pages/lesson-player/index?courseId=${courseId}&lessonId=${lessonId}`,
+      path: playerPath,
     }
   })
 
@@ -66,7 +73,7 @@ export default function LessonPlayer() {
     const title = course ? `正在学习：${course.title}` : 'GEO 课程学习'
     return {
       title,
-      query: `courseId=${courseId}&lessonId=${lessonId}`,
+      query: playerPath.split('?')[1] || `courseId=${courseId}`,
     }
   })
 
@@ -76,14 +83,15 @@ export default function LessonPlayer() {
     Promise.all([
       getCourseById(courseId),
       getLessons(courseId),
-      getLessonById(lessonId),
+      lessonId ? getLessonById(lessonId).catch(() => undefined) : Promise.resolve(undefined),
       getCourseAccess(courseId),
       getWxshopEntryState(courseId),
     ])
       .then(([courseData, lessonsData, lessonData, accessData, wxshopState]) => {
         setCourse(courseData ?? null)
         setLessons(lessonsData)
-        setCurrentLesson(lessonData ?? lessonsData[0] ?? null)
+        const lessonInCourse = lessonData && lessonsData.some((lesson) => lesson.id === lessonData.id)
+        setCurrentLesson(lessonInCourse ? lessonData : lessonsData[0] ?? null)
         setAccess(accessData)
         setWxshopEntry(wxshopState)
       })
@@ -105,9 +113,9 @@ export default function LessonPlayer() {
         .then((res) => setVideoUrl(res.videoUrl))
         .catch((err) => {
           // 403 → 用户无权限
-          if (err?.code === 403) {
+          if (err?.code === 401 || err?.code === 403) {
             setAccess((prev) => prev ? { ...prev, canLearn: false, purchased: false } : prev)
-            Taro.showToast({ title: '请先购买课程', icon: 'none' })
+            showApiError(err, '请先购买课程')
           } else {
             showApiError(err, '视频地址获取失败')
           }
@@ -119,9 +127,9 @@ export default function LessonPlayer() {
       getLessonContent(currentLesson.id)
         .then((res) => setLessonContent(res.content))
         .catch((err) => {
-          if (err?.code === 403) {
+          if (err?.code === 401 || err?.code === 403) {
             setAccess((prev) => prev ? { ...prev, canLearn: false, purchased: false } : prev)
-            Taro.showToast({ title: '请先购买课程', icon: 'none' })
+            showApiError(err, '请先购买课程')
           } else {
             showApiError(err, '内容加载失败')
           }
@@ -184,7 +192,7 @@ export default function LessonPlayer() {
   if (loading) {
     return (
       <View className='lesson-player-page'>
-        <NavBar title='课程播放' share copyPath={`/pages/lesson-player/index?courseId=${courseId}&lessonId=${lessonId}`} />
+        <NavBar title='课程播放' share copyPath={playerPath} />
         <View className='player-loading'>
           <View className='player-loading-spinner' />
           <Text className='player-loading-text'>加载中...</Text>
@@ -195,11 +203,17 @@ export default function LessonPlayer() {
 
   return (
     <View className='lesson-player-page'>
-      <NavBar title='课程播放' share copyPath={`/pages/lesson-player/index?courseId=${courseId}&lessonId=${lessonId}`} />
+      <NavBar title='课程播放' share copyPath={playerPath} />
 
       {/* 内容展示区域 — 视频 / 图文 / 锁屏（由后台模块模式控制） */}
       <View className='player-video-area'>
-        {access?.canLearn && (contentMode === 'text-image' || videoUrl) ? (
+        {!currentLesson ? (
+          <View className='player-lock'>
+            <Icon name='book-open' size={80} color='#94A3B8' />
+            <Text className='player-lock-title'>暂无可观看课时</Text>
+            <Text className='player-lock-desc'>{course?.title}</Text>
+          </View>
+        ) : access?.canLearn && (contentMode === 'text-image' || videoUrl) ? (
           contentMode === 'text-image' ? (
             <View className='player-article'>
               <Text className='player-article-title'>{currentLesson?.title}</Text>
@@ -266,9 +280,9 @@ export default function LessonPlayer() {
 
       {/* 课时信息 */}
       <View className='player-info'>
-        <Text className='player-lesson-title'>{currentLesson?.title}</Text>
+        <Text className='player-lesson-title'>{currentLesson?.title || '暂无课时'}</Text>
         <Text className='player-lesson-course'>
-          {course?.title} · 第 {currentLessonIndex + 1}/{lessons.length} 节
+          {course?.title}{currentLesson ? ` · 第 ${currentLessonIndex + 1}/${lessons.length} 节` : ''}
         </Text>
       </View>
 

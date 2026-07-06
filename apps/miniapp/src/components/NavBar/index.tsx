@@ -1,5 +1,6 @@
 import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import { HOME_PAGE_URL } from '../../services/login-redirect'
 import { useNavBarRect } from '../../hooks/useNavBarRect'
 import Icon from '../Icon'
 import './index.scss'
@@ -18,8 +19,19 @@ export default function NavBar({ title, share = false, copyPath }: NavBarProps) 
   // 左右占位宽度 = 胶囊宽度 + 左右间隙，保证标题严格居中且不被胶囊遮挡
   const sideWidth = menuWidth + menuRightGap * 2
 
+  const goHome = () => {
+    Taro.switchTab({ url: HOME_PAGE_URL }).catch(() => {
+      Taro.reLaunch({ url: HOME_PAGE_URL })
+    })
+  }
+
   const handleBack = () => {
-    Taro.navigateBack()
+    const pages = Taro.getCurrentPages()
+    if (pages.length > 1) {
+      Taro.navigateBack().catch(goHome)
+      return
+    }
+    goHome()
   }
 
   const handleCopyLink = () => {

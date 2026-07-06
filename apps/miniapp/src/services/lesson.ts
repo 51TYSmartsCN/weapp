@@ -8,7 +8,10 @@ import { request } from './request'
  * 注意:后端不返回 videoUrl 和 content,需单独调用 getLessonPlayUrl / getLessonContent 获取
  */
 export async function getLessons(courseId?: number, options?: RequestOptions): Promise<Lesson[]> {
-  if (shouldUseLocal(options)) return lessons
+  if (shouldUseLocal(options)) {
+    if (courseId != null) return lessons.filter((lesson) => (lesson.courseId ?? 1) === courseId)
+    return lessons
+  }
   if (courseId != null) {
     // TODO: return Taro.request({ url: `/api/courses/${courseId}/lessons` })
     return request<Lesson[]>({ url: `/api/courses/${courseId}/lessons`, method: 'GET', skipAuth: true })
@@ -26,7 +29,7 @@ export async function getLessonById(id: number, options?: RequestOptions): Promi
 
 /**
  * 获取课时播放地址(鉴权后下发)
- * - 必须登录
+ * - 免费课/开放课: 未登录也可看
  * - 课程免费(price=0)→ 返回 videoUrl
  * - 课程付费 → 用户已购才返回,否则抛 403 ApiException
  * - videoUrl 为带签名的临时 URL，2 小时内有效
@@ -45,7 +48,11 @@ export async function getLessonPlayUrl(lessonId: number, options?: RequestOption
     }
   }
   // TODO: return Taro.request({ url: `/api/lessons/${lessonId}/play })
-  return request<LessonPlayUrl>({ url: `/api/lessons/${lessonId}/play`, method: 'GET' })
+  return request<LessonPlayUrl>({
+    url: `/api/lessons/${lessonId}/play`,
+    method: 'GET',
+    authMode: 'optional',
+  })
 }
 
 /**
@@ -64,7 +71,11 @@ export async function getLessonContent(lessonId: number, options?: RequestOption
     }
   }
   // TODO: return Taro.request({ url: `/api/lessons/${lessonId}/content` })
-  return request<LessonContent>({ url: `/api/lessons/${lessonId}/content`, method: 'GET' })
+  return request<LessonContent>({
+    url: `/api/lessons/${lessonId}/content`,
+    method: 'GET',
+    authMode: 'optional',
+  })
 }
 
 /** 上报课时学习进度 */

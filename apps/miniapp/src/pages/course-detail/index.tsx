@@ -122,14 +122,19 @@ export default function CourseDetail() {
 
   /** 主按钮点击:已购/免费 → 立即学习 */
   const handlePrimaryAction = () => {
-    if (access?.canLearn) {
-      const firstLesson = lessons[0]
-      if (firstLesson) {
-        Taro.navigateTo({
-          url: `/pages/lesson-player/index?courseId=${courseId}&lessonId=${firstLesson.id}`,
-        })
-      }
+    if (!access?.canLearn) return
+
+    const firstLesson = lessons[0]
+    if (!firstLesson) {
+      Taro.showToast({ title: '暂无可观看课时', icon: 'none' })
+      return
     }
+
+    Taro.navigateTo({
+      url: `/pages/lesson-player/index?courseId=${courseId}&lessonId=${firstLesson.id}`,
+    }).catch(() => {
+      Taro.showToast({ title: '打开课程失败', icon: 'none' })
+    })
   }
 
   // store-product 自定义样式：让组件 UI 贴合课程详情页的绿色主题
