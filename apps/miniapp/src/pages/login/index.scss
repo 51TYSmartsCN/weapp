@@ -9,12 +9,38 @@
   box-sizing: border-box;
 }
 
+.login-topbar {
+  width: 100%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+}
+
+.login-cancel-link {
+  min-width: 176rpx;
+  height: 64rpx;
+  padding: 0 $md 0 $sm;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1rpx solid $border-light;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-cancel-link-text {
+  margin-left: $xs;
+  font-size: $font-sm;
+  color: $text-secondary;
+  font-weight: 500;
+}
+
 /* 品牌区 */
 .login-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: $xxxl * 1.5;
+  padding-top: $xxl;
 }
 
 .login-logo {
@@ -155,6 +181,23 @@
   font-weight: 600;
   color: $text-inverse;
   letter-spacing: 2rpx;
+}
+
+.login-secondary-btn {
+  height: 88rpx;
+  margin-top: $sm;
+  border-radius: $radius-full;
+  border: 2rpx solid $border;
+  background: $surface;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-secondary-btn-text {
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-secondary;
 }
 
 .login-bottom-space {
