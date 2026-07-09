@@ -43,21 +43,6 @@
   gap: 8rpx;
 }
 
-// 分享按钮 — 移除 Button 默认样式，仅保留图标区域
-.nav-share-btn {
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  line-height: 1 !important;
-  font-size: inherit !important;
-  border-radius: 0 !important;
-
-  &::after {
-    border: none !important;
-  }
-}
-
 .nav-title {
   flex: 1;
   font-size: $font-md;

@@ -76,6 +76,12 @@ router.get('/lessons', authMiddleware, async (req, res) => {
 router.post('/lessons', authMiddleware, async (req, res) => {
   try {
     const { courseId, title, duration, durationSeconds, videoUrl, content, sort } = req.body
+    if (!Number.isInteger(Number(courseId)) || Number(courseId) <= 0) {
+      return fail(res, 400, '缺少有效的 courseId')
+    }
+    if (!String(title || '').trim()) {
+      return fail(res, 400, '缺少课时标题')
+    }
     const [result] = await pool.query(
       `INSERT INTO lessons (course_id, title, duration, duration_seconds, video_url, content, sort, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
@@ -118,6 +124,15 @@ router.put('/lessons/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id)
     const { courseId, title, duration, durationSeconds, videoUrl, content, sort } = req.body
+    if (!Number.isInteger(id) || id <= 0) {
+      return fail(res, 400, '缺少有效的课时 ID')
+    }
+    if (!Number.isInteger(Number(courseId)) || Number(courseId) <= 0) {
+      return fail(res, 400, '缺少有效的 courseId')
+    }
+    if (!String(title || '').trim()) {
+      return fail(res, 400, '缺少课时标题')
+    }
     await pool.query(
       `UPDATE lessons SET course_id=?, title=?, duration=?, duration_seconds=?, video_url=?, content=?, sort=?
        WHERE id=?`,
