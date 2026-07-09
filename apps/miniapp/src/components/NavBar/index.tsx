@@ -1,4 +1,4 @@
-import { View, Text, Button } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { HOME_PAGE_URL } from '../../services/login-redirect'
 import { useNavBarRect } from '../../hooks/useNavBarRect'
@@ -7,13 +7,13 @@ import './index.scss'
 
 interface NavBarProps {
   title: string
-  /** 是否显示分享按钮（Button openType='share'，触发页面 onShareAppMessage） */
+  /** 保留兼容字段，分享入口统一交给微信胶囊菜单 */
   share?: boolean
   /** 复制链接的文本内容，提供后显示复制链接按钮 */
   copyPath?: string
 }
 
-export default function NavBar({ title, share = false, copyPath }: NavBarProps) {
+export default function NavBar({ title, share: _share = false, copyPath }: NavBarProps) {
   const { statusBarHeight, contentHeight, totalHeight, menuWidth, menuRightGap } = useNavBarRect()
 
   // 左右占位宽度 = 胶囊宽度 + 左右间隙，保证标题严格居中且不被胶囊遮挡
@@ -41,7 +41,7 @@ export default function NavBar({ title, share = false, copyPath }: NavBarProps) 
       .catch(() => Taro.showToast({ title: '复制失败', icon: 'none' }))
   }
 
-  const showRightActions = share || copyPath
+  const showRightActions = !!copyPath
 
   return (
     <>
@@ -57,13 +57,8 @@ export default function NavBar({ title, share = false, copyPath }: NavBarProps) 
             </View>
           </View>
           <Text className='nav-title'>{title}</Text>
-          {/* 右侧：分享 / 复制链接 按钮 */}
+          {/* 右侧：仅保留复制链接按钮，分享由微信胶囊菜单承担 */}
           <View className={`nav-side nav-side-right ${showRightActions ? 'nav-side-actions' : ''}`} style={{ width: `${sideWidth}px` }}>
-            {share && (
-              <Button className='nav-btn nav-share-btn' openType='share'>
-                <Icon name='share-2' size={40} color='#0F172A' />
-              </Button>
-            )}
             {copyPath && (
               <View className='nav-btn' onClick={handleCopyLink}>
                 <Icon name='link' size={40} color='#0F172A' />
