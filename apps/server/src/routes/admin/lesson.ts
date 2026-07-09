@@ -1,9 +1,45 @@
 import { Router } from 'express'
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
 import { pool } from '../../db'
 import { ok, fail } from '../../utils'
 import { authMiddleware } from '../../auth'
 
 const router = Router()
+const LESSON_VIDEO_MAX_SIZE = 200 * 1024 * 1024
+const ALLOWED_VIDEO_MIME_TYPES = ['video/mp4', 'video/quicktime', 'video/x-m4v']
+const ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.m4v']
+
+const lessonVideoDir = path.join(__dirname, '../../../public/videos/lessons')
+if (!fs.existsSync(lessonVideoDir)) {
+  fs.mkdirSync(lessonVideoDir, { recursive: true })
+}
+
+function isAllowedVideoFile(file: Express.Multer.File) {
+  const ext = path.extname(file.originalname).toLowerCase()
+  return ALLOWED_VIDEO_MIME_TYPES.includes(file.mimetype) && ALLOWED_VIDEO_EXTENSIONS.includes(ext)
+}
+
+const lessonVideoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, lessonVideoDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.mp4'
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    cb(null, `lesson-video-${unique}${ext}`)
+  },
+})
+
+const lessonVideoUpload = multer({
+  storage: lessonVideoStorage,
+  limits: { fileSize: LESSON_VIDEO_MAX_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (!isAllowedVideoFile(file)) {
+      return cb(new Error('仅支持 MP4/MOV/M4V 格式'))
+    }
+    cb(null, true)
+  },
+})
 
 function mapLessonRow(row: any) {
   return {
@@ -50,6 +86,31 @@ router.post('/lessons', authMiddleware, async (req, res) => {
     console.error(err)
     return fail(res, 500, '服务器错误')
   }
+})
+
+/**
+ * POST /api/admin/lessons/video
+ * 上传课时视频，返回可访问 URL；之后通过创建/编辑课时写入 videoUrl 字段
+ */
+router.post('/lessons/video', authMiddleware, (req, res) => {
+  lessonVideoUpload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return fail(res, 400, '视频大小不能超过 200MB')
+    }
+
+    if (err) {
+      return fail(res, 400, err.message || '视频上传失败')
+    }
+
+    try {
+      if (!req.file) return fail(res, 400, '未收到文件')
+      const url = `/videos/lessons/${req.file.filename}`
+      return ok(res, { url })
+    } catch (error) {
+      console.error(error)
+      return fail(res, 500, '服务器错误')
+    }
+  })
 })
 
 /** PUT /api/admin/lessons/:id */

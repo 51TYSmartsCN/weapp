@@ -10,6 +10,7 @@ import {
   Popconfirm,
   Space,
   message,
+  Upload,
 } from 'antd'
 import {
   PlusOutlined,
@@ -17,9 +18,21 @@ import {
   ArrowDownOutlined,
   EditOutlined,
   DeleteOutlined,
+  UploadOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { lessonApi, courseApi } from '../../api'
+
+const LESSON_VIDEO_MAX_SIZE_MB = 200
+const LESSON_VIDEO_ACCEPT = 'video/mp4,video/quicktime,video/x-m4v,.mp4,.mov,.m4v'
+const LESSON_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.m4v']
+const LESSON_VIDEO_MIME_TYPES = ['video/mp4', 'video/quicktime', 'video/x-m4v']
+
+function isAllowedLessonVideo(file: File) {
+  const lowerName = file.name.toLowerCase()
+  const hasAllowedExt = LESSON_VIDEO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
+  return hasAllowedExt && LESSON_VIDEO_MIME_TYPES.includes(file.type)
+}
 
 interface LessonItem {
   id: number
@@ -56,6 +69,7 @@ export default function Lessons() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<LessonItem | null>(null)
   const [modalLoading, setModalLoading] = useState(false)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
   const [form] = Form.useForm<FormValues>()
 
   // 加载课程列表
@@ -287,8 +301,49 @@ export default function Lessons() {
           <Form.Item name="durationSeconds" label="时长(秒)">
             <InputNumber min={0} style={{ width: '100%' }} placeholder="请输入秒数" />
           </Form.Item>
-          <Form.Item name="videoUrl" label="视频地址">
-            <Input placeholder="请输入视频地址" />
+          <Form.Item label="课时视频">
+            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+              <Upload
+                accept={LESSON_VIDEO_ACCEPT}
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  if (!isAllowedLessonVideo(file)) {
+                    message.error('仅支持 MP4/MOV/M4V 格式')
+                    return Upload.LIST_IGNORE
+                  }
+
+                  const isAllowedSize = file.size / 1024 / 1024 <= LESSON_VIDEO_MAX_SIZE_MB
+                  if (!isAllowedSize) {
+                    message.error(`视频大小不能超过 ${LESSON_VIDEO_MAX_SIZE_MB}MB`)
+                    return Upload.LIST_IGNORE
+                  }
+
+                  return true
+                }}
+                customRequest={async (options) => {
+                  const { file, onSuccess, onError } = options
+                  setUploadingVideo(true)
+                  try {
+                    const { url } = await lessonApi.uploadVideo(file as File)
+                    form.setFieldValue('videoUrl', url)
+                    message.success('视频上传成功')
+                    onSuccess?.({ url })
+                  } catch (err) {
+                    message.error(err instanceof Error ? err.message : '视频上传失败')
+                    onError?.(err as Error)
+                  } finally {
+                    setUploadingVideo(false)
+                  }
+                }}
+              >
+                <Button icon={<UploadOutlined />} loading={uploadingVideo}>
+                  上传视频文件
+                </Button>
+              </Upload>
+              <Form.Item name="videoUrl" style={{ marginBottom: 0 }}>
+                <Input placeholder="仅支持 MP4/MOV/M4V，最大 200MB；上传后会自动回填，也可手动输入视频地址" />
+              </Form.Item>
+            </Space>
           </Form.Item>
           <Form.Item name="content" label="图文教程内容" tooltip="当模块展示模式为「图文」时，小程序课时播放页会展示此内容。支持换行。">
             <Input.TextArea

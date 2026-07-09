@@ -110,8 +110,9 @@ app.use('/api/channels', channelsWebhookRoutes)
 // 提高 JSON body 限制以支持头像 base64 上传（默认 100kb 过小）
 app.use(express.json({ limit: '5mb' }))
 
-// 静态文件服务：提供 /images/*.jpg 等静态资源访问
+// 静态文件服务：提供 /images/*.jpg 和 /videos/*.mp4 等静态资源访问
 app.use('/images', express.static(path.join(__dirname, '../public/images')))
+app.use('/videos', express.static(path.join(__dirname, '../public/videos')))
 
 // Admin 后台管理静态页面
 const adminStaticRoot = path.join(__dirname, '../public/admin')
