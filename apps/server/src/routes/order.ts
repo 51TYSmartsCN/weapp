@@ -18,6 +18,7 @@ function mapOrder(o: any) {
       o.original_amount != null ? Number(o.original_amount) : undefined,
     couponId: o.coupon_id,
     status: o.status,
+    source: o.source,
     payMethod: o.pay_method,
     paidAt: o.paid_at,
     createdAt: o.created_at,

@@ -67,32 +67,59 @@ function parseXml(xml: string): Record<string, string> {
 // 业务逻辑
 // ============================================================
 
-export async function findOrCreateUserByOpenid(openid: string): Promise<number | null> {
+export async function findOrCreateUserByWechatIdentity(input: {
+  openid?: string
+  unionid?: string
+}): Promise<number | null> {
+  const openid = String(input.openid || '').trim()
+  const unionid = String(input.unionid || '').trim()
+  if (!openid && !unionid) return null
+
+  if (unionid) {
+    const [unionRows] = await pool.query(
+      'SELECT id FROM users WHERE unionid = ? ORDER BY id ASC LIMIT 1',
+      [unionid]
+    )
+    const existingByUnionid = (unionRows as any[])[0]
+    if (existingByUnionid) return existingByUnionid.id
+  }
+
   if (!openid) return null
-  const [rows] = await pool.query('SELECT id FROM users WHERE openid = ?', [openid])
+
+  const [rows] = await pool.query('SELECT id, unionid FROM users WHERE openid = ?', [openid])
   const existing = (rows as any[])[0]
-  if (existing) return existing.id
+  if (existing) {
+    if (unionid && !existing.unionid) {
+      await pool.query('UPDATE users SET unionid = ? WHERE id = ?', [unionid, existing.id])
+    }
+    return existing.id
+  }
 
   await pool.query(
-    'INSERT INTO users (openid, name, avatar, vip) VALUES (?, ?, ?, 0)',
-    [openid, '微信用户', DEFAULT_AVATAR_URL]
+    'INSERT INTO users (openid, unionid, name, avatar, vip) VALUES (?, ?, ?, ?, 0)',
+    [openid, unionid || null, '微信用户', DEFAULT_AVATAR_URL]
   )
   const [r2] = await pool.query('SELECT id FROM users WHERE openid = ?', [openid])
   return (r2 as any[])[0]?.id ?? null
 }
 
+export async function findOrCreateUserByOpenid(openid: string): Promise<number | null> {
+  return findOrCreateUserByWechatIdentity({ openid })
+}
+
 export async function handleOrderPaid(payload: {
   orderNo: string
-  openid: string
+  openid?: string
+  unionid?: string
   courseId: number
   amount: number
   originalAmount?: number
   paidAt?: string
 }): Promise<{ orderId: number; userId: number; created: boolean }> {
-  const { orderNo, openid, courseId, amount, originalAmount, paidAt } = payload
+  const { orderNo, openid, unionid, courseId, amount, originalAmount, paidAt } = payload
 
-  const userId = await findOrCreateUserByOpenid(openid)
-  if (userId == null) throw new Error('无法解析用户 openid')
+  const userId = await findOrCreateUserByWechatIdentity({ openid, unionid })
+  if (userId == null) throw new Error('无法解析用户微信身份')
 
   const [existRows] = await pool.query('SELECT id FROM orders WHERE order_no = ?', [orderNo])
   const existing = (existRows as any[])[0]

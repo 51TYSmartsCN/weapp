@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { View, Text, Video, ScrollView } from '@tarojs/components'
 import Taro, { useRouter, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { createVideoContext } from '@tarojs/taro'
@@ -16,6 +16,9 @@ import {
   showApiError,
   getWxshopEntryState,
   showWxshopUnavailable,
+  markWxshopPurchasePending,
+  getWxshopPendingPurchase,
+  clearWxshopPendingPurchase,
 } from '../../services'
 import type { Course, Lesson, CourseAccess } from '../../types'
 import type { WxshopEntryState } from '../../services'
@@ -47,7 +50,41 @@ export default function LessonPlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [showList, setShowList] = useState(true)
   const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
+  const [wxshopChecking, setWxshopChecking] = useState(false)
+  const wxshopCheckingRef = useRef(false)
   const playerPath = buildPlayerPath(courseId, currentLesson?.id ?? lessonId)
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  const checkWxshopPurchaseReturn = async () => {
+    const pending = getWxshopPendingPurchase(courseId)
+    if (!pending || wxshopCheckingRef.current) return
+
+    if (Date.now() - pending.startedAt > 30 * 60 * 1000) {
+      clearWxshopPendingPurchase(courseId)
+      return
+    }
+
+    wxshopCheckingRef.current = true
+    setWxshopChecking(true)
+    try {
+      for (let i = 0; i < 6; i++) {
+        const nextAccess = await getCourseAccess(courseId)
+        setAccess(nextAccess)
+        if (nextAccess.canLearn) {
+          clearWxshopPendingPurchase(courseId)
+          Taro.showToast({ title: '课程已开通', icon: 'success' })
+          return
+        }
+        if (i < 5) await wait(i < 2 ? 1500 : 3000)
+      }
+      Taro.showToast({ title: '支付结果确认中，请稍后刷新', icon: 'none' })
+    } catch (err) {
+      console.warn('[wxshop] check purchase return failed:', err)
+    } finally {
+      wxshopCheckingRef.current = false
+      setWxshopChecking(false)
+    }
+  }
 
   // 每次页面显示时刷新模块模式（覆盖冷启动 / 切前台 / 返回页面三种场景，确保后台改动及时生效）
   useDidShow(() => {
@@ -57,6 +94,7 @@ export default function LessonPlayer() {
         // 网络失败时回退到本地缓存
         setContentMode(getModuleModesSync().lessonPlayer.contentMode)
       })
+    checkWxshopPurchaseReturn()
   })
 
   // 分享给朋友
@@ -173,6 +211,15 @@ export default function LessonPlayer() {
   const canOpenWxshop = wxshopEntry?.canOpen === true
 
   const handleWxshopEnterSuccess = () => {
+    if (wxshopEntry?.productId) {
+      markWxshopPurchasePending({
+        courseId,
+        productId: wxshopEntry.productId,
+        courseTitle: course?.title,
+        productTitle: wxshopEntry.product?.productTitle,
+        sourcePage: 'lesson-player',
+      })
+    }
     console.log('[wxshop] enter success', {
       courseId,
       productId: wxshopEntry?.productId,
@@ -253,11 +300,16 @@ export default function LessonPlayer() {
             <Text className='player-lock-desc'>
               {course?.title}
             </Text>
-            {!access?.isVip && (
+            {!access?.isVip && wxshopChecking ? (
+              <View className='player-lock-btn'>
+                支付确认中...
+              </View>
+            ) : !access?.isVip && (
               canOpenWxshop ? (
                 <store-product
                   appid={wxshopEntry?.appid}
                   product-id={wxshopEntry?.productId}
+                  product-path={wxshopEntry?.config.productPath}
                   custom-content
                   open-page='product-detail'
                   logo-position='bottom-right'

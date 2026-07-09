@@ -84,9 +84,12 @@ export {
   getWxshopEntryState,
   resolveWxshopEntryState,
   showWxshopUnavailable,
+  markWxshopPurchasePending,
+  getWxshopPendingPurchase,
+  clearWxshopPendingPurchase,
   navigateToWxshopProduct,
 } from './wxshop'
-export type { WxshopProduct, WxshopConfig, WxshopEntryState } from './wxshop'
+export type { WxshopProduct, WxshopConfig, WxshopEntryState, WxshopPendingPurchase } from './wxshop'
 
 export { redeemCode } from './redeem'
 export type { RedeemResult } from './redeem'
