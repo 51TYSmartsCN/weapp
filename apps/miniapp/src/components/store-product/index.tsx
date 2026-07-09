@@ -5,13 +5,17 @@ import './index.scss'
 interface StoreProductProps {
   appid?: string
   productId?: string
+  productPath?: string
   customContent?: boolean
   openPage?: string
   logoPosition?: string
   customStyle?: Record<string, unknown>
   className?: string
+  class?: string
   onEnterSuccess?: (event: any) => void
   onEnterError?: (event: any) => void
+  bindentersuccess?: (event: any) => void
+  bindentererror?: (event: any) => void
   children?: any
 }
 
@@ -23,26 +27,39 @@ function toCamelCase(str: string): string {
 export default function StoreProduct({
   appid,
   productId,
+  productPath,
   customStyle,
   className,
+  class: legacyClassName,
   onEnterSuccess,
   onEnterError,
+  bindentersuccess,
+  bindentererror,
 }: StoreProductProps) {
   const handleClick = async () => {
     if (!appid || !productId) {
-      onEnterError?.({ detail: { errMsg: 'missing appid or productId' } })
+      const event = { detail: { errMsg: 'missing appid or productId' } }
+      onEnterError?.(event)
+      bindentererror?.(event)
       return
     }
+
+    const basePath = productPath || '/pages/product/detail/index'
+    const path = basePath + (basePath.includes('?') ? '&' : '?') + `productId=${encodeURIComponent(productId)}`
 
     try {
       await Taro.navigateToMiniProgram({
         appId: appid,
-        path: `/pages/product/detail/index?productId=${productId}`,
+        path,
         envVersion: 'release',
       })
-      onEnterSuccess?.({})
+      const event = { detail: { appid, productId, path } }
+      onEnterSuccess?.(event)
+      bindentersuccess?.(event)
     } catch (err) {
-      onEnterError?.({ detail: err })
+      const event = { detail: err }
+      onEnterError?.(event)
+      bindentererror?.(event)
     }
   }
 
@@ -55,7 +72,7 @@ export default function StoreProduct({
 
   return (
     <View
-      className={`store-product ${className || ''}`}
+      className={`store-product ${className || legacyClassName || ''}`}
       style={buttonStyle}
       onClick={handleClick}
     >

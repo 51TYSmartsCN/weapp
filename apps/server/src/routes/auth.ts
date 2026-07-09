@@ -39,6 +39,59 @@ function mapUser(row: any) {
   }
 }
 
+async function recomputeBoughtCourses(userId: number) {
+  await pool.query(
+    `UPDATE users
+     SET bought_courses = (
+       SELECT COUNT(1) FROM user_courses WHERE user_id = ?
+     )
+     WHERE id = ?`,
+    [userId, userId]
+  )
+}
+
+async function mergeUserPurchaseData(sourceUserId: number, targetUserId: number) {
+  if (!sourceUserId || !targetUserId || sourceUserId === targetUserId) return
+
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+
+    await conn.query(
+      `INSERT IGNORE INTO user_courses
+         (user_id, course_id, status, progress, completed_lessons, total_lessons, last_study_at, created_at, updated_at)
+       SELECT ?, course_id, status, progress, completed_lessons, total_lessons, last_study_at, created_at, updated_at
+       FROM user_courses
+       WHERE user_id = ?`,
+      [targetUserId, sourceUserId]
+    )
+    await conn.query(
+      `INSERT IGNORE INTO lesson_progress
+         (user_id, lesson_id, course_id, completed, watched_seconds, last_position, updated_at)
+       SELECT ?, lesson_id, course_id, completed, watched_seconds, last_position, updated_at
+       FROM lesson_progress
+       WHERE user_id = ?`,
+      [targetUserId, sourceUserId]
+    )
+    await conn.query('UPDATE orders SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId])
+    await conn.query('UPDATE course_entitlements SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId])
+    await conn.query('UPDATE redeem_codes SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId])
+    await conn.query('DELETE FROM user_courses WHERE user_id = ?', [sourceUserId])
+    await conn.query('DELETE FROM lesson_progress WHERE user_id = ?', [sourceUserId])
+    await conn.query('UPDATE users SET unionid = NULL WHERE id = ?', [sourceUserId])
+
+    await conn.commit()
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
+
+  await recomputeBoughtCourses(targetUserId)
+  await recomputeBoughtCourses(sourceUserId)
+}
+
 /** 调用微信 jscode2session 接口换取 openid + session_key */
 async function jscode2session(code: string): Promise<{ openid: string; unionid?: string }> {
   const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${encodeURIComponent(
@@ -76,9 +129,32 @@ router.post('/login', async (req: Request, res: Response) => {
     const openid = session.openid
     const unionid = session.unionid
 
-    // 先查存量用户
+    // 先查存量用户：openid 命中优先；若小店回调先创建了同 unionid 的占位用户，则合并到该用户。
     const [rows] = await pool.query('SELECT * FROM users WHERE openid = ?', [openid])
     let userRow = (rows as any[])[0]
+    if (unionid) {
+      const [unionRows] = await pool.query(
+        'SELECT * FROM users WHERE unionid = ? ORDER BY id ASC LIMIT 1',
+        [unionid]
+      )
+      const unionUserRow = (unionRows as any[])[0]
+      if (userRow && unionUserRow && Number(userRow.id) !== Number(unionUserRow.id)) {
+        await mergeUserPurchaseData(Number(unionUserRow.id), Number(userRow.id))
+        if (!userRow.unionid) {
+          await pool.query('UPDATE users SET unionid = ? WHERE id = ?', [unionid, userRow.id])
+        }
+        const [updatedRows] = await pool.query('SELECT * FROM users WHERE id = ?', [userRow.id])
+        userRow = (updatedRows as any[])[0]
+      } else if (userRow && !userRow.unionid) {
+        await pool.query('UPDATE users SET unionid = ? WHERE id = ?', [unionid, userRow.id])
+        const [updatedRows] = await pool.query('SELECT * FROM users WHERE id = ?', [userRow.id])
+        userRow = (updatedRows as any[])[0]
+      } else if (!userRow && unionUserRow) {
+        await pool.query('UPDATE users SET openid = ? WHERE id = ?', [openid, unionUserRow.id])
+        const [updatedRows] = await pool.query('SELECT * FROM users WHERE id = ?', [unionUserRow.id])
+        userRow = (updatedRows as any[])[0]
+      }
+    }
 
     // 不存在则创建（占位昵称 + 默认头像，待用户在登录后完善资料）
     if (!userRow) {

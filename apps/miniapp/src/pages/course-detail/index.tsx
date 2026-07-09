@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, Image, Video, ScrollView } from '@tarojs/components'
 import { useRouter, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import Taro from '@tarojs/taro'
@@ -9,7 +9,7 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, toggleFavorite, checkFavorite, getInstructorById, resolveColor, resolveUrl } from '../../services'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, markWxshopPurchasePending, getWxshopPendingPurchase, clearWxshopPendingPurchase, toggleFavorite, checkFavorite, getInstructorById, resolveColor, resolveUrl } from '../../services'
 import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
 import type { WxshopEntryState } from '../../services'
 import './index.scss'
@@ -44,6 +44,41 @@ export default function CourseDetail() {
   const [followed, setFollowed] = useState(false)
   const [favorited, setFavorited] = useState(false)
   const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
+  const [wxshopChecking, setWxshopChecking] = useState(false)
+  const wxshopCheckingRef = useRef(false)
+
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  const checkWxshopPurchaseReturn = async () => {
+    const pending = getWxshopPendingPurchase(courseId)
+    if (!pending || wxshopCheckingRef.current) return
+
+    if (Date.now() - pending.startedAt > 30 * 60 * 1000) {
+      clearWxshopPendingPurchase(courseId)
+      return
+    }
+
+    wxshopCheckingRef.current = true
+    setWxshopChecking(true)
+    try {
+      for (let i = 0; i < 6; i++) {
+        const nextAccess = await getCourseAccess(courseId)
+        setAccess(nextAccess)
+        if (nextAccess.canLearn) {
+          clearWxshopPendingPurchase(courseId)
+          Taro.showToast({ title: '课程已开通', icon: 'success' })
+          return
+        }
+        if (i < 5) await wait(i < 2 ? 1500 : 3000)
+      }
+      Taro.showToast({ title: '支付结果确认中，请稍后刷新', icon: 'none' })
+    } catch (err) {
+      console.warn('[wxshop] check purchase return failed:', err)
+    } finally {
+      wxshopCheckingRef.current = false
+      setWxshopChecking(false)
+    }
+  }
 
   // 每次页面显示时刷新封面模式（覆盖冷启动 / 切前台 / 返回页面三种场景，确保后台改动及时生效）
   useDidShow(() => {
@@ -58,6 +93,7 @@ export default function CourseDetail() {
         setCoverMode(modes.courseDetailCover.mode)
         setCoverVideoUrl(modes.courseDetailCover.videoUrl || '')
       })
+    checkWxshopPurchaseReturn()
   })
 
   useEffect(() => {
@@ -194,6 +230,15 @@ export default function CourseDetail() {
   const canOpenWxshop = wxshopEntry?.canOpen === true
 
   const handleWxshopEnterSuccess = () => {
+    if (wxshopEntry?.productId) {
+      markWxshopPurchasePending({
+        courseId,
+        productId: wxshopEntry.productId,
+        courseTitle: course?.title,
+        productTitle: wxshopEntry.product?.productTitle,
+        sourcePage: 'course-detail',
+      })
+    }
     console.log('[wxshop] enter success', {
       courseId,
       productId: wxshopEntry?.productId,
@@ -359,11 +404,16 @@ export default function CourseDetail() {
             <View className='enroll-btn' onClick={handlePrimaryAction}>
               {primaryBtnText}
             </View>
+          ) : wxshopChecking ? (
+            <View className='enroll-btn'>
+              支付确认中...
+            </View>
           ) : canOpenWxshop ? (
             <store-product
               class='store-product-btn'
               appid={wxshopEntry?.appid}
               product-id={wxshopEntry?.productId}
+              product-path={wxshopEntry?.config.productPath}
               custom-style={storeProductStyle}
               bindentersuccess={handleWxshopEnterSuccess}
               bindentererror={(e: any) => {

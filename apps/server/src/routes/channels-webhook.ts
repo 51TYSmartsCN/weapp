@@ -189,10 +189,11 @@ async function fulfillPaidChannelsOrder(input: {
     deliveryError: autoDelivery.deliveryError,
   })
 
-  if (openid) {
+  if (openid || unionid) {
     const result = await handleOrderPaid({
       orderNo: input.orderId,
-      openid,
+      openid: openid || undefined,
+      unionid,
       courseId,
       amount,
       paidAt,

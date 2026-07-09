@@ -24,7 +24,17 @@ export interface WxshopEntryState {
   message: string
 }
 
+export interface WxshopPendingPurchase {
+  courseId: number
+  productId: string
+  courseTitle?: string
+  productTitle?: string
+  sourcePage: 'course-detail' | 'lesson-player' | 'unknown'
+  startedAt: number
+}
+
 const WXSHOP_CONFIG_STORAGE_KEY = 'wxshop_config'
+const WXSHOP_PENDING_PURCHASE_KEY = 'wxshop_pending_purchase'
 
 const DEFAULT_WXSHOP_CONFIG: WxshopConfig = {
   appid: '',
@@ -141,6 +151,38 @@ export function showWxshopUnavailable(state: Pick<WxshopEntryState, 'message' | 
   Taro.showToast({ title: state.message, icon: 'none' })
 }
 
+export function markWxshopPurchasePending(input: Omit<WxshopPendingPurchase, 'startedAt'>) {
+  try {
+    Taro.setStorageSync(WXSHOP_PENDING_PURCHASE_KEY, {
+      ...input,
+      startedAt: Date.now(),
+    })
+  } catch {
+    // ignore
+  }
+}
+
+export function getWxshopPendingPurchase(courseId?: number): WxshopPendingPurchase | null {
+  try {
+    const pending = Taro.getStorageSync(WXSHOP_PENDING_PURCHASE_KEY) as WxshopPendingPurchase | undefined
+    if (!pending?.courseId || !pending.productId) return null
+    if (courseId != null && Number(pending.courseId) !== Number(courseId)) return null
+    return pending
+  } catch {
+    return null
+  }
+}
+
+export function clearWxshopPendingPurchase(courseId?: number) {
+  const pending = getWxshopPendingPurchase(courseId)
+  if (courseId != null && !pending) return
+  try {
+    Taro.removeStorageSync(WXSHOP_PENDING_PURCHASE_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 export async function navigateToWxshopProduct(courseId: number): Promise<boolean> {
   const state = await getWxshopEntryState(courseId)
 
@@ -149,9 +191,16 @@ export async function navigateToWxshopProduct(courseId: number): Promise<boolean
     return false
   }
 
-  const path = state.config.productPath + (state.config.productPath.includes('?') ? '&' : '?') + `productId=${state.productId}`
+  const path = state.config.productPath + (state.config.productPath.includes('?') ? '&' : '?') + `productId=${encodeURIComponent(state.productId)}`
 
   try {
+    markWxshopPurchasePending({
+      courseId,
+      productId: state.productId,
+      courseTitle: state.product?.courseTitle,
+      productTitle: state.product?.productTitle,
+      sourcePage: 'unknown',
+    })
     await Taro.navigateToMiniProgram({
       appId: state.appid,
       path,

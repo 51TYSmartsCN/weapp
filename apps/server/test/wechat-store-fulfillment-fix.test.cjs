@@ -191,8 +191,11 @@ test('wxshop auto-created users use a non-null placeholder avatar', async () => 
   const pool = {
     async query(sql, params) {
       queries.push({ sql, params })
-      if (String(sql).startsWith('SELECT id FROM users')) {
+      if (String(sql).startsWith('SELECT id, unionid FROM users')) {
         return queries.length === 1 ? [[]] : [[{ id: 123 }]]
+      }
+      if (String(sql).startsWith('SELECT id FROM users')) {
+        return [[{ id: 123 }]]
       }
       if (String(sql).startsWith('INSERT INTO users')) {
         return [{ affectedRows: 1 }]
@@ -207,8 +210,60 @@ test('wxshop auto-created users use a non-null placeholder avatar', async () => 
   const insertQuery = queries.find((query) => String(query.sql).startsWith('INSERT INTO users'))
   assert.equal(userId, 123)
   assert.ok(insertQuery, 'expected user insert query')
-  assert.equal(typeof insertQuery.params[2], 'string')
-  assert.notEqual(insertQuery.params[2], '')
+  assert.equal(typeof insertQuery.params[3], 'string')
+  assert.notEqual(insertQuery.params[3], '')
+})
+
+test('wxshop paid order identity prefers existing miniapp user by unionid', async () => {
+  const queries = []
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params })
+      if (String(sql).startsWith('SELECT id FROM users WHERE unionid')) {
+        return [[{ id: 88 }]]
+      }
+      throw new Error(`unexpected query: ${sql}`)
+    },
+  }
+  const wxshop = loadWxshopWithMockPool(pool)
+
+  const userId = await wxshop.findOrCreateUserByWechatIdentity({
+    openid: 'store-openid',
+    unionid: 'union-1',
+  })
+
+  assert.equal(userId, 88)
+  assert.equal(queries.length, 1)
+  assert.deepEqual(queries[0].params, ['union-1'])
+})
+
+test('wxshop paid order identity fills unionid on existing openid user', async () => {
+  const queries = []
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params })
+      if (String(sql).startsWith('SELECT id FROM users WHERE unionid')) {
+        return [[]]
+      }
+      if (String(sql).startsWith('SELECT id, unionid FROM users WHERE openid')) {
+        return [[{ id: 99, unionid: null }]]
+      }
+      if (String(sql).startsWith('UPDATE users SET unionid')) {
+        return [{ affectedRows: 1 }]
+      }
+      throw new Error(`unexpected query: ${sql}`)
+    },
+  }
+  const wxshop = loadWxshopWithMockPool(pool)
+
+  const userId = await wxshop.findOrCreateUserByWechatIdentity({
+    openid: 'miniapp-openid',
+    unionid: 'union-2',
+  })
+
+  assert.equal(userId, 99)
+  assert.equal(queries.length, 3)
+  assert.deepEqual(queries[2].params, ['union-2', 99])
 })
 
 test('auto delivery treats wxshop already-delivered response as idempotent success', async () => {
