@@ -127,6 +127,17 @@ export const lessonApi = {
   reorder(items: { id: number; sort: number }[]) {
     return request({ method: 'PUT', url: '/admin/lessons/reorder', data: { items } })
   },
+  uploadVideo(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request<{ url: string }>({
+      method: 'POST',
+      url: '/admin/lessons/video',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 300000,
+    })
+  },
 }
 
 // ===================== Banners =====================
