@@ -93,6 +93,9 @@ export const instructorApi = {
   update(id: number, data: Record<string, any>) {
     return request({ method: 'PUT', url: `/admin/instructors/${id}`, data })
   },
+  toggleStatus(id: number) {
+    return request<{ status: number }>({ method: 'PUT', url: `/admin/instructors/${id}/status` })
+  },
   remove(id: number) {
     return request({ method: 'DELETE', url: `/admin/instructors/${id}` })
   },

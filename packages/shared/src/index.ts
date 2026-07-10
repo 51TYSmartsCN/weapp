@@ -24,6 +24,7 @@ export interface Instructor {
   title: string
   service: string
   color: string
+  status?: number
   bio?: string
   avatar?: string
   /** 专长领域（标签数组） */

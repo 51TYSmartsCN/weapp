@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import path from 'path'
-import { corsOrigins, isProduction, port, host, env } from './config'
+import { corsOrigins, isProduction, port, host, env, dbConfig } from './config'
 import { pool } from './db'
 import userRoutes from './routes/user'
 import favoriteRoutes from './routes/favorite'
@@ -147,6 +147,44 @@ async function testDbConnection() {
   }
 }
 
+async function ensureInstructorSchema() {
+  try {
+    const [rows] = await pool.query(
+      `SELECT COLUMN_NAME AS columnName,
+              CHARACTER_MAXIMUM_LENGTH AS maxLength
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ?
+         AND TABLE_NAME = 'instructors'
+         AND COLUMN_NAME IN ('avatar', 'status')`,
+      [dbConfig.database]
+    ) as any[]
+
+    const columns = rows as Array<{ columnName?: string; maxLength?: number }>
+    const avatarColumn = columns.find((item) => item.columnName === 'avatar')
+    const maxLength = Number(avatarColumn?.maxLength || 0)
+    if (maxLength >= 512) {
+      // no-op
+    } else {
+      await pool.query(
+        `ALTER TABLE instructors
+         MODIFY COLUMN avatar VARCHAR(512) NULL COMMENT '头像文字或 URL'`
+      )
+      console.log(`[DB] 已自动升级 instructors.avatar 字段长度: ${maxLength || 'unknown'} -> 512`)
+    }
+
+    const hasStatusColumn = columns.some((item) => item.columnName === 'status')
+    if (!hasStatusColumn) {
+      await pool.query(
+        `ALTER TABLE instructors
+         ADD COLUMN status TINYINT(1) NOT NULL DEFAULT 1 COMMENT '状态（0=下架 1=上架）' AFTER avatar`
+      )
+      console.log('[DB] 已自动补齐 instructors.status 字段')
+    }
+  } catch (err) {
+    console.error('[DB] 自动校正 instructors 表结构失败:', err)
+  }
+}
+
 // 挂载路由
 app.use('/api/auth', authRoutes)
 app.use('/api', courseRoutes) // /api/courses, /api/categories, /api/courses/:id/lessons
@@ -186,6 +224,7 @@ app.get('/api/health', (req, res) => res.json({ code: 0, data: { status: 'ok' } 
 // 启动服务
 async function bootstrap() {
   await testDbConnection()
+  await ensureInstructorSchema()
   app.listen(port, host, () => {
     console.log(`[Server] GEO 课程后端服务已启动 (env=${env}): http://${host}:${port}`)
   })

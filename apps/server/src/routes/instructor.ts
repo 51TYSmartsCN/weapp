@@ -12,6 +12,7 @@ function mapInstructor(row: any) {
     title: row.title,
     service: row.service,
     color: row.color,
+    status: row.status,
     bio: row.bio ?? undefined,
     avatar: row.avatar ?? undefined,
     expertise: row.expertise ? row.expertise.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
@@ -25,7 +26,7 @@ function mapInstructor(row: any) {
 /** GET /api/instructors 全部讲师 */
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM instructors ORDER BY id')
+    const [rows] = await pool.query('SELECT * FROM instructors WHERE status = 1 ORDER BY id')
     return ok(res, (rows as any[]).map(mapInstructor))
   } catch (err) {
     console.error(err)
@@ -37,7 +38,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const [rows] = await pool.query('SELECT * FROM instructors WHERE id = ?', [id])
+    const [rows] = await pool.query('SELECT * FROM instructors WHERE id = ? AND status = 1', [id])
     const row = (rows as any[])[0]
     if (!row) return fail(res, 404, '讲师不存在')
     return ok(res, mapInstructor(row))
