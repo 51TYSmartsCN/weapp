@@ -187,8 +187,8 @@ async function seed() {
     // 3. 插入 instructors（含 bio、expertise、years、成就等介绍数据）
     for (const ins of instructorsData) {
       await pool.execute(
-        `INSERT INTO instructors (id, name, title, service, bio, color, avatar, expertise, years, student_count, course_count, achievements)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO instructors (id, name, title, service, bio, color, avatar, status, expertise, years, student_count, course_count, achievements)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           ins.id,
           ins.name,
@@ -197,6 +197,7 @@ async function seed() {
           ins.bio,
           ins.color,
           ins.name.charAt(0),
+          1,
           ins.expertise,
           ins.years,
           ins.studentCount,

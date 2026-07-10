@@ -9,13 +9,16 @@ import {
   Popconfirm,
   Space,
   Spin,
+  Switch,
   message,
   ColorPicker,
   Upload,
   Avatar as AntAvatar,
+  Tag,
 } from 'antd'
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { ApiRequestError } from '../../api/client'
 import dayjs from 'dayjs'
 import { instructorApi } from '../../api'
 
@@ -24,6 +27,7 @@ interface InstructorItem {
   name: string
   title: string
   service: string
+  status: number
   bio?: string
   color: string
   avatar?: string
@@ -31,12 +35,19 @@ interface InstructorItem {
   years?: number
   studentCount?: number
   courseCount?: number
+  linkedCourseCount?: number
   achievements?: string
   createdAt: string
 }
 
+function isAvatarImageUrl(value?: string): boolean {
+  if (!value) return false
+  return /^https?:\/\//.test(value) || value.startsWith('/')
+}
+
 export default function Instructors() {
   const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [data, setData] = useState<InstructorItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState<InstructorItem | null>(null)
@@ -62,7 +73,7 @@ export default function Instructors() {
   const handleCreate = () => {
     setEditingRecord(null)
     form.resetFields()
-    form.setFieldsValue({ color: '#0D9488' })
+    form.setFieldsValue({ color: '#0D9488', status: true })
     setAvatarUrl('')
     setModalOpen(true)
   }
@@ -72,8 +83,9 @@ export default function Instructors() {
     form.setFieldsValue({
       ...record,
       color: record.color || '#0D9488',
+      status: record.status === 1,
     })
-    setAvatarUrl(record.avatar || '')
+    setAvatarUrl(isAvatarImageUrl(record.avatar) ? record.avatar || '' : '')
     setModalOpen(true)
   }
 
@@ -82,14 +94,39 @@ export default function Instructors() {
       await instructorApi.remove(id)
       message.success('删除成功')
       fetchData()
-    } catch {
-      message.error('删除失败')
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '删除失败')
+    }
+  }
+
+  const handleToggleStatus = async (record: InstructorItem) => {
+    try {
+      await instructorApi.toggleStatus(record.id)
+      message.success(record.status === 1 ? '已下架' : '已上架')
+      fetchData()
+    } catch (error) {
+      if (
+        error instanceof ApiRequestError &&
+        error.status === 404 &&
+        (error.responseText || '').includes('Cannot PUT /api/admin/instructors/')
+      ) {
+        message.error('当前线上环境未部署讲师上下架接口，请先发布后端接口后再操作')
+        return
+      }
+      message.error(error instanceof Error ? error.message : '状态切换失败')
     }
   }
 
   const handleSubmit = async () => {
+    let values: any
     try {
-      const values = await form.validateFields()
+      values = await form.validateFields()
+    } catch {
+      return
+    }
+
+    try {
+      setSubmitting(true)
       const colorValue =
         typeof values.color === 'string'
           ? values.color
@@ -98,6 +135,7 @@ export default function Instructors() {
       const payload = {
         ...values,
         color: colorValue,
+        status: values.status ? 1 : 0,
       }
 
       if (editingRecord) {
@@ -109,8 +147,10 @@ export default function Instructors() {
       }
       setModalOpen(false)
       fetchData()
-    } catch {
-      // form validation failed
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : (editingRecord ? '更新失败' : '新增失败'))
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -125,11 +165,11 @@ export default function Instructors() {
       dataIndex: 'avatar',
       width: 80,
       render: (avatar: string | undefined, record: InstructorItem) =>
-        avatar ? (
+        isAvatarImageUrl(avatar) ? (
           <AntAvatar src={avatar} size={40} />
         ) : (
           <AntAvatar size={40} style={{ backgroundColor: record.color || '#0D9488' }}>
-            {record.name?.[0] || '?'}
+            {avatar || record.name?.[0] || '?'}
           </AntAvatar>
         ),
     },
@@ -142,6 +182,13 @@ export default function Instructors() {
       title: '头衔',
       dataIndex: 'title',
       width: 140,
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      width: 90,
+      render: (value: number) =>
+        value === 1 ? <Tag color="green">上架</Tag> : <Tag color="default">下架</Tag>,
     },
     {
       title: '服务说明',
@@ -172,6 +219,14 @@ export default function Instructors() {
       dataIndex: 'courseCount',
       width: 90,
       render: (v: number | undefined) => (v != null ? v : '-'),
+    },
+    {
+      title: '关联课程',
+      dataIndex: 'linkedCourseCount',
+      width: 110,
+      render: (v: number | undefined) => (
+        v ? <Tag color="gold">{`${v} 门`}</Tag> : <Tag color="default">0 门</Tag>
+      ),
     },
     {
       title: '头像背景色',
@@ -212,16 +267,35 @@ export default function Instructors() {
           <Button type="link" size="small" onClick={() => handleEdit(record)}>
             编辑
           </Button>
-          <Popconfirm
-            title="确认删除该讲师吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button type="link" size="small" danger>
+          <Button type="link" size="small" onClick={() => handleToggleStatus(record)}>
+            {record.status === 1 ? '下架' : '上架'}
+          </Button>
+          {(record.linkedCourseCount || 0) > 0 ? (
+            <Button
+              type="link"
+              size="small"
+              danger
+              disabled
+              title={
+                record.status === 1
+                  ? '该讲师已关联课程，请先下架；若要彻底删除，还需先解除课程关联'
+                  : '该讲师已关联课程，虽已下架但仍需先解除课程关联后才能删除'
+              }
+            >
               删除
             </Button>
-          </Popconfirm>
+          ) : (
+            <Popconfirm
+              title="确认删除该讲师吗？"
+              onConfirm={() => handleDelete(record.id)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button type="link" size="small" danger>
+                删除
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -251,6 +325,7 @@ export default function Instructors() {
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
+        confirmLoading={submitting}
         okText="确定"
         cancelText="取消"
         width={600}
@@ -285,6 +360,10 @@ export default function Instructors() {
             <ColorPicker showText format="hex" />
           </Form.Item>
 
+          <Form.Item label="上架状态" name="status" valuePropName="checked">
+            <Switch checkedChildren="上架" unCheckedChildren="下架" />
+          </Form.Item>
+
           <Form.Item label="头像图片" name="avatar">
             <Upload
               listType="picture-circle"
@@ -296,7 +375,7 @@ export default function Instructors() {
                   const { url } = await instructorApi.uploadAvatar(file as File)
                   form.setFieldValue('avatar', url)
                   setAvatarUrl(url)
-                  message.success('头像上传成功')
+                  message.success('头像上传成功，请点击确定保存')
                   onSuccess?.(null)
                 } catch (err) {
                   message.error('头像上传失败')
