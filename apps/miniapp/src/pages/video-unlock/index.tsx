@@ -47,6 +47,22 @@ export default function VideoUnlock() {
   const [success, setSuccess] = useState<{ courseId: number; courseTitle: string } | null>(null)
   const [claimStatus, setClaimStatus] = useState<ClaimStatus | null>(null)
 
+  const goToCourse = async (courseId: number) => {
+    const courseUrl = `/pages/course-detail/index?id=${courseId}`
+    try {
+      await Taro.redirectTo({ url: courseUrl })
+      return true
+    } catch {
+      try {
+        await Taro.navigateTo({ url: courseUrl })
+        return true
+      } catch {
+        Taro.showToast({ title: '进入课程失败', icon: 'none' })
+        return false
+      }
+    }
+  }
+
   // 支持三类入口：URL Link token、小程序码 scene、手动兑换码 code。
   useEffect(() => {
     const params = router.params || {}
@@ -83,6 +99,7 @@ export default function VideoUnlock() {
       setClaimStatus(result)
       if (result.status === 'claimed_current_user' && result.courseId) {
         setSuccess({ courseId: result.courseId, courseTitle: result.courseTitle || '' })
+        void goToCourse(result.courseId)
       }
     } catch (err) {
       showApiError(err, '查询订单失败')
@@ -142,10 +159,7 @@ export default function VideoUnlock() {
 
   const handleGoToCourse = () => {
     if (!success) return
-    const courseUrl = `/pages/course-detail/index?id=${success.courseId}`
-    Taro.redirectTo({ url: courseUrl })
-      .catch(() => Taro.navigateTo({ url: courseUrl }))
-      .catch(() => Taro.showToast({ title: '进入课程失败', icon: 'none' }))
+    void goToCourse(success.courseId)
   }
 
   const handleReset = () => {

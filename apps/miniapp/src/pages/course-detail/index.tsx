@@ -9,7 +9,7 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, markWxshopPurchasePending, getWxshopPendingPurchase, clearWxshopPendingPurchase, toggleFavorite, checkFavorite, getInstructorById, resolveColor, resolveUrl } from '../../services'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, getWxshopPendingPurchase, clearWxshopPendingPurchase, toggleFavorite, checkFavorite, getInstructorById, navigateToWxshopProductFromSource, resolveColor, resolveUrl } from '../../services'
 import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
 import type { WxshopEntryState } from '../../services'
 import './index.scss'
@@ -229,35 +229,13 @@ export default function CourseDetail() {
   const totalHours = (totalSeconds / 3600).toFixed(1)
   const canOpenWxshop = wxshopEntry?.canOpen === true
 
-  const handleWxshopEnterSuccess = () => {
-    if (wxshopEntry?.productId) {
-      markWxshopPurchasePending({
-        courseId,
-        productId: wxshopEntry.productId,
-        courseTitle: course?.title,
-        productTitle: wxshopEntry.product?.productTitle,
-        sourcePage: 'course-detail',
-      })
-    }
-    console.log('[wxshop] enter success', {
-      courseId,
-      productId: wxshopEntry?.productId,
-      appid: wxshopEntry?.appid,
-    })
-  }
-
-  const handleWxshopEnterError = (detail?: unknown) => {
-    console.error('[wxshop] enter error', {
-      courseId,
-      detail,
-      state: wxshopEntry,
-    })
-    Taro.showToast({ title: '打开微信小店失败', icon: 'none' })
+  const handleGoToBuy = () => {
+    void navigateToWxshopProductFromSource(courseId, 'course-detail')
   }
 
   return (
     <View className='course-detail-page'>
-      <NavBar title='课程详情' share copyPath={`/pages/course-detail/index?id=${courseId}`} />
+      <NavBar title='课程详情' share />
 
       <ScrollView className='detail-scroll' scrollY>
         {loading ? (
@@ -408,25 +386,11 @@ export default function CourseDetail() {
             <View className='enroll-btn'>
               支付确认中...
             </View>
-          ) : canOpenWxshop ? (
-            <store-product
-              class='store-product-btn'
-              appid={wxshopEntry?.appid}
-              product-id={wxshopEntry?.productId}
-              product-path={wxshopEntry?.config.productPath}
-              custom-style={storeProductStyle}
-              bindentersuccess={handleWxshopEnterSuccess}
-              bindentererror={(e: any) => {
-                handleWxshopEnterError(e.detail)
-              }}
-            />
           ) : (
             <View
               className='enroll-btn'
-              onClick={() => showWxshopUnavailable(wxshopEntry ?? {
-                reason: 'missing_product',
-                message: '该课程暂未绑定微信小店商品',
-              })}
+              onClick={handleGoToBuy}
+              style={canOpenWxshop ? (storeProductStyle['buy-button'] as Record<string, string>) : undefined}
             >
               {primaryBtnText}
             </View>
