@@ -5,7 +5,7 @@
  * 注意：
  * - 主题色通过 app.ts 根节点 inline style 设置 CSS 变量完成
  * - TabBar 颜色通过 Taro.setTabBarStyle 动态设置
- * - TabBar 图标通过 downloadFile 下载到本地缓存 + Taro.setTabBarItem 设置
+ * - TabBar 图标优先直接使用线上 URL；若运行环境不接受网络图，再回退为 downloadFile + setTabBarItem
  */
 import Taro from '@tarojs/taro'
 import { request, BASE_URL } from './request'
@@ -183,23 +183,25 @@ export function applyTabBarTheme(config: ThemeConfig): void {
 
 /**
  * 下载网络图片到本地临时文件，返回本地路径
- * 已下载过的（按 URL 缓存）直接返回缓存路径
+ * 仅在运行环境不接受直接传入网络 URL 时作为回退方案
  */
 async function downloadIcon(url: string): Promise<string> {
   if (!url) return ''
 
+  const absoluteUrl = toAbsoluteUrl(url)
+
   // 检查缓存
   const cache = Taro.getStorageSync(TAB_ICON_CACHE_KEY) || {}
-  if (cache[url]) {
+  if (cache[absoluteUrl]) {
     // 校验本地文件是否还存在（Taro.getFileSystemManager 不可用则直接用）
-    return cache[url]
+    return cache[absoluteUrl]
   }
 
   try {
-    const res = await Taro.downloadFile({ url: toAbsoluteUrl(url) })
+    const res = await Taro.downloadFile({ url: absoluteUrl })
     if (res.statusCode === 200) {
       // 缓存映射
-      cache[url] = res.tempFilePath
+      cache[absoluteUrl] = res.tempFilePath
       Taro.setStorageSync(TAB_ICON_CACHE_KEY, cache)
       return res.tempFilePath
     }
@@ -211,33 +213,41 @@ async function downloadIcon(url: string): Promise<string> {
 
 /**
  * 应用 TabBar 图标配置
- * 下载每个 tab 的图标到本地，再调用 setTabBarItem 设置
+ * 2.7.0 起支持网络文件，这里优先直接下发线上 URL。
+ * 若某次运行环境不接受网络图，再回退到本地临时文件。
  */
 export async function applyTabBarIcons(config: ThemeConfig): Promise<void> {
   const items = config.tabItems
   if (!items || items.length === 0) return
 
-  // 并行下载所有图标
-  const downloadTasks = items.map((item) =>
-    Promise.all([
-      downloadIcon(item.iconUrl),
-      downloadIcon(item.activeIconUrl),
-    ])
-  )
-  const results = await Promise.all(downloadTasks)
-
-  // 依次设置每个 tab item（含图标和文字）
   for (let i = 0; i < items.length; i++) {
-    const [iconPath, selectedIconPath] = results[i]
+    const item = items[i]
+    const iconUrl = toAbsoluteUrl(item.iconUrl)
+    const selectedIconUrl = toAbsoluteUrl(item.activeIconUrl)
+
     try {
       await Taro.setTabBarItem({
         index: i,
-        text: items[i].text,
-        iconPath: iconPath || undefined,
-        selectedIconPath: selectedIconPath || undefined,
+        text: item.text,
+        iconPath: iconUrl || undefined,
+        selectedIconPath: selectedIconUrl || undefined,
       })
     } catch {
-      // 单个设置失败不影响其他
+      const [iconPath, selectedIconPath] = await Promise.all([
+        downloadIcon(item.iconUrl),
+        downloadIcon(item.activeIconUrl),
+      ])
+
+      try {
+        await Taro.setTabBarItem({
+          index: i,
+          text: item.text,
+          iconPath: iconPath || undefined,
+          selectedIconPath: selectedIconPath || undefined,
+        })
+      } catch {
+        // 单个设置失败不影响其他
+      }
     }
   }
 }
