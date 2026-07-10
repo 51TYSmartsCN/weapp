@@ -9,8 +9,8 @@ import InstructorCard from '../../components/InstructorCard'
 import StatsCard from '../../components/StatsCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCategories, getCoursesByCategory, getInstructors, getBanners, showApiError } from '../../services'
-import type { Banner, Course, Instructor } from '../../types'
+import { ApiException, getCategories, getCoursesByCategory, getInstructors, getBanners, getHomeStats, showApiError } from '../../services'
+import type { Banner, Course, HomeStatItem, Instructor } from '../../types'
 import { Category, CATEGORY_LABELS } from '../../types'
 // import { useAutoFill } from '../../hooks/useAutoFill'
 import './index.scss'
@@ -22,6 +22,7 @@ export default function Index() {
   const [categories, setCategories] = useState<Category[]>([])
   const [instructors, setInstructors] = useState<Instructor[]>([])
   const [banners, setBanners] = useState<Banner[]>([])
+  const [homeStats, setHomeStats] = useState<HomeStatItem[]>([])
   const [loading, setLoading] = useState(true)
 
   // const searchAutoFill = useAutoFill({
@@ -33,27 +34,55 @@ export default function Index() {
   //   }
   // })
 
+  const showHomeError = (err: unknown, fallback: string) => {
+    if (err instanceof ApiException && err.code === 401) {
+      Taro.showToast({ title: fallback, icon: 'none' })
+      return
+    }
+    showApiError(err, fallback)
+  }
+
   const loadCourses = (category: Category) => {
     setLoading(true)
     getCoursesByCategory(category)
       .then((data) => setFilteredCourses(data.slice(0, 2)))
-      .catch((err) => showApiError(err, '课程加载失败'))
+      .catch((err) => showHomeError(err, '课程加载失败'))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       getCategories(),
       getInstructors(),
       getBanners(),
+      getHomeStats(),
     ])
-      .then(([categoriesData, instructorsData, bannersData]) => {
+      .then(([categoriesResult, instructorsResult, bannersResult, homeStatsResult]) => {
+        const errors: unknown[] = []
+
+        const categoriesData = categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
+        if (categoriesResult.status === 'rejected') errors.push(categoriesResult.reason)
+
+        const instructorsData = instructorsResult.status === 'fulfilled' ? instructorsResult.value : []
+        if (instructorsResult.status === 'rejected') errors.push(instructorsResult.reason)
+
+        const bannersData = bannersResult.status === 'fulfilled' ? bannersResult.value : []
+        if (bannersResult.status === 'rejected') errors.push(bannersResult.reason)
+
+        const homeStatsData = homeStatsResult.status === 'fulfilled' ? homeStatsResult.value : []
+        if (homeStatsResult.status === 'rejected') errors.push(homeStatsResult.reason)
+
         setCategories(categoriesData)
         setInstructors(instructorsData)
         setBanners(bannersData)
+        setHomeStats(homeStatsData)
+
+        if (errors.length > 0) {
+          showHomeError(errors[0], errors.length === 4 ? '首页数据加载失败' : '首页部分数据加载失败')
+        }
+
         loadCourses(categoriesData[0] || Category.All)
       })
-      .catch((err) => showApiError(err, '首页数据加载失败'))
   }, [])
 
   const handleCategoryChange = (index: number) => {
@@ -211,15 +240,22 @@ export default function Index() {
           {/* Hot Courses */}
           <View className='home-section'>
             <SectionHeader title='热门课程' linkText='查看全部' onLinkClick={goToCourseList} />
-            <View className='course-grid'>
-              {filteredCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  mode='grid'
-                />
-              ))}
-            </View>
+            {filteredCourses.length === 0 ? (
+              <View className='home-course-empty'>
+                <Icon name='book-open' size={88} color='#94A3B8' />
+                <Text className='home-course-empty-text'>暂无课程，敬请期待</Text>
+              </View>
+            ) : (
+              <View className='course-grid'>
+                {filteredCourses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    mode='grid'
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
           {/* Instructors */}
@@ -243,18 +279,16 @@ export default function Index() {
           </View>
 
           {/* Stats */}
-          <View className='home-section'>
-            <StatsCard
-              items={[
-                { value: '10,000+', label: '学员' },
-                { value: '200+', label: '企业客户' },
-                { value: '98%', label: '好评率' }
-              ]}
-              bg='var(--theme-primary-lightest, #F0FDFA)'
-              dividerColor='var(--theme-primary-lighter, #99F6E4)'
-              valueColor='var(--theme-primary-dark, #0F766E)'
-            />
-          </View>
+          {homeStats.length > 0 && (
+            <View className='home-section'>
+              <StatsCard
+                items={homeStats}
+                bg='var(--theme-primary-lightest, #F0FDFA)'
+                dividerColor='var(--theme-primary-lighter, #99F6E4)'
+                valueColor='var(--theme-primary-dark, #0F766E)'
+              />
+            </View>
+          )}
 
           <View className='home-bottom-space' />
         </>

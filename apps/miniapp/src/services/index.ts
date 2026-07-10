@@ -36,6 +36,7 @@ export {
 } from './course'
 
 export { getBanners } from './banner'
+export { getHomeStats } from './home'
 
 export { getInstructors, getInstructorById } from './instructor'
 export { getLessons, getLessonById, getLessonPlayUrl, getLessonContent, reportLessonProgress } from './lesson'

@@ -110,6 +110,12 @@ export interface Banner {
   sort: number
 }
 
+/** 首页统计项 */
+export interface HomeStatItem {
+  value: string
+  label: string
+}
+
 /** Category → 中文显示名 */
 export const CATEGORY_LABELS: Record<Category, string> = {
   [Category.All]: '全部',

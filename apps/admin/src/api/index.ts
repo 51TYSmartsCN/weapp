@@ -284,6 +284,11 @@ interface AppInfo {
   appDescription?: string
 }
 
+interface HomeStatItem {
+  value: string
+  label: string
+}
+
 export const appConfigApi = {
   getTheme() {
     return request<any>({ url: '/admin/app-configs/theme' })
@@ -335,6 +340,18 @@ export const appConfigApi = {
       method: 'PUT',
       url: '/admin/app-configs/module_modes',
       data: { value: data, description: '模块展示模式配置（lessonPlayer.contentMode / courseDetailCover.mode）' },
+    })
+  },
+  /** 获取首页统计卡片配置 */
+  getHomeStats() {
+    return request<any>({ url: '/admin/app-configs/home_stats' })
+  },
+  /** 更新首页统计卡片配置 */
+  updateHomeStats(data: HomeStatItem[]) {
+    return request({
+      method: 'PUT',
+      url: '/admin/app-configs/home_stats',
+      data: { value: data, description: '首页统计卡片配置' },
     })
   },
   /** 获取微信小店配置 */
