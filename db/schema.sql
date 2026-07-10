@@ -387,6 +387,10 @@ INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
 INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
 ('app-info', '{"appName":"GEO 课程","appDescription":"专注 GEO 领域的实战学习平台"}', '应用基础信息（名称、描述、Logo）');
 
+-- 首页统计卡片配置（首页 StatsCard）
+INSERT INTO `app_configs` (`key`, `value`, `description`) VALUES
+('home_stats', '[{"value":"10,000+","label":"学员"},{"value":"200+","label":"企业客户"},{"value":"98%","label":"好评率"}]', '首页统计卡片配置');
+
 -- ------------------------------------------------------------
 -- 表名：wxshop_products（微信小店商品-课程映射表）
 -- ------------------------------------------------------------

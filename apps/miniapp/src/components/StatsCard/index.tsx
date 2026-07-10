@@ -1,13 +1,9 @@
 import { View, Text } from '@tarojs/components'
+import type { HomeStatItem } from '../../types'
 import './index.scss'
 
-interface StatItem {
-  value: string
-  label: string
-}
-
 interface StatsCardProps {
-  items: StatItem[]
+  items: HomeStatItem[]
   bg?: string
   dividerColor?: string
   valueColor?: string

@@ -176,6 +176,28 @@ router.get('/app-configs/app-info', async (_req, res) => {
 })
 
 /**
+ * GET /api/app-configs/home-stats - 小程序获取首页统计卡片配置（无需登录，需放在 :key 之前）
+ * 控制首页 StatsCard 的展示内容
+ */
+router.get('/app-configs/home-stats', async (_req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT value FROM app_configs WHERE `key` = ?', ['home_stats']) as [any[], any]
+    const row = rows[0]
+    if (!row) {
+      return ok(res, [
+        { value: '10,000+', label: '学员' },
+        { value: '200+', label: '企业客户' },
+        { value: '98%', label: '好评率' },
+      ])
+    }
+    return ok(res, JSON.parse(row.value))
+  } catch (err) {
+    console.error(err)
+    return fail(res, 500, '服务器错误')
+  }
+})
+
+/**
  * POST /api/admin/app-configs/tabbar/icon/:index/:state
  * 上传 TabBar 图标
  * - index: tab 序号 0-3

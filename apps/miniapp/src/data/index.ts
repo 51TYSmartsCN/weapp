@@ -3,6 +3,7 @@ export * from './instructors'
 export * from './reviews'
 export * from './lessons'
 export * from './menu'
+export * from './home-stats'
 export { user } from './user'
 
 export { myCourses } from './user-courses'

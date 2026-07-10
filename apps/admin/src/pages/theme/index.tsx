@@ -31,6 +31,11 @@ interface AppInfo {
   appDescription?: string
 }
 
+interface HomeStatItem {
+  value: string
+  label: string
+}
+
 const colorLabels: Record<string, string> = {
   primary: '主色',
   primaryLight: '浅主色',
@@ -66,6 +71,12 @@ const defaultAppInfo: AppInfo = {
   appDescription: '专注 GEO 领域的实战学习平台',
 }
 
+const defaultHomeStats: HomeStatItem[] = [
+  { value: '10,000+', label: '学员' },
+  { value: '200+', label: '企业客户' },
+  { value: '98%', label: '好评率' },
+]
+
 // 主题色字段
 const themeColorKeys = ['primary', 'primaryLight', 'primaryLighter', 'primaryLightest', 'primaryDark', 'primaryDarker']
 // TabBar 颜色字段
@@ -83,6 +94,8 @@ export default function ThemeConfig() {
   const [appInfo, setAppInfo] = useState<AppInfo>(defaultAppInfo)
   const [savingAppInfo, setSavingAppInfo] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [homeStats, setHomeStats] = useState<HomeStatItem[]>(defaultHomeStats)
+  const [savingHomeStats, setSavingHomeStats] = useState(false)
 
   // 加载主题配置
   const loadTheme = async () => {
@@ -114,6 +127,16 @@ export default function ThemeConfig() {
     }
   }
 
+  const loadHomeStats = async () => {
+    try {
+      const data = await appConfigApi.getHomeStats()
+      const list = ((data && (data as any).value) || data || []) as HomeStatItem[]
+      setHomeStats(list.length > 0 ? list : defaultHomeStats)
+    } catch {
+      // 忽略，使用默认值
+    }
+  }
+
   // 保存应用信息
   const handleSaveAppInfo = async () => {
     if (!appInfo.appName.trim()) {
@@ -128,6 +151,29 @@ export default function ThemeConfig() {
       message.error('保存失败')
     } finally {
       setSavingAppInfo(false)
+    }
+  }
+
+  const handleSaveHomeStats = async () => {
+    const normalized = homeStats.map((item) => ({
+      value: item.value.trim(),
+      label: item.label.trim(),
+    }))
+
+    if (normalized.some((item) => !item.value || !item.label)) {
+      message.error('首页统计的数值和标签都不能为空')
+      return
+    }
+
+    setSavingHomeStats(true)
+    try {
+      await appConfigApi.updateHomeStats(normalized)
+      setHomeStats(normalized)
+      message.success('首页统计已保存')
+    } catch {
+      message.error('保存失败')
+    } finally {
+      setSavingHomeStats(false)
     }
   }
 
@@ -149,6 +195,7 @@ export default function ThemeConfig() {
   useEffect(() => {
     loadTheme()
     loadAppInfo()
+    loadHomeStats()
   }, [])
 
   // 保存主题配置
@@ -207,6 +254,12 @@ export default function ThemeConfig() {
     const newItems = [...tabItems]
     newItems[index] = { ...newItems[index], text }
     setTabItems(newItems)
+  }
+
+  const handleHomeStatChange = (index: number, key: keyof HomeStatItem, value: string) => {
+    const next = [...homeStats]
+    next[index] = { ...next[index], [key]: value }
+    setHomeStats(next)
   }
 
   const renderColorPicker = (key: string) => (
@@ -295,6 +348,39 @@ export default function ThemeConfig() {
             </Button>
           </div>
         </div>
+      </Card>
+
+      <Card title="首页统计" size="small" style={{ marginBottom: 24, background: '#fafafa' }}>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          配置首页统计卡片的数值与文案，保存后小程序首页的统计区会同步更新。
+        </Text>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
+          {homeStats.map((item, index) => (
+            <Card key={index} size="small">
+              <div style={{ marginBottom: 12 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>数值</Text>
+                <Input
+                  value={item.value}
+                  onChange={(e) => handleHomeStatChange(index, 'value', e.target.value)}
+                  placeholder="如：10,000+"
+                  maxLength={20}
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>标签</Text>
+                <Input
+                  value={item.label}
+                  onChange={(e) => handleHomeStatChange(index, 'label', e.target.value)}
+                  placeholder="如：学员"
+                  maxLength={20}
+                />
+              </div>
+            </Card>
+          ))}
+        </div>
+        <Button type="primary" onClick={handleSaveHomeStats} loading={savingHomeStats}>
+          保存首页统计
+        </Button>
       </Card>
 
       {/* 主题色预览区 */}

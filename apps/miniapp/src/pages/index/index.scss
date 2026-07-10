@@ -156,6 +156,22 @@
   gap: $md;
 }
 
+.home-course-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $md;
+  padding: 72rpx $base;
+  border-radius: $radius-lg;
+  background: $bg-secondary;
+}
+
+.home-course-empty-text {
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
 .instructor-scroll {
   width: 100%;
   display: flex;
