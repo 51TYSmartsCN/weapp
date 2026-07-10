@@ -184,6 +184,23 @@ export function clearWxshopPendingPurchase(courseId?: number) {
 }
 
 export async function navigateToWxshopProduct(courseId: number): Promise<boolean> {
+  return navigateToWxshopProductFromSource(courseId, 'unknown')
+}
+
+function resolveWxshopNavigateErrorMessage(err: unknown): string {
+  const errMsg = typeof err === 'string'
+    ? err
+    : (err && typeof err === 'object' && 'errMsg' in err ? String((err as { errMsg?: unknown }).errMsg || '') : '')
+
+  if (errMsg.includes('cancel')) return '已取消打开微信小店'
+  if (errMsg.includes('fail')) return '打开微信小店失败，请稍后重试'
+  return '暂时无法打开微信小店，请稍后重试'
+}
+
+export async function navigateToWxshopProductFromSource(
+  courseId: number,
+  sourcePage: WxshopPendingPurchase['sourcePage']
+): Promise<boolean> {
   const state = await getWxshopEntryState(courseId)
 
   if (!state.canOpen) {
@@ -199,7 +216,7 @@ export async function navigateToWxshopProduct(courseId: number): Promise<boolean
       productId: state.productId,
       courseTitle: state.product?.courseTitle,
       productTitle: state.product?.productTitle,
-      sourcePage: 'unknown',
+      sourcePage,
     })
     await Taro.navigateToMiniProgram({
       appId: state.appid,
@@ -213,7 +230,7 @@ export async function navigateToWxshopProduct(courseId: number): Promise<boolean
     return true
   } catch (err) {
     console.error('[wxshop] navigate fail:', err)
-    Taro.showToast({ title: '跳转小店失败', icon: 'none' })
+    Taro.showToast({ title: resolveWxshopNavigateErrorMessage(err), icon: 'none' })
     return false
   }
 }

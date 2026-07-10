@@ -15,10 +15,9 @@ import {
   refreshModuleModes,
   showApiError,
   getWxshopEntryState,
-  showWxshopUnavailable,
-  markWxshopPurchasePending,
   getWxshopPendingPurchase,
   clearWxshopPendingPurchase,
+  navigateToWxshopProductFromSource,
 } from '../../services'
 import type { Course, Lesson, CourseAccess } from '../../types'
 import type { WxshopEntryState } from '../../services'
@@ -201,39 +200,7 @@ export default function LessonPlayer() {
   }
 
   const handleGoToBuy = () => {
-    if (wxshopEntry?.canOpen) return
-    showWxshopUnavailable(wxshopEntry ?? {
-      reason: 'missing_product',
-      message: '该课程暂未绑定微信小店商品',
-    })
-  }
-
-  const canOpenWxshop = wxshopEntry?.canOpen === true
-
-  const handleWxshopEnterSuccess = () => {
-    if (wxshopEntry?.productId) {
-      markWxshopPurchasePending({
-        courseId,
-        productId: wxshopEntry.productId,
-        courseTitle: course?.title,
-        productTitle: wxshopEntry.product?.productTitle,
-        sourcePage: 'lesson-player',
-      })
-    }
-    console.log('[wxshop] enter success', {
-      courseId,
-      productId: wxshopEntry?.productId,
-      appid: wxshopEntry?.appid,
-    })
-  }
-
-  const handleWxshopEnterError = (detail?: unknown) => {
-    console.error('[wxshop] enter error', {
-      courseId,
-      detail,
-      state: wxshopEntry,
-    })
-    Taro.showToast({ title: '打开微信小店失败', icon: 'none' })
+    void navigateToWxshopProductFromSource(courseId, 'lesson-player')
   }
 
   if (loading) {
@@ -305,26 +272,9 @@ export default function LessonPlayer() {
                 支付确认中...
               </View>
             ) : !access?.isVip && (
-              canOpenWxshop ? (
-                <store-product
-                  appid={wxshopEntry?.appid}
-                  product-id={wxshopEntry?.productId}
-                  product-path={wxshopEntry?.config.productPath}
-                  custom-content
-                  open-page='product-detail'
-                  logo-position='bottom-right'
-                  bindentersuccess={handleWxshopEnterSuccess}
-                  bindentererror={(e: any) => handleWxshopEnterError(e.detail)}
-                >
-                  <View className='player-lock-btn'>
-                    去购买课程
-                  </View>
-                </store-product>
-              ) : (
-                <View className='player-lock-btn' onClick={handleGoToBuy}>
-                  去购买课程
-                </View>
-              )
+              <View className='player-lock-btn' onClick={handleGoToBuy}>
+                去购买课程
+              </View>
             )}
           </View>
         )}
