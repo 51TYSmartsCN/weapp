@@ -70,11 +70,36 @@ interface AppConfigRow {
   updated_at: Date
 }
 
+function appendVersion(url: string, version: string): string {
+  if (!url) return url
+
+  const [pathname, queryString = ''] = url.split('?')
+  const params = new URLSearchParams(queryString)
+  params.set('v', version)
+  return `${pathname}?${params.toString()}`
+}
+
+function withTabIconVersion(value: any, updatedAt?: Date): any {
+  if (!value || !Array.isArray(value.tabItems) || !updatedAt) return value
+
+  const version = String(new Date(updatedAt).getTime())
+  return {
+    ...value,
+    tabItems: value.tabItems.map((item: any) => ({
+      ...item,
+      iconUrl: appendVersion(item.iconUrl || '', version),
+      activeIconUrl: appendVersion(item.activeIconUrl || '', version),
+    })),
+  }
+}
+
 function mapConfigRow(row: any) {
   return {
     id: row.id,
     key: row.key,
-    value: JSON.parse(row.value),
+    value: row.key === 'theme'
+      ? withTabIconVersion(JSON.parse(row.value), row.updated_at)
+      : JSON.parse(row.value),
     description: row.description,
     updatedAt: row.updated_at,
   }
@@ -83,7 +108,7 @@ function mapConfigRow(row: any) {
 /** GET /api/app-configs/theme - 小程序获取主题配置（无需登录，需放在 :key 之前） */
 router.get('/app-configs/theme', async (_req, res) => {
   try {
-    const [rows] = await pool.query('SELECT value FROM app_configs WHERE `key` = ?', ['theme']) as [any[], any]
+    const [rows] = await pool.query('SELECT value, updated_at FROM app_configs WHERE `key` = ?', ['theme']) as [any[], any]
     const row = rows[0]
     if (!row) {
       // 返回默认主题色（蓝紫色系）
@@ -99,7 +124,7 @@ router.get('/app-configs/theme', async (_req, res) => {
         tabBarBgColor: '#FFFFFF',
       })
     }
-    return ok(res, JSON.parse(row.value))
+    return ok(res, withTabIconVersion(JSON.parse(row.value), row.updated_at))
   } catch (err) {
     console.error(err)
     return fail(res, 500, '服务器错误')
@@ -166,8 +191,8 @@ router.post('/app-configs/tabbar/icon/:index/:state', authMiddleware, upload.sin
 
     if (!req.file) return fail(res, 400, '未收到文件')
 
-    // 返回可访问 URL（静态资源已挂载 /images）
-    const url = `/images/tab/${req.file.filename}`
+    // 固定文件名会让小程序和浏览器命中旧缓存，这里返回带版本号的 URL 强制刷新。
+    const url = appendVersion(`/images/tab/${req.file.filename}`, String(Date.now()))
     return ok(res, { url })
   } catch (err) {
     console.error(err)
