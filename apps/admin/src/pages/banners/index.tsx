@@ -13,9 +13,12 @@ import {
   message,
   Tag,
   Image,
+  Upload,
 } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { bannerApi } from '../../api'
+
+const BANNER_IMAGE_MAX_SIZE_MB = 2
 
 interface BannerItem {
   id: number
@@ -47,6 +50,8 @@ export default function Banners() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<BannerItem | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [form] = Form.useForm()
 
   const fetchList = async () => {
@@ -69,6 +74,7 @@ export default function Banners() {
     setEditingItem(null)
     form.resetFields()
     form.setFieldsValue({ sort: 0, status: 1, linkType: 'none' })
+    setImageUrl('')
     setModalOpen(true)
   }
 
@@ -83,6 +89,7 @@ export default function Banners() {
       sort: record.sort,
       status: record.status === 1,
     })
+    setImageUrl(record.image || '')
     setModalOpen(true)
   }
 
@@ -122,6 +129,7 @@ export default function Banners() {
         message.success('创建成功')
       }
       setModalOpen(false)
+      setImageUrl('')
       fetchList()
     } catch {
       // validation error or api error
@@ -227,7 +235,10 @@ export default function Banners() {
         title={editingItem ? '编辑轮播图' : '新增轮播图'}
         open={modalOpen}
         onOk={handleModalOk}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false)
+          setUploadingImage(false)
+        }}
         confirmLoading={confirmLoading}
         destroyOnClose
         width={560}
@@ -239,8 +250,57 @@ export default function Banners() {
           <Form.Item name='subtitle' label='副标题'>
             <Input placeholder='请输入副标题' />
           </Form.Item>
-          <Form.Item name='image' label='图片' rules={[{ required: true, message: '请输入图片地址' }]}>
-            <Input placeholder='请输入图片 URL' />
+          <Form.Item label='图片'>
+            <Space direction='vertical' style={{ width: '100%' }} size={12}>
+              <Upload
+                accept='image/png,image/jpeg'
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  const isAllowedType = ['image/png', 'image/jpeg'].includes(file.type)
+                  if (!isAllowedType) {
+                    message.error('仅支持 JPG/PNG 格式')
+                    return Upload.LIST_IGNORE
+                  }
+
+                  const isAllowedSize = file.size / 1024 / 1024 <= BANNER_IMAGE_MAX_SIZE_MB
+                  if (!isAllowedSize) {
+                    message.error(`Banner 图片大小不能超过 ${BANNER_IMAGE_MAX_SIZE_MB}MB`)
+                    return Upload.LIST_IGNORE
+                  }
+
+                  return true
+                }}
+                customRequest={async (options) => {
+                  const { file, onSuccess, onError } = options
+                  setUploadingImage(true)
+                  try {
+                    const { url } = await bannerApi.uploadImage(file as File)
+                    form.setFieldValue('image', url)
+                    setImageUrl(url)
+                    message.success('Banner 图片上传成功')
+                    onSuccess?.({ url })
+                  } catch (err) {
+                    message.error('Banner 图片上传失败')
+                    onError?.(err as Error)
+                  } finally {
+                    setUploadingImage(false)
+                  }
+                }}
+              >
+                <Button icon={<UploadOutlined />} loading={uploadingImage}>
+                  上传 Banner 图片
+                </Button>
+              </Upload>
+              {imageUrl ? (
+                <Image src={imageUrl} width={200} height={80} style={{ objectFit: 'cover', borderRadius: 8 }} />
+              ) : null}
+              <Form.Item name='image' rules={[{ required: true, message: '请上传图片或填写图片地址' }]} style={{ marginBottom: 0 }}>
+                <Input
+                  placeholder='仅支持 JPG/PNG，最大 2MB；上传后会自动回填，也可手动输入图片地址'
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </Form.Item>
+            </Space>
           </Form.Item>
           <Form.Item name='linkType' label='跳转类型'>
             <Select options={linkTypeOptions} />

@@ -1,9 +1,38 @@
 import { Router } from 'express'
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
 import { pool } from '../../db'
 import { ok, fail } from '../../utils'
 import { authMiddleware } from '../../auth'
 
 const router = Router()
+const BANNER_IMAGE_MAX_SIZE = 2 * 1024 * 1024
+
+const bannerImageDir = path.join(__dirname, '../../../public/images/banners')
+if (!fs.existsSync(bannerImageDir)) {
+  fs.mkdirSync(bannerImageDir, { recursive: true })
+}
+
+const bannerImageStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, bannerImageDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg'
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    cb(null, `banner-${unique}${ext}`)
+  },
+})
+
+const bannerImageUpload = multer({
+  storage: bannerImageStorage,
+  limits: { fileSize: BANNER_IMAGE_MAX_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (!['image/png', 'image/jpeg'].includes(file.mimetype)) {
+      return cb(new Error('仅支持 PNG/JPG 格式'))
+    }
+    cb(null, true)
+  },
+})
 
 function mapBannerRow(row: any) {
   return {
@@ -45,6 +74,31 @@ router.post('/banners', authMiddleware, async (req, res) => {
     console.error(err)
     return fail(res, 500, '服务器错误')
   }
+})
+
+/**
+ * POST /api/admin/banners/image
+ * 上传 Banner 图片，返回可访问 URL
+ */
+router.post('/banners/image', authMiddleware, (req, res) => {
+  bannerImageUpload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return fail(res, 400, 'Banner 图片大小不能超过 2MB')
+    }
+
+    if (err) {
+      return fail(res, 400, err.message || 'Banner 图片上传失败')
+    }
+
+    try {
+      if (!req.file) return fail(res, 400, '未收到文件')
+      const url = `/images/banners/${req.file.filename}`
+      return ok(res, { url })
+    } catch (error) {
+      console.error(error)
+      return fail(res, 500, '服务器错误')
+    }
+  })
 })
 
 /** PUT /api/admin/banners/:id */

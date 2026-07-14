@@ -23,9 +23,22 @@ function resolveCourseCover(cover?: string): string {
   return cover
 }
 
+function buildFallbackCourseAccess(course: Course | null, courseId: number): CourseAccess {
+  const isFree = !!course && course.price === 0
+  const canLearn = isFree || course?.requiresAccess === false
+  return {
+    courseId,
+    isFree,
+    purchased: canLearn,
+    canLearn,
+    isVip: false,
+  }
+}
+
 export default function CourseDetail() {
   const router = useRouter()
-  const courseId = Number(router.params.id) || 1
+  const parsedCourseId = Number(router.params.id)
+  const courseId = Number.isFinite(parsedCourseId) && parsedCourseId > 0 ? parsedCourseId : 0
 
   // 课程详情页封面展示模式：'image' = 静态封面图; 'video' = 视频预览
   const [coverMode, setCoverMode] = useState<'image' | 'video'>(
@@ -41,6 +54,7 @@ export default function CourseDetail() {
   const [instructor, setInstructor] = useState<Instructor | null>(null)
   const [access, setAccess] = useState<CourseAccess | null>(null)
   const [loading, setLoading] = useState(true)
+  const [detailError, setDetailError] = useState('')
   const [followed, setFollowed] = useState(false)
   const [favorited, setFavorited] = useState(false)
   const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
@@ -50,6 +64,7 @@ export default function CourseDetail() {
   const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
   const checkWxshopPurchaseReturn = async () => {
+    if (!courseId) return
     const pending = getWxshopPendingPurchase(courseId)
     if (!pending || wxshopCheckingRef.current) return
 
@@ -97,27 +112,77 @@ export default function CourseDetail() {
   })
 
   useEffect(() => {
+    if (!courseId) {
+      setCourse(null)
+      setLessons([])
+      setReviews([])
+      setInstructor(null)
+      setAccess(null)
+      setWxshopEntry(null)
+      setDetailError('课程参数无效')
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
     setLoading(true)
-    Promise.all([
+    setDetailError('')
+
+    Promise.allSettled([
       getCourseById(courseId),
       getLessons(courseId),
       getReviews(courseId),
       getCourseAccess(courseId),
       getWxshopEntryState(courseId),
     ])
-      .then(async ([courseData, lessonsData, reviewsData, accessData, wxshopState]) => {
-        setCourse(courseData ?? null)
-        setLessons(lessonsData)
-        setReviews(reviewsData)
-        setAccess(accessData)
-        setWxshopEntry(wxshopState)
+      .then(async ([courseResult, lessonsResult, reviewsResult, accessResult, wxshopResult]) => {
+        if (cancelled) return
 
-        // 加载讲师信息
-        if (courseData?.instructorId) {
-          const ins = await getInstructorById(courseData.instructorId)
-          setInstructor(ins ?? null)
-        } else if (courseData?.instructor) {
-          // 兼容只有 instructor 名字的情况，构造一个最小对象
+        if (courseResult.status === 'rejected') {
+          setCourse(null)
+          setLessons([])
+          setReviews([])
+          setInstructor(null)
+          setAccess(null)
+          setWxshopEntry(null)
+          setDetailError('课程详情加载失败')
+          showApiError(courseResult.reason, '课程详情加载失败')
+          return
+        }
+
+        const courseData = courseResult.value ?? null
+        if (!courseData) {
+          setCourse(null)
+          setLessons([])
+          setReviews([])
+          setInstructor(null)
+          setAccess(null)
+          setWxshopEntry(null)
+          setDetailError('课程不存在或已下架')
+          return
+        }
+
+        setCourse(courseData)
+        setLessons(lessonsResult.status === 'fulfilled' ? lessonsResult.value : [])
+        setReviews(reviewsResult.status === 'fulfilled' ? reviewsResult.value : [])
+        setAccess(
+          accessResult.status === 'fulfilled'
+            ? accessResult.value
+            : buildFallbackCourseAccess(courseData, courseId)
+        )
+        setWxshopEntry(wxshopResult.status === 'fulfilled' ? wxshopResult.value : null)
+
+        // 讲师信息不是主阻塞依赖，失败时降级到课程里的展示名
+        if (courseData.instructorId) {
+          const ins = await getInstructorById(courseData.instructorId).catch(() => null)
+          if (cancelled) return
+          if (ins) {
+            setInstructor(ins)
+            return
+          }
+        }
+
+        if (courseData.instructor) {
           setInstructor({
             id: 0,
             name: courseData.instructor,
@@ -125,14 +190,26 @@ export default function CourseDetail() {
             service: '',
             color: '#0D9488',
           })
+          return
         }
+
+        setInstructor(null)
       })
-      .catch((err) => showApiError(err, '课程详情加载失败'))
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [courseId])
 
   // 进入页面时同步收藏状态
   useEffect(() => {
+    if (!courseId) {
+      setFavorited(false)
+      return
+    }
     checkFavorite(courseId)
       .then(setFavorited)
       .catch(() => setFavorited(false))
@@ -210,6 +287,7 @@ export default function CourseDetail() {
   }
 
   const handleFavorite = async () => {
+    if (!courseId) return
     const next = !favorited
     setFavorited(next)
     Taro.showToast({ title: next ? '已收藏' : '已取消收藏', icon: 'none' })
@@ -222,14 +300,13 @@ export default function CourseDetail() {
     }
   }
 
-  if (!course && !loading) return null
-
   const totalLessons = lessons.length
   const totalSeconds = lessons.reduce((sum, l) => sum + (l.durationSeconds || 0), 0)
   const totalHours = (totalSeconds / 3600).toFixed(1)
   const canOpenWxshop = wxshopEntry?.canOpen === true
 
   const handleGoToBuy = () => {
+    if (!courseId) return
     void navigateToWxshopProductFromSource(courseId, 'course-detail')
   }
 
@@ -261,104 +338,113 @@ export default function CourseDetail() {
           </>
         ) : (
           <>
-            {/* Cover — 由后台模块模式控制：image 或 video */}
-            {coverMode === 'video' && coverVideoUrl ? (
-              <Video
-                className='detail-cover'
-                src={coverVideoUrl}
-                controls={true}
-                autoplay={false}
-                muted={true}
-                loop={true}
-                objectFit='cover'
-                showCenterPlayBtn={true}
-              />
+            {!course ? (
+              <View className='detail-empty-state'>
+                <Text className='detail-empty-title'>{detailError || '课程暂时无法查看'}</Text>
+                <Text className='detail-empty-hint'>请返回课程列表后重试</Text>
+              </View>
             ) : (
-              <Image
-                className='detail-cover'
-                src={resolveCourseCover(course?.cover)}
-                mode='aspectFill'
-              />
-            )}
-
-            {/* Info Card */}
-            <View className='detail-info-card'>
-              <Text className='detail-title'>{course?.title}</Text>
-              <View className='detail-price-row'>
-                <Text className='detail-price'>¥{course?.price}</Text>
-                {course?.originalPrice && (
-                  <Text className='detail-original'>¥{course.originalPrice}</Text>
+              <>
+                {/* Cover — 由后台模块模式控制：image 或 video */}
+                {coverMode === 'video' && coverVideoUrl ? (
+                  <Video
+                    className='detail-cover'
+                    src={coverVideoUrl}
+                    controls={true}
+                    autoplay={false}
+                    muted={true}
+                    loop={true}
+                    objectFit='cover'
+                    showCenterPlayBtn={true}
+                  />
+                ) : (
+                  <Image
+                    className='detail-cover'
+                    src={resolveCourseCover(course?.cover)}
+                    mode='aspectFill'
+                  />
                 )}
-              </View>
-              <View className='detail-meta-row'>
-                <Icon name='star' size={28} color='#F59E0B' />
-                <Text className='detail-rating'>{course?.rating}</Text>
-                <View className='detail-divider' />
-                <Text className='detail-meta-text'>{course?.students}人已学</Text>
-                <View className='detail-divider' />
-                <Text className='detail-meta-text'>更新至2026.06</Text>
-              </View>
-              <View className='detail-tags'>
-                {course?.tags?.map((tag) => (
-                  <Text key={tag} className='detail-tag'>
-                    {tag}
-                  </Text>
-                ))}
-              </View>
-            </View>
 
-            {/* Instructor */}
-            {instructor && (
-              <View className='detail-section'>
-                <View className='detail-card instructor-detail-card'>
-                  <Avatar text={instructor.name?.charAt(0) || '?'} size={80} bg={resolveColor(instructor.color)} src={instructor.avatar} />
-                  <View className='instructor-info'>
-                    <View className='instructor-header'>
-                      <View>
-                        <Text className='instructor-name'>{instructor.name}</Text>
-                        <Text className='instructor-title'>{instructor.title || course?.instructor}</Text>
-                      </View>
-                      <View
-                        className={`follow-btn ${followed ? 'followed' : ''}`}
-                        onClick={handleFollow}
-                      >
-                        {followed ? '已关注' : '关注'}
-                      </View>
-                    </View>
-                    <Text className='instructor-bio'>
-                      {instructor.bio || instructor.service || '暂无简介'}
-                    </Text>
+                {/* Info Card */}
+                <View className='detail-info-card'>
+                  <Text className='detail-title'>{course?.title}</Text>
+                  <View className='detail-price-row'>
+                    <Text className='detail-price'>¥{course?.price}</Text>
+                    {course?.originalPrice && (
+                      <Text className='detail-original'>¥{course.originalPrice}</Text>
+                    )}
+                  </View>
+                  <View className='detail-meta-row'>
+                    <Icon name='star' size={28} color='#F59E0B' />
+                    <Text className='detail-rating'>{course?.rating}</Text>
+                    <View className='detail-divider' />
+                    <Text className='detail-meta-text'>{course?.students}人已学</Text>
+                    <View className='detail-divider' />
+                    <Text className='detail-meta-text'>更新至2026.06</Text>
+                  </View>
+                  <View className='detail-tags'>
+                    {course?.tags?.map((tag) => (
+                      <Text key={tag} className='detail-tag'>
+                        {tag}
+                      </Text>
+                    ))}
                   </View>
                 </View>
-              </View>
+
+                {/* Instructor */}
+                {instructor && (
+                  <View className='detail-section'>
+                    <View className='detail-card instructor-detail-card'>
+                      <Avatar text={instructor.name?.charAt(0) || '?'} size={80} bg={resolveColor(instructor.color)} src={instructor.avatar} />
+                      <View className='instructor-info'>
+                        <View className='instructor-header'>
+                          <View>
+                            <Text className='instructor-name'>{instructor.name}</Text>
+                            <Text className='instructor-title'>{instructor.title || course?.instructor}</Text>
+                          </View>
+                          <View
+                            className={`follow-btn ${followed ? 'followed' : ''}`}
+                            onClick={handleFollow}
+                          >
+                            {followed ? '已关注' : '关注'}
+                          </View>
+                        </View>
+                        <Text className='instructor-bio'>
+                          {instructor.bio || instructor.service || '暂无简介'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* Curriculum */}
+                <View className='detail-section'>
+                  <View className='detail-card'>
+                    <View className='detail-section-title'>
+                      <Text className='title-main'>课程大纲</Text>
+                      <Text className='title-sub'>共 {totalLessons} 节课 · 总时长 {totalHours} 小时</Text>
+                    </View>
+                    {lessons.map((lesson) => (
+                      <LessonItem key={lesson.id} lesson={lesson} completed={false} courseId={courseId} />
+                    ))}
+                    <View className='more-lessons'>
+                      <Text>+ 更多课程</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Reviews */}
+                <View className='detail-section'>
+                  <View className='detail-section-title'>
+                    <Text className='title-main'>学员评价</Text>
+                    <Text className='title-sub'>{course?.rating || 0}分 · {reviews.length}条评价</Text>
+                  </View>
+                  {reviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </View>
+              </>
             )}
-
-            {/* Curriculum */}
-            <View className='detail-section'>
-              <View className='detail-card'>
-                <View className='detail-section-title'>
-                  <Text className='title-main'>课程大纲</Text>
-                  <Text className='title-sub'>共 {totalLessons} 节课 · 总时长 {totalHours} 小时</Text>
-                </View>
-                {lessons.map((lesson) => (
-                  <LessonItem key={lesson.id} lesson={lesson} completed={false} courseId={courseId} />
-                ))}
-                <View className='more-lessons'>
-                  <Text>+ 更多课程</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Reviews */}
-            <View className='detail-section'>
-              <View className='detail-section-title'>
-                <Text className='title-main'>学员评价</Text>
-                <Text className='title-sub'>{course?.rating || 0}分 · {reviews.length}条评价</Text>
-              </View>
-              {reviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
-            </View>
           </>
         )}
 
@@ -366,7 +452,7 @@ export default function CourseDetail() {
       </ScrollView>
 
       {/* Sticky Bottom */}
-      {!loading && (
+      {!loading && course && (
         <View className='detail-bottom-bar safe-bottom'>
           <View className='detail-actions'>
             <View className='icon-action' onClick={() => Taro.navigateTo({ url: '/pages/contact-wx/index' })}>
