@@ -5,6 +5,7 @@ import fs from 'fs'
 import { pool } from '../../db'
 import { ok, fail } from '../../utils'
 import { authMiddleware } from '../../auth'
+import { baseUrl } from '../../config'
 
 const router = Router()
 const BANNER_IMAGE_MAX_SIZE = 2 * 1024 * 1024
@@ -34,12 +35,20 @@ const bannerImageUpload = multer({
   },
 })
 
+function resolveBannerImage(image: unknown) {
+  const value = typeof image === 'string' ? image.trim() : ''
+  if (!value) return ''
+  if (/^https?:\/\//i.test(value)) return value
+  if (value.startsWith('/')) return `${baseUrl}${value}`
+  return `${baseUrl}/${value}`
+}
+
 function mapBannerRow(row: any) {
   return {
     id: row.id,
     title: row.title,
     subtitle: row.subtitle,
-    image: row.image,
+    image: resolveBannerImage(row.image),
     linkType: row.link_type,
     linkValue: row.link_value,
     sort: row.sort,
@@ -92,7 +101,7 @@ router.post('/banners/image', authMiddleware, (req, res) => {
 
     try {
       if (!req.file) return fail(res, 400, '未收到文件')
-      const url = `/images/banners/${req.file.filename}`
+      const url = resolveBannerImage(`/images/banners/${req.file.filename}`)
       return ok(res, { url })
     } catch (error) {
       console.error(error)
