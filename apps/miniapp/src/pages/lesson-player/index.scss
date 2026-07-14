@@ -116,6 +116,20 @@
   font-weight: 600;
 }
 
+.player-store-product {
+  display: block;
+  flex: 0 0 280rpx;
+  width: 280rpx;
+
+  .player-lock-btn {
+    width: 100%;
+    padding-left: $md;
+    padding-right: $md;
+    box-sizing: border-box;
+    text-align: center;
+  }
+}
+
 /* --- 课时信息 --- */
 .player-info {
   padding: $base $base $sm;

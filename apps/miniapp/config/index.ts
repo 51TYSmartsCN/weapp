@@ -25,6 +25,23 @@ function getTaroAppEnv(): Record<string, string> {
 
 const taroAppEnv = getTaroAppEnv()
 
+// Taro 4.2 的 React 自动 JSX 转换无法稳定收集第三方原生组件，需在构建启动时显式注册。
+const { componentConfig: taroComponentConfig } = require('@tarojs/webpack5-runner/dist/utils/component') as {
+  componentConfig: { thirdPartyComponents: Map<string, Set<string>> }
+}
+
+const WXSHOP_COMPONENT_ATTRIBUTES = new Set([
+  'class',
+  'appid',
+  'product-id',
+  'custom-style',
+  'custom-content',
+  'open-page',
+  'logo-position',
+  'bindentersuccess',
+  'bindentererror',
+])
+
 /**
  * 修复 webpackbar 5.x 与 webpack 5.108+ 的 schema 冲突。
  *
@@ -51,10 +68,15 @@ function replaceWebpackBar(chain: any) {
 function registerWxshopComponents(nodeName: string, componentConfig: any) {
   if (nodeName !== 'store-product') return
 
-  if (!componentConfig.thirdPartyComponents.has('store-product')) {
-    componentConfig.thirdPartyComponents.set('store-product', new Set())
+  const registeredAttributes = componentConfig.thirdPartyComponents.get('store-product')
+  if (registeredAttributes) {
+    WXSHOP_COMPONENT_ATTRIBUTES.forEach((attribute) => registeredAttributes.add(attribute))
+  } else {
+    componentConfig.thirdPartyComponents.set('store-product', new Set(WXSHOP_COMPONENT_ATTRIBUTES))
   }
 }
+
+registerWxshopComponents('store-product', taroComponentConfig)
 
 const miniConfig: any = {
   onParseCreateElement(nodeName: string, componentConfig: any) {

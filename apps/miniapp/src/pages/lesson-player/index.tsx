@@ -15,9 +15,10 @@ import {
   refreshModuleModes,
   showApiError,
   getWxshopEntryState,
+  showWxshopUnavailable,
+  markWxshopPurchasePending,
   getWxshopPendingPurchase,
   clearWxshopPendingPurchase,
-  navigateToWxshopProductFromSource,
 } from '../../services'
 import type { Course, Lesson, CourseAccess } from '../../types'
 import type { WxshopEntryState } from '../../services'
@@ -200,7 +201,29 @@ export default function LessonPlayer() {
   }
 
   const handleGoToBuy = () => {
-    void navigateToWxshopProductFromSource(courseId, 'lesson-player')
+    showWxshopUnavailable(wxshopEntry ?? {
+      reason: 'missing_product',
+      message: '该课程暂未绑定微信小店商品',
+    })
+  }
+
+  const canOpenWxshop = wxshopEntry?.canOpen === true
+
+  const handleWxshopEnterSuccess = () => {
+    if (!wxshopEntry?.productId) return
+
+    markWxshopPurchasePending({
+      courseId,
+      productId: wxshopEntry.productId,
+      courseTitle: course?.title,
+      productTitle: wxshopEntry.product?.productTitle,
+      sourcePage: 'lesson-player',
+    })
+  }
+
+  const handleWxshopEnterError = (detail?: unknown) => {
+    console.error('[wxshop] enter error', { courseId, detail, state: wxshopEntry })
+    Taro.showToast({ title: '打开微信小店失败，请稍后重试', icon: 'none' })
   }
 
   if (loading) {
@@ -272,9 +295,26 @@ export default function LessonPlayer() {
                 支付确认中...
               </View>
             ) : !access?.isVip && (
-              <View className='player-lock-btn' onClick={handleGoToBuy}>
-                去购买课程
-              </View>
+              canOpenWxshop ? (
+                <store-product
+                  class='player-store-product'
+                  appid={wxshopEntry?.appid}
+                  product-id={wxshopEntry?.productId}
+                  custom-content
+                  open-page='product-detail'
+                  logo-position='bottom-right'
+                  bindentersuccess={handleWxshopEnterSuccess}
+                  bindentererror={(event: any) => handleWxshopEnterError(event.detail)}
+                >
+                  <View className='player-lock-btn'>
+                    去购买课程
+                  </View>
+                </store-product>
+              ) : (
+                <View className='player-lock-btn' onClick={handleGoToBuy}>
+                  去购买课程
+                </View>
+              )
             )}
           </View>
         )}

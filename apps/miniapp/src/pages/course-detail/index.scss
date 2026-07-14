@@ -299,9 +299,17 @@
 }
 
 // store-product 是微信原生组件，内部 UI 由微信渲染。
-// 仅控制外层布局，让组件占据右侧剩余空间，和左侧客服/收藏按钮协调布局。
+// 固定为紧凑宽度，避免原生组件作为 flex 子项时占满底栏剩余空间。
 .store-product-btn {
-  flex: 1;
-  min-width: 0;
+  display: block;
+  flex: 0 0 320rpx;
+  width: 320rpx;
   margin-left: $sm;
+
+  .enroll-btn {
+    width: 100%;
+    padding-left: $md;
+    padding-right: $md;
+    text-align: center;
+  }
 }
