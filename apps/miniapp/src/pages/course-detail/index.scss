@@ -129,6 +129,29 @@
   padding: $base;
 }
 
+.detail-empty-state {
+  margin: $base;
+  padding: 120rpx $base;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  text-align: center;
+}
+
+.detail-empty-title {
+  display: block;
+  font-size: $font-md;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.detail-empty-hint {
+  display: block;
+  margin-top: $sm;
+  font-size: $font-sm;
+  color: $text-tertiary;
+}
+
 .detail-section-title {
   display: flex;
   align-items: baseline;

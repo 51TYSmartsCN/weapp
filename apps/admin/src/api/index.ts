@@ -149,6 +149,16 @@ export const bannerApi = {
   getList() {
     return request<any[]>({ url: '/admin/banners' })
   },
+  uploadImage(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request<{ url: string }>({
+      method: 'POST',
+      url: '/admin/banners/image',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
   create(data: Record<string, any>) {
     return request({ method: 'POST', url: '/admin/banners', data })
   },
