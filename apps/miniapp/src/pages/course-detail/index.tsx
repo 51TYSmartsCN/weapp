@@ -9,7 +9,7 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, getWxshopPendingPurchase, clearWxshopPendingPurchase, toggleFavorite, checkFavorite, getInstructorById, navigateToWxshopProductFromSource, resolveColor, resolveUrl } from '../../services'
+import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, markWxshopPurchasePending, getWxshopPendingPurchase, clearWxshopPendingPurchase, toggleFavorite, checkFavorite, getInstructorById, resolveColor, resolveUrl } from '../../services'
 import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
 import type { WxshopEntryState } from '../../services'
 import './index.scss'
@@ -306,8 +306,27 @@ export default function CourseDetail() {
   const canOpenWxshop = wxshopEntry?.canOpen === true
 
   const handleGoToBuy = () => {
-    if (!courseId) return
-    void navigateToWxshopProductFromSource(courseId, 'course-detail')
+    showWxshopUnavailable(wxshopEntry ?? {
+      reason: 'missing_product',
+      message: '该课程暂未绑定微信小店商品',
+    })
+  }
+
+  const handleWxshopEnterSuccess = () => {
+    if (!wxshopEntry?.productId) return
+
+    markWxshopPurchasePending({
+      courseId,
+      productId: wxshopEntry.productId,
+      courseTitle: course?.title,
+      productTitle: wxshopEntry.product?.productTitle,
+      sourcePage: 'course-detail',
+    })
+  }
+
+  const handleWxshopEnterError = (detail?: unknown) => {
+    console.error('[wxshop] enter error', { courseId, detail, state: wxshopEntry })
+    Taro.showToast({ title: '打开微信小店失败，请稍后重试', icon: 'none' })
   }
 
   return (
@@ -472,11 +491,26 @@ export default function CourseDetail() {
             <View className='enroll-btn'>
               支付确认中...
             </View>
+          ) : canOpenWxshop ? (
+            <store-product
+              class='store-product-btn'
+              appid={wxshopEntry?.appid}
+              product-id={wxshopEntry?.productId}
+              custom-style={storeProductStyle}
+              custom-content
+              open-page='product-detail'
+              logo-position='bottom-right'
+              bindentersuccess={handleWxshopEnterSuccess}
+              bindentererror={(event: any) => handleWxshopEnterError(event.detail)}
+            >
+              <View className='enroll-btn'>
+                {primaryBtnText}
+              </View>
+            </store-product>
           ) : (
             <View
               className='enroll-btn'
               onClick={handleGoToBuy}
-              style={canOpenWxshop ? (storeProductStyle['buy-button'] as Record<string, string>) : undefined}
             >
               {primaryBtnText}
             </View>

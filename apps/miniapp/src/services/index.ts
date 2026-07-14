@@ -88,8 +88,6 @@ export {
   markWxshopPurchasePending,
   getWxshopPendingPurchase,
   clearWxshopPendingPurchase,
-  navigateToWxshopProduct,
-  navigateToWxshopProductFromSource,
 } from './wxshop'
 export type { WxshopProduct, WxshopConfig, WxshopEntryState, WxshopPendingPurchase } from './wxshop'
 
