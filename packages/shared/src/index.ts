@@ -287,6 +287,7 @@ export interface Follow {
   userId: number
   instructorId: number
   createdAt: string
+  instructor?: Instructor
 }
 
 /** 学习证书 */

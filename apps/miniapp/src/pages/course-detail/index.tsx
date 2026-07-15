@@ -9,7 +9,7 @@ import LessonItem from '../../components/LessonItem'
 import ReviewCard from '../../components/ReviewCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCourseById, getLessons, getReviews, getCourseAccess, getModuleModesSync, refreshModuleModes, showApiError, getWxshopEntryState, showWxshopUnavailable, markWxshopPurchasePending, getWxshopPendingPurchase, clearWxshopPendingPurchase, toggleFavorite, checkFavorite, getInstructorById, resolveColor, resolveUrl } from '../../services'
+import { buildLoginPageUrl, checkFavorite, checkFollow, clearWxshopPendingPurchase, getCourseAccess, getCourseById, getInstructorById, getLessons, getModuleModesSync, getReviews, getWxshopEntryState, getWxshopPendingPurchase, isLoggedIn, markWxshopPurchasePending, refreshModuleModes, resolveColor, resolveUrl, showApiError, showWxshopUnavailable, toggleFavorite, toggleFollow } from '../../services'
 import type { Course, Lesson, Review, CourseAccess, Instructor } from '../../types'
 import type { WxshopEntryState } from '../../services'
 import './index.scss'
@@ -108,6 +108,19 @@ export default function CourseDetail() {
         setCoverMode(modes.courseDetailCover.mode)
         setCoverVideoUrl(modes.courseDetailCover.videoUrl || '')
       })
+
+    if (courseId) {
+      getCourseById(courseId)
+        .then((nextCourse) => {
+          if (nextCourse) setCourse(nextCourse)
+        })
+        .catch(() => {})
+
+      getCourseAccess(courseId)
+        .then(setAccess)
+        .catch(() => {})
+    }
+
     checkWxshopPurchaseReturn()
   })
 
@@ -215,6 +228,18 @@ export default function CourseDetail() {
       .catch(() => setFavorited(false))
   }, [courseId])
 
+  useEffect(() => {
+    const instructorId = instructor?.id || course?.instructorId || 0
+    if (!instructorId || !isLoggedIn()) {
+      setFollowed(false)
+      return
+    }
+
+    checkFollow(instructorId)
+      .then(setFollowed)
+      .catch(() => setFollowed(false))
+  }, [instructor?.id, course?.instructorId])
+
   // 分享给朋友
   useShareAppMessage(() => {
     const title = course ? `${course.title} - GEO 课程` : 'GEO 课程详情'
@@ -278,12 +303,22 @@ export default function CourseDetail() {
     return '去微信小店购买'
   })()
 
-  const handleFollow = () => {
-    setFollowed((prev) => {
-      const next = !prev
+  const handleFollow = async () => {
+    const instructorId = instructor?.id || course?.instructorId || 0
+    if (!instructorId) return
+
+    if (!isLoggedIn()) {
+      Taro.navigateTo({ url: buildLoginPageUrl(`/pages/course-detail/index?id=${courseId}`) })
+      return
+    }
+
+    try {
+      const next = await toggleFollow(instructorId)
+      setFollowed(next)
       Taro.showToast({ title: next ? '已关注讲师' : '已取消关注', icon: 'none' })
-      return next
-    })
+    } catch (err) {
+      showApiError(err, '关注操作失败')
+    }
   }
 
   const handleFavorite = async () => {
