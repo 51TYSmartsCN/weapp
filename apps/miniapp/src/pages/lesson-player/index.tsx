@@ -11,6 +11,7 @@ import {
   getCourseAccess,
   getLessonPlayUrl,
   getLessonContent,
+  reportLessonProgress,
   getModuleModesSync,
   refreshModuleModes,
   showApiError,
@@ -52,6 +53,10 @@ export default function LessonPlayer() {
   const [wxshopEntry, setWxshopEntry] = useState<WxshopEntryState | null>(null)
   const [wxshopChecking, setWxshopChecking] = useState(false)
   const wxshopCheckingRef = useRef(false)
+  const startedLessonIdsRef = useRef<Record<number, true>>({})
+  const lastReportedSecondsRef = useRef<Record<number, number>>({})
+  const currentPositionRef = useRef(0)
+  const currentDurationRef = useRef(0)
   const playerPath = buildPlayerPath(courseId, currentLesson?.id ?? lessonId)
   const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -163,7 +168,20 @@ export default function LessonPlayer() {
       // 图文模式:获取图文内容
       setVideoUrl('')
       getLessonContent(currentLesson.id)
-        .then((res) => setLessonContent(res.content))
+        .then((res) => {
+          setLessonContent(res.content)
+          if (!startedLessonIdsRef.current[currentLesson.id]) {
+            startedLessonIdsRef.current[currentLesson.id] = true
+            void reportLessonProgress(currentLesson.id, {
+              watchedSeconds: 0,
+              completed: false,
+              lastPosition: 0,
+            }).catch((err) => {
+              delete startedLessonIdsRef.current[currentLesson.id]
+              console.warn('[lesson-player] report text lesson start failed', err)
+            })
+          }
+        })
         .catch((err) => {
           if (err?.code === 401 || err?.code === 403) {
             setAccess((prev) => prev ? { ...prev, canLearn: false, purchased: false } : prev)
@@ -176,15 +194,73 @@ export default function LessonPlayer() {
     }
   }, [currentLesson, access?.canLearn, contentMode])
 
-  const handlePlay = useCallback(() => setIsPlaying(true), [])
-  const handlePause = useCallback(() => setIsPlaying(false), [])
+  useEffect(() => {
+    currentPositionRef.current = 0
+    currentDurationRef.current = Number(currentLesson?.durationSeconds || 0)
+  }, [currentLesson?.id])
+
+  const flushLessonProgress = useCallback((completed: boolean) => {
+    if (!currentLesson || !access?.canLearn || contentMode !== 'video') return
+
+    const lessonId = currentLesson.id
+    const watchedSeconds = completed
+      ? Math.max(
+          Math.floor(currentDurationRef.current || currentLesson.durationSeconds || 0),
+          Math.floor(currentPositionRef.current)
+        )
+      : Math.floor(currentPositionRef.current)
+
+    if (watchedSeconds <= 0 && !completed) return
+    if (!completed && watchedSeconds <= (lastReportedSecondsRef.current[lessonId] || 0)) return
+
+    void reportLessonProgress(lessonId, {
+      watchedSeconds,
+      completed,
+      lastPosition: completed ? watchedSeconds : Math.floor(currentPositionRef.current),
+    })
+      .then(() => {
+        lastReportedSecondsRef.current[lessonId] = Math.max(
+          lastReportedSecondsRef.current[lessonId] || 0,
+          watchedSeconds
+        )
+      })
+      .catch((err) => {
+        console.warn('[lesson-player] flush lesson progress failed', err)
+      })
+  }, [access?.canLearn, contentMode, currentLesson])
+
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true)
+    if (!currentLesson || !access?.canLearn) return
+    if (startedLessonIdsRef.current[currentLesson.id]) return
+
+    startedLessonIdsRef.current[currentLesson.id] = true
+    void reportLessonProgress(currentLesson.id, {
+      watchedSeconds: 0,
+      completed: false,
+      lastPosition: 0,
+    }).catch((err) => {
+      delete startedLessonIdsRef.current[currentLesson.id]
+      console.warn('[lesson-player] report lesson start failed', err)
+    })
+  }, [access?.canLearn, currentLesson])
+
+  const handlePause = useCallback(() => {
+    setIsPlaying(false)
+    flushLessonProgress(false)
+  }, [flushLessonProgress])
+
   const handleEnded = useCallback(() => {
     setIsPlaying(false)
+    flushLessonProgress(true)
     const ctx = createVideoContext('lessonVideo')
     ctx.pause()
-  }, [])
+  }, [flushLessonProgress])
 
   const handleLessonChange = (lesson: Lesson) => {
+    if (currentLesson?.id && currentLesson.id !== lesson.id) {
+      flushLessonProgress(false)
+    }
     setCurrentLesson(lesson)
     setIsPlaying(false)
   }
@@ -276,6 +352,11 @@ export default function LessonPlayer() {
               enableProgressGesture={true}
               objectFit='contain'
               poster=''
+              onTimeUpdate={(event: any) => {
+                currentPositionRef.current = Math.floor(event?.detail?.currentTime || 0)
+                const nextDuration = Number(event?.detail?.duration || 0)
+                if (nextDuration > 0) currentDurationRef.current = nextDuration
+              }}
               onPlay={handlePlay}
               onPause={handlePause}
               onEnded={handleEnded}
