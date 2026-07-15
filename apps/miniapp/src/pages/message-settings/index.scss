@@ -1,0 +1,70 @@
+@use '../../styles/variables.scss' as *;
+
+.message-settings-page {
+  width: 100%;
+  min-height: 100vh;
+  background: $bg-secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-settings-body {
+  flex: 1;
+  padding: $base;
+  box-sizing: border-box;
+}
+
+.message-settings-card {
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.message-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $md;
+  padding: $base;
+}
+
+.message-settings-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-settings-title {
+  display: block;
+  font-size: $font-base;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 1.4;
+}
+
+.message-settings-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.6;
+}
+
+.message-settings-divider {
+  height: 1rpx;
+  margin: 0 $base;
+  background: $divider;
+}
+
+.message-settings-tip {
+  margin-top: $base;
+  padding: $base;
+  background: rgba(13, 148, 136, 0.08);
+  border-radius: $radius-lg;
+}
+
+.message-settings-tip-text {
+  font-size: $font-sm;
+  color: $text-secondary;
+  line-height: 1.7;
+}

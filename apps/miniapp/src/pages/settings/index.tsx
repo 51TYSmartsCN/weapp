@@ -2,7 +2,7 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import NavBar from '../../components/NavBar'
 import MenuItem from '../../components/MenuItem'
-import { getAppInfoSync, logout } from '../../services'
+import { getToken, logout, setToken } from '../../services'
 import './index.scss'
 
 const SETTINGS = [
@@ -15,18 +15,50 @@ export default function Settings() {
   const handleMenuClick = (label: string) => {
     switch (label) {
       case '消息通知':
-        Taro.showToast({ title: '消息通知设置', icon: 'none' })
+        Taro.navigateTo({ url: '/pages/message-settings/index' })
         break
       case '清除缓存':
-        Taro.showToast({ title: '清理完成', icon: 'success' })
+        void handleClearCache()
         break
-      case '关于我们': {
-        const appInfo = getAppInfoSync()
-        Taro.showToast({ title: `${appInfo.appName} v1.0.0`, icon: 'none' })
+      case '关于我们':
+        Taro.navigateTo({ url: '/pages/about/index' })
         break
-      }
       default:
         break
+    }
+  }
+
+  const handleClearCache = async () => {
+    const result = await Taro.showModal({
+      title: '清除缓存',
+      content: '会清理本地缓存的主题、页面配置和临时记录，但会保留当前登录状态，是否继续？',
+      confirmText: '清理',
+      confirmColor: '#EF4444',
+    })
+    if (!result.confirm) return
+
+    Taro.showLoading({ title: '清理中...', mask: true })
+    try {
+      const preservedToken = getToken()
+      const storageInfo = Taro.getStorageInfoSync()
+      const removableKeys = storageInfo.keys.filter((key) => key !== 'geo_token')
+
+      for (const key of removableKeys) {
+        await Taro.removeStorage({ key }).catch(() => {
+          Taro.removeStorageSync(key)
+        })
+      }
+
+      if (preservedToken) {
+        setToken(preservedToken)
+      }
+
+      Taro.showToast({
+        title: removableKeys.length > 0 ? `已清理 ${removableKeys.length} 项缓存` : '暂无可清理缓存',
+        icon: 'success',
+      })
+    } finally {
+      Taro.hideLoading()
     }
   }
 
