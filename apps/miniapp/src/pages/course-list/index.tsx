@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow, useRouter } from '@tarojs/taro'
 import SafeTop from '../../components/SafeTop'
 import SearchBar from '../../components/SearchBar'
 import CourseCard from '../../components/CourseCard'
 import Skeleton from '../../components/Skeleton'
 import Icon from '../../components/Icon'
-import { getCategories, getCoursesByCategory, getAllCourses, showApiError } from '../../services'
+import { consumeAgentHandoff, getCategories, getCoursesByCategory, getAllCourses, showApiError } from '../../services'
 import { Category, CATEGORY_LABELS } from '../../types'
 import type { Course } from '../../types'
 import './index.scss'
@@ -24,7 +24,21 @@ const SORT_LABELS: Record<SortKey, string> = {
 const SORT_KEYS: SortKey[] = ['default', 'newest', 'priceAsc', 'priceDesc', 'rating']
 const COURSE_LIST_FETCH_SIZE = 1000
 
+function parseKeywordFromQuery(query = ''): string {
+  if (!query) return ''
+  const params: Record<string, string> = {}
+  query.split('&').forEach((pair) => {
+    const [rawKey, rawValue = ''] = pair.split('=')
+    if (!rawKey) return
+    const key = decodeURIComponent(rawKey)
+    const value = decodeURIComponent(rawValue.replace(/\+/g, ' '))
+    params[key] = value
+  })
+  return (params.keyword || '').trim()
+}
+
 export default function CourseList() {
+  const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<Category>(Category.All)
   // 每个分类对应的课程列表（用于准确计数与即时切换，避免本地 tag 过滤与后端不一致）
@@ -32,6 +46,28 @@ export default function CourseList() {
   const [keyword, setKeyword] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('default')
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const inboundKeyword = typeof router.params.keyword === 'string' ? router.params.keyword.trim() : ''
+    if (inboundKeyword) setKeyword(inboundKeyword)
+  }, [router.params.keyword])
+
+  useDidShow(() => {
+    const handoff = consumeAgentHandoff('/pages/course-list/index')
+    if (!handoff) return
+
+    const queryKeyword = parseKeywordFromQuery(handoff.query)
+    const payloadKeyword =
+      handoff.payload &&
+      typeof handoff.payload === 'object' &&
+      'keyword' in handoff.payload &&
+      typeof (handoff.payload as { keyword?: unknown }).keyword === 'string'
+        ? String((handoff.payload as { keyword?: string }).keyword).trim()
+        : ''
+
+    const inboundKeyword = queryKeyword || payloadKeyword
+    if (inboundKeyword) setKeyword(inboundKeyword)
+  })
 
   useEffect(() => {
     setLoading(true)

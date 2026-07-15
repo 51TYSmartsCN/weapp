@@ -1,0 +1,58 @@
+{
+  "apis": [
+    {
+      "name": "searchCourses",
+      "description": "搜索 GEO 课程并导向课程列表页或课程详情页。可按课程名、讲师名、课程简介、课程标签检索；当 keyword 留空时返回全部课程，用于泛浏览场景。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "description": "搜索关键词，必须来自用户原话，可为课程名、讲师名或主题词。用户只是想浏览课程时可留空。"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "description": "本次实际使用的搜索词"
+          },
+          "total": {
+            "type": "number",
+            "description": "命中的课程数量"
+          },
+          "items": {
+            "type": "array",
+            "description": "课程搜索结果",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "number", "description": "课程 ID" },
+                "title": { "type": "string", "description": "课程标题" },
+                "instructor": { "type": "string", "description": "讲师名称" },
+                "price": { "type": "number", "description": "课程价格" },
+                "tags": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "课程标签"
+                }
+              }
+            }
+          },
+          "destination": {
+            "type": "string",
+            "description": "本次接力的目标页面，course-list 或 course-detail"
+          }
+        }
+      },
+      "_meta": {
+        "ui": {
+          "pagePath": "/pages/course-list/index"
+        }
+      }
+    }
+  ],
+  "components": []
+}

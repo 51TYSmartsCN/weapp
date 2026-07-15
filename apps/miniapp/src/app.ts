@@ -12,6 +12,9 @@ import {
   initWxshopConfig,
   refreshWxshopConfig,
   type ThemeConfig,
+  WECHAT_AI_ENABLED,
+  cacheAgentHandoff,
+  cacheWechatAiBaseUrl,
 } from './services'
 import './app.scss'
 
@@ -19,6 +22,14 @@ function App({ children }: PropsWithChildren<any>) {
   const [theme, setTheme] = useState<ThemeConfig>(getThemeConfigSync())
 
   useLaunch(async () => {
+    cacheWechatAiBaseUrl()
+
+    if (WECHAT_AI_ENABLED && typeof wx !== 'undefined' && typeof wx.onAgentHandoff === 'function') {
+      wx.onAgentHandoff(({ pageId, path, query, payload }) => {
+        cacheAgentHandoff({ pageId, path, query, payload })
+      })
+    }
+
     // 初始化主题：先用缓存秒开，再异步拉取最新值
     await initTheme()
     setTheme(getThemeConfigSync())

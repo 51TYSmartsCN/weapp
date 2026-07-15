@@ -1,3 +1,5 @@
+const enableWechatAi = process.env.TARO_APP_ENABLE_WECHAT_AI === 'true'
+
 export default defineAppConfig({
   pages: [
     'pages/index/index',
@@ -11,6 +13,7 @@ export default defineAppConfig({
     'pages/profile/index',
     'pages/edit-profile/index',
     'pages/favorites/index',
+    'pages/follows/index',
     'pages/study-records/index',
     'pages/certificates/index',
     'pages/orders/index',
@@ -21,10 +24,34 @@ export default defineAppConfig({
     'pages/feedback/index',
     'pages/contact-wx/index',
     'pages/settings/index',
+    'pages/message-settings/index',
+    'pages/about/index',
     'pages/agreement/index',
     'pages/privacy/index',
     'pages/video-unlock/index'
   ],
+  ...(enableWechatAi
+    ? {
+        lazyCodeLoading: 'requiredComponents' as const,
+        subPackages: [
+          {
+            root: 'skills',
+            pages: [],
+            independent: true,
+          },
+        ],
+        agent: {
+          skills: [
+            {
+              name: 'courseSearch',
+              description: 'GEO 课程场景：搜索课程，并按搜索结果进入课程列表或课程详情页',
+              path: 'skills/course-search-skill',
+            },
+          ],
+          instruction: 'skills/AGENTS.md',
+        },
+      }
+    : {}),
   tabBar: {
     color: '#94A3B8',
     selectedColor: '#0D9488',
