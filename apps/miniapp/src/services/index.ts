@@ -3,6 +3,14 @@ export type { RequestOptions } from './config'
 
 export { request, showApiError, ApiException } from './request'
 export type { ApiResponse } from './request'
+export {
+  WECHAT_AI_ENABLED,
+  cacheAgentHandoff,
+  consumeAgentHandoff,
+  cacheWechatAiBaseUrl,
+  getWechatAiBaseUrl,
+} from './agent-handoff'
+export type { AgentHandoffPayload } from './agent-handoff'
 
 export {
   login,

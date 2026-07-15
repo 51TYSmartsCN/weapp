@@ -24,6 +24,7 @@ function getTaroAppEnv(): Record<string, string> {
 }
 
 const taroAppEnv = getTaroAppEnv()
+const enableWechatAi = process.env.TARO_APP_ENABLE_WECHAT_AI === 'true'
 
 // Taro 4.2 的 React 自动 JSX 转换无法稳定收集第三方原生组件，需在构建启动时显式注册。
 const { componentConfig: taroComponentConfig } = require('@tarojs/webpack5-runner/dist/utils/component') as {
@@ -127,7 +128,14 @@ export default defineConfig<'webpack5'>(async (merge) => {
       ])
     ),
     copy: {
-      patterns: [],
+      patterns: enableWechatAi
+        ? [
+            {
+              from: 'src/skills',
+              to: 'dist/skills',
+            },
+          ]
+        : [],
       options: {}
     },
     framework: 'react',
