@@ -225,6 +225,8 @@ router.post(
   '/:lessonId/progress',
   authMiddleware,
   async (req: Request, res: Response) => {
+    const conn = await pool.getConnection()
+    let transactionStarted = false
     try {
       const userId = (req as AuthRequest).userId!
       const lessonId = Number(req.params.lessonId)
@@ -239,8 +241,11 @@ router.post(
         return fail(res, 400, '参数错误')
       }
 
+      const safeWatchedSeconds = Math.max(0, Math.floor(watchedSeconds))
+      const safeLastPosition = Math.max(0, Math.floor(lastPosition))
+
       // 查 lesson 拿 course_id
-      const [lessonRows] = await pool.query(
+      const [lessonRows] = await conn.query(
         'SELECT course_id FROM lessons WHERE id = ?',
         [lessonId]
       )
@@ -248,68 +253,132 @@ router.post(
       if (lessonList.length === 0) return fail(res, 404, '课时不存在')
       const courseId = lessonList[0].course_id
 
+      const access = await checkCourseAccess(userId, courseId)
+      if (!access.canAccess) {
+        return fail(res, 403, access.reason || '无访问权限')
+      }
+
+      await conn.beginTransaction()
+      transactionStarted = true
+
+      const [totalRows] = await conn.query(
+        'SELECT COUNT(*) AS cnt FROM lessons WHERE course_id = ?',
+        [courseId]
+      )
+      const totalLessons = Number((totalRows as any[])[0]?.cnt || 0)
+
+      const [ucRows] = await conn.query(
+        `SELECT id, status
+         FROM user_courses
+         WHERE user_id = ? AND course_id = ?
+         FOR UPDATE`,
+        [userId, courseId]
+      )
+      const userCourse = (ucRows as any[])[0]
+
+      const [startedRows] = await conn.query(
+        `SELECT id
+         FROM lesson_progress
+         WHERE user_id = ? AND course_id = ?
+         LIMIT 1
+         FOR UPDATE`,
+        [userId, courseId]
+      )
+      const hasStartedCourse = (startedRows as any[]).length > 0
+      const shouldIncrementStudents = !hasStartedCourse && (!userCourse || Number(userCourse.status) === 0)
+
+      if (!userCourse) {
+        await conn.query(
+          `INSERT INTO user_courses (user_id, course_id, status, progress, completed_lessons, total_lessons, last_study_at, created_at, updated_at)
+           VALUES (?, ?, 1, 0, 0, ?, NOW(), NOW(), NOW())`,
+          [userId, courseId, totalLessons]
+        )
+      }
+
       // UPSERT lesson_progress
-      await pool.query(
+      await conn.query(
         `INSERT INTO lesson_progress (user_id, lesson_id, course_id, completed, watched_seconds, last_position, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, NOW())
          ON DUPLICATE KEY UPDATE
-           completed = VALUES(completed),
-           watched_seconds = VALUES(watched_seconds),
+           completed = GREATEST(completed, VALUES(completed)),
+           watched_seconds = GREATEST(watched_seconds, VALUES(watched_seconds)),
            last_position = VALUES(last_position),
            updated_at = NOW()`,
-        [userId, lessonId, courseId, completed ? 1 : 0, watchedSeconds, lastPosition]
+        [userId, lessonId, courseId, completed ? 1 : 0, safeWatchedSeconds, safeLastPosition]
       )
 
-      // 完成时重新统计并更新 user_courses
-      if (completed) {
-        const [countRows] = await pool.query(
-          'SELECT COUNT(*) AS cnt FROM lesson_progress WHERE user_id = ? AND course_id = ? AND completed = 1',
-          [userId, courseId]
-        )
-        const completedLessons = (countRows as any[])[0].cnt
+      const [countRows] = await conn.query(
+        'SELECT COUNT(*) AS cnt FROM lesson_progress WHERE user_id = ? AND course_id = ? AND completed = 1',
+        [userId, courseId]
+      )
+      const completedLessons = Number((countRows as any[])[0]?.cnt || 0)
+      const progress =
+        totalLessons > 0
+          ? Math.round((completedLessons / totalLessons) * 100)
+          : 0
+      const nextStatus = progress === 100 ? 2 : 1
 
-        const [totalRows] = await pool.query(
-          'SELECT COUNT(*) AS cnt FROM lessons WHERE course_id = ?',
+      await conn.query(
+        `UPDATE user_courses
+         SET completed_lessons = ?, total_lessons = ?, progress = ?, status = ?, last_study_at = NOW(), updated_at = NOW()
+         WHERE user_id = ? AND course_id = ?`,
+        [completedLessons, totalLessons, progress, nextStatus, userId, courseId]
+      )
+
+      if (shouldIncrementStudents) {
+        await conn.query(
+          'UPDATE courses SET students = students + 1 WHERE id = ?',
           [courseId]
         )
-        const totalLessons = (totalRows as any[])[0].cnt
+      }
 
-        const progress =
-          totalLessons > 0
-            ? Math.round((completedLessons / totalLessons) * 100)
-            : 0
-
-        await pool.query(
-          `UPDATE user_courses
-           SET completed_lessons = ?, progress = ?, status = ?, last_study_at = NOW(), updated_at = NOW()
-           WHERE user_id = ? AND course_id = ?`,
-          [completedLessons, progress, progress === 100 ? 2 : 1, userId, courseId]
+      if (safeWatchedSeconds > 0) {
+        await conn.query(
+          'INSERT INTO study_records (user_id, course_id, lesson_id, duration, studied_at) VALUES (?, ?, ?, ?, NOW())',
+          [userId, courseId, lessonId, safeWatchedSeconds]
         )
+      }
 
-        // 进度满 100 且无证书，颁发证书
-        if (progress === 100) {
-          const [certRows] = await pool.query(
-            'SELECT id FROM certificates WHERE user_id = ? AND course_id = ?',
-            [userId, courseId]
+      const [userStatRows] = await conn.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) AS finished_lessons,
+           COALESCE(SUM(watched_seconds), 0) AS watched_seconds
+         FROM lesson_progress
+         WHERE user_id = ?`,
+        [userId]
+      )
+      const userStats = (userStatRows as any[])[0] || {}
+      await conn.query(
+        `UPDATE users
+         SET finished_lessons = ?, study_hours = ?, updated_at = NOW()
+         WHERE id = ?`,
+        [
+          Number(userStats.finished_lessons || 0),
+          Math.floor(Number(userStats.watched_seconds || 0) / 3600),
+          userId,
+        ]
+      )
+
+      // 进度满 100 且无证书，颁发证书
+      if (progress === 100) {
+        const [certRows] = await conn.query(
+          'SELECT id FROM certificates WHERE user_id = ? AND course_id = ?',
+          [userId, courseId]
+        )
+        if ((certRows as any[]).length === 0) {
+          const certificateNo = `GEO${userId}${courseId}${Date.now()}`
+          await conn.query(
+            'INSERT INTO certificates (user_id, course_id, certificate_no, issued_at) VALUES (?, ?, ?, NOW())',
+            [userId, courseId, certificateNo]
           )
-          if ((certRows as any[]).length === 0) {
-            const certificateNo = `GEO${userId}${courseId}${Date.now()}`
-            await pool.query(
-              'INSERT INTO certificates (user_id, course_id, certificate_no, issued_at) VALUES (?, ?, ?, NOW())',
-              [userId, courseId, certificateNo]
-            )
-          }
         }
       }
 
-      // 记录学习流水
-      await pool.query(
-        'INSERT INTO study_records (user_id, course_id, lesson_id, duration, studied_at) VALUES (?, ?, ?, ?, NOW())',
-        [userId, courseId, lessonId, watchedSeconds]
-      )
+      await conn.commit()
+      transactionStarted = false
 
       // 返回更新后的 LessonProgress 对象
-      const [progressRows] = await pool.query(
+      const [progressRows] = await conn.query(
         'SELECT * FROM lesson_progress WHERE user_id = ? AND lesson_id = ?',
         [userId, lessonId]
       )
@@ -325,8 +394,13 @@ router.post(
         updatedAt: progressRow.updated_at,
       })
     } catch (err) {
+      if (transactionStarted) {
+        await conn.rollback()
+      }
       console.error('[lesson] progress error:', err)
       fail(res, 500, '进度上报失败')
+    } finally {
+      conn.release()
     }
   }
 )
