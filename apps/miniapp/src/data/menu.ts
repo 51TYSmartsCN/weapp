@@ -6,6 +6,7 @@ export const menuGroups: MenuGroup[] = [
       { icon: 'book-open', label: '我的课程' },
       { icon: 'clock', label: '学习记录' },
       { icon: 'heart', label: '收藏课程' },
+      { icon: 'users', label: '关注讲师' },
       { icon: 'award', label: '学习证书' }
     ]
   },

@@ -43,6 +43,9 @@ export default function Profile() {
       case '收藏课程':
         Taro.navigateTo({ url: '/pages/favorites/index' })
         break
+      case '关注讲师':
+        Taro.navigateTo({ url: '/pages/follows/index' })
+        break
       case '学习证书':
         Taro.navigateTo({ url: '/pages/certificates/index' })
         break
